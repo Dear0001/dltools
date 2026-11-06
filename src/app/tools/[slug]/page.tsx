@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import ToolContent from './ToolContent';
 import Toast from '@/components/ui/Toast';
 import WorkspaceShell from '@/app/tool-workspace/components/WorkspaceShell';
 import { TOOLS, getToolBySlug, getToolPath, getToolSlug } from '@/data/tools';
@@ -44,6 +45,7 @@ export default async function ToolPage({
     <>
       <Toast />
       <WorkspaceShell tool={tool} />
+      <ToolContent tool={tool} />
     </>
   );
 }
