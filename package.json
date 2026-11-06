@@ -66,7 +66,7 @@
     "ajv": "^6.15.0",
     "browser-image-compression": "^2.0.2",
     "crypto-js": "^4.2.0",
-    "diff": "^7.0.0",
+    "diff": "^9.0.0",
     "docx": "^9.12.0",
     "geist": "^1.7.2",
     "html2canvas": "^1.4.1",
@@ -105,7 +105,7 @@
     "eslint-config-next": "^15.2.4",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "postcss": "8.4.8",
+    "postcss": "^8.5.23",
     "prisma": "^6.19.3",
     "tailwindcss": "3.4.6",
     "tailwindcss-animate": "^1.0.7",
@@ -115,5 +115,9 @@
     "@prisma/client@6.19.3": true,
     "@prisma/engines@6.19.3": true,
     "prisma@6.19.3": true
+  },
+  "overrides": {
+    "postcss": "^8.5.23",
+    "postcss-selector-parser": "^6.1.5"
   }
 }

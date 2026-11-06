@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -102,6 +102,9 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
   const trackedToolId = useRef('');
   const colors = CATEGORY_COLORS[tool.category];
   const PanelComponent = PANEL_MAP[tool.id] || GenericComingSoon;
+  // Tool panels use browser-only APIs (DOMParser, window, localStorage), so render them after mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Save to recent
   useEffect(() => {
@@ -174,7 +177,13 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
 
       {/* Workspace body */}
       <div className="flex-1 overflow-hidden">
-        <PanelComponent tool={tool} />
+        {mounted ? (
+          <PanelComponent tool={tool} />
+        ) : (
+          <div className="flex h-full min-h-[40vh] items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        )}
       </div>
     </div>
   );
