@@ -7,7 +7,7 @@ import AppLogo from '@/components/ui/AppLogo';
 import { Menu, X, Zap, HandCoins, LogIn, LogOut, ChevronDown, CircleUserRound, Heart } from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { CATEGORIES, TOOLS } from '@/data/tools';
+import { CATEGORIES, TOOLS, getToolPath } from '@/data/tools';
 import { getToolName, useLocale } from '@/i18n/LocaleProvider';
 
 type Theme = 'light' | 'dark' | 'nord' | 'monokai';
@@ -254,7 +254,7 @@ export default function Topbar() {
                                           {TOOLS.filter((tool) => tool.category === category.id).map((tool) => (
                                             <li key={tool.id}>
                                               <Link
-                                                href={`/tool-workspace?tool=${encodeURIComponent(tool.id)}`}
+                                                href={getToolPath(tool)}
                                                 onClick={() => setOpenMenu(null)}
                                                 className="block rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted hover:text-primary"
                                               >
@@ -271,7 +271,7 @@ export default function Topbar() {
                                     {workspaceTools.map((tool) => (
                                       <li key={tool.id}>
                                         <Link
-                                          href={`/tool-workspace?tool=${encodeURIComponent(tool.id)}`}
+                                          href={getToolPath(tool)}
                                           onClick={() => setOpenMenu(null)}
                                           className="block rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted hover:text-primary"
                                         >
@@ -497,7 +497,7 @@ export default function Topbar() {
                       {(link.menu === 'hub' ? TOOLS.slice(0, 8) : workspaceTools).map((tool) => (
                         <li key={tool.id}>
                           <Link
-                            href={`/tool-workspace?tool=${encodeURIComponent(tool.id)}`}
+                            href={getToolPath(tool)}
                             onClick={() => {
                               setMobileOpen(false);
                               setOpenMenu(null);

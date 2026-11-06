@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { TOOLS } from '@/data/tools';
+import { TOOLS, getToolPath } from '@/data/tools';
 import { SITE_URL } from '@/lib/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     ...TOOLS.map((tool) => ({
-      url: `${SITE_URL}/tool-workspace?tool=${tool.id}`,
+      url: `${SITE_URL}${getToolPath(tool)}`,
       lastModified,
       changeFrequency: 'monthly' as const,
       priority: tool.popular ? 0.9 : 0.7,

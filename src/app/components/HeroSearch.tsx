@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
-import { TOOLS } from '@/data/tools';
+import { TOOLS, getToolPath } from '@/data/tools';
 import { getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
 export default function HeroSearch() {
@@ -87,7 +87,7 @@ export default function HeroSearch() {
             results.map((tool) => (
               <Link
                 key={tool.id}
-                href={`/tool-workspace?tool=${tool.id}`}
+                href={getToolPath(tool)}
                 onClick={handleSelect}
                 className="flex items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors duration-100 last:border-b-0 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
               >

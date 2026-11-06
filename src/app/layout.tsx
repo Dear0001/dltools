@@ -6,7 +6,7 @@ import { GeistSans } from 'geist/font/sans';
 import Topbar from '@/components/Topbar';
 import AuthProvider from '@/components/AuthProvider';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
-import { SITE_NAME, SITE_URL, SITE_DESCRIPTION } from '@/lib/site';
+import { SITE_NAME, SITE_TITLE, SITE_URL, SITE_DESCRIPTION } from '@/lib/site';
 import '../styles/tailwind.css';
 
 export const viewport: Viewport = {
@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'DL DevToolkit — Browser-Based Developer Tools',
+    default: SITE_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -25,21 +25,21 @@ export const metadata: Metadata = {
   keywords: [
     'developer tools', 'online tools', 'JSON formatter', 'SQL formatter', 'YAML formatter',
     'JWT decoder', 'KHQR', 'QR code', 'UUID generator', 'Base64', 'regex tester',
-    'text diff', 'PDF to Word', 'DL DevToolkit',
+    'text diff', 'PDF to Word', 'DLTools',
   ],
   alternates: { canonical: '/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
-    title: 'DL DevToolkit — Browser-Based Developer Tools',
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     url: '/',
     images: [{ url: '/assets/images/app_logo.jpg' }],
   },
   twitter: {
     card: 'summary',
-    title: 'DL DevToolkit — Browser-Based Developer Tools',
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: ['/assets/images/app_logo.jpg'],
   },

@@ -1,4 +1,4 @@
-export const SITE_NAME = 'DL DevToolkit';
+export const SITE_NAME = 'DLTools';
 
 const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
@@ -12,5 +12,7 @@ export const SITE_URL = (
   (process.env.NODE_ENV === 'production' ? PRODUCTION_URL : 'http://localhost:4028')
 ).replace(/\/+$/, '');
 
+export const SITE_TITLE = 'DLTools — Free Online Developer Tools & Converters';
+
 export const SITE_DESCRIPTION =
-  'Free browser-based developer tools: JSON, SQL, YAML and XML formatters, diff, KHQR/QR, JWT, UUID, hash, regex, Base64, PDF & Word converters and more. No install, runs in your browser.';
+  'DLTools offers free online developer tools: JSON, SQL and YAML formatters, JWT decoder, KHQR and QR generator, diff checker, Base64 and PDF to Word converters.';

@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Wrench, ArrowLeft } from 'lucide-react';
-import { TOOLS, CATEGORY_COLORS } from '../../../data/tools';
+import { TOOLS, CATEGORY_COLORS, getToolPath } from '../../../data/tools';
 import { useRouter } from 'next/navigation';
 import { getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
@@ -34,7 +34,7 @@ export default function NoToolSelected() {
             return (
               <button
                 key={`popular-${tool?.id}`}
-                onClick={() => router?.push(`/tool-workspace?tool=${tool?.id}`)}
+                onClick={() => router?.push(getToolPath(tool))}
                 className="flex items-start gap-3 bg-card border border-border rounded-xl p-4 text-left card-glow-hover"
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colors?.bg} border ${colors?.border}`}>

@@ -417,3 +417,15 @@ export const CATEGORY_COLORS: Record<ToolCategory, { bg: string; text: string; b
   generators: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' },
   documents: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20' },
 };
+
+export function getToolSlug(tool: Pick<Tool, 'id'>): string {
+  return tool.id.replace(/^tool-/, '');
+}
+
+export function getToolPath(tool: Pick<Tool, 'id'>): string {
+  return `/tools/${getToolSlug(tool)}`;
+}
+
+export function getToolBySlug(slug: string): Tool | undefined {
+  return TOOLS.find((t) => getToolSlug(t) === slug);
+}

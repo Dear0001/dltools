@@ -8,7 +8,7 @@ import {
   Link2, SearchCode, Clock, Sparkles, FileCode, Terminal, TableProperties,
   ArrowRight, Star, Zap
 } from 'lucide-react';
-import { Tool, CATEGORY_COLORS, CATEGORIES } from '@/data/tools';
+import { Tool, CATEGORY_COLORS, CATEGORIES, getToolPath } from '@/data/tools';
 import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -27,7 +27,7 @@ export default function ToolCard({ tool }: { tool: Tool }) {
 
   return (
     <Link
-      href={`/tool-workspace?tool=${tool.id}`}
+      href={getToolPath(tool)}
       className="group relative flex min-h-44 flex-col gap-3 rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transform-none"
       aria-label={`${t('open')} ${getToolName(tool.id, tool.name, locale)}`}
     >

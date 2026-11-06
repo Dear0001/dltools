@@ -156,7 +156,7 @@ export default function GoogleAnalytics() {
                 <div>
                   <h2 id="analytics-consent-title" className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <BarChart3 size={15} className="text-primary" />
-                    Help improve DevToolkit
+                    Help improve DLTools
                   </h2>
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                     Allow Google Analytics to count visits and tool opens. Your tool inputs and outputs are never sent.

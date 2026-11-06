@@ -6,8 +6,9 @@ import HeroSearch from './components/HeroSearch';
 import CategoryFilters from './components/CategoryFilters';
 import ToolGrid from './components/ToolGrid';
 import RecentTools from './components/RecentTools';
+import SeoContent from './components/SeoContent';
 import Toast from '@/components/ui/Toast';
-import { TOOLS, CATEGORIES } from '@/data/tools';
+import { TOOLS, CATEGORIES, getToolPath } from '@/data/tools';
 import { getToolName, useLocale } from '@/i18n/LocaleProvider';
 
 const DRIZZLE_DROPS = [
@@ -106,7 +107,7 @@ export default function HomePage() {
               {TOOLS.filter((tool) => tool.popular).slice(0, 4).map((tool) => (
                 <Link
                   key={`hero-popular-${tool.id}`}
-                  href={`/tool-workspace?tool=${encodeURIComponent(tool.id)}`}
+                  href={getToolPath(tool)}
                   className="rounded-full border border-border/80 bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transform-none"
                 >
                   {getToolName(tool.id, tool.name, locale)}
@@ -146,6 +147,8 @@ export default function HomePage() {
           </Suspense>
           <ToolGrid />
         </section>
+
+        <SeoContent />
 
         <footer className="mt-12 flex flex-col gap-2 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>{t('usefulTools')}</p>

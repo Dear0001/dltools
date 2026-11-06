@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { History, X } from 'lucide-react';
-import { TOOLS } from '@/data/tools';
+import { TOOLS, getToolPath } from '@/data/tools';
 import { CATEGORY_COLORS } from '@/data/tools';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -107,7 +107,7 @@ export default function RecentTools() {
             return (
               <div key={`recent-${tool.id}`} className="group flex items-center rounded-md border border-border bg-card">
                 <Link
-                  href={`/tool-workspace?tool=${tool.id}`}
+                  href={getToolPath(tool)}
                   className="rounded-l-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {getToolName(tool.id, tool.name, locale)}
