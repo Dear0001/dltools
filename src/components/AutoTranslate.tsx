@@ -91,8 +91,7 @@ export default function AutoTranslate() {
       }
     });
 
-    walk(document.body);
-    observer.takeRecords();
+    // Content rendered later on the client is translated as soon as it appears.
     observer.observe(document.body, {
       childList: true,
       subtree: true,
@@ -101,7 +100,22 @@ export default function AutoTranslate() {
       attributeFilter: [...ATTRS],
     });
 
+    // Text that came from the server is only rewritten once hydration has had
+    // time to finish; changing it earlier makes React report a hydration mismatch.
+    let initialPass = 0;
+    const runInitialPass = () => {
+      walk(document.body);
+      observer.takeRecords();
+    };
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    initialPass = idle
+      ? idle(runInitialPass, { timeout: 1500 })
+      : window.setTimeout(runInitialPass, 800);
+
     return () => {
+      const cancelIdle = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (cancelIdle) cancelIdle(initialPass);
+      window.clearTimeout(initialPass);
       observer.disconnect();
       textOriginals.forEach((original, node) => {
         if (node.isConnected) node.nodeValue = original;

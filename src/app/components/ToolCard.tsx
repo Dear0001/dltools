@@ -82,7 +82,7 @@ export default function ToolCard({ tool }: { tool: Tool }) {
       onClick={() => toggle(tool.id)}
       aria-pressed={favorite}
       aria-label={`${favorite ? (locale === 'kh' ? 'ដកចេញពីចំណូលចិត្ត' : 'Remove from favorites') : (locale === 'kh' ? 'បន្ថែមទៅចំណូលចិត្ត' : 'Add to favorites')}: ${getToolName(tool.id, tool.name, locale)}`}
-      title={favorite ? 'Remove from favorites' : 'Add to favorites'}
+      title={favorite ? (locale === 'kh' ? 'ដកចេញពីចំណូលចិត្ត' : 'Remove from favorites') : (locale === 'kh' ? 'បន្ថែមទៅចំណូលចិត្ត' : 'Add to favorites')}
       className="btn-icon absolute right-3 top-3"
     >
       <Heart size={16} className={favorite ? 'fill-primary text-primary' : ''} />

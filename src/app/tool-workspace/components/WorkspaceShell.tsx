@@ -186,7 +186,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
               onClick={() => toggle(tool.id)}
               aria-pressed={favorite}
               className="btn-ghost"
-              title={favorite ? 'Remove from favorites' : 'Add to favorites'}
+              title={favorite ? (locale === 'kh' ? 'ដកចេញពីចំណូលចិត្ត' : 'Remove from favorites') : (locale === 'kh' ? 'បន្ថែមទៅចំណូលចិត្ត' : 'Add to favorites')}
             >
               <Heart size={15} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
               <span className="hidden sm:inline">{favorite ? (locale === 'kh' ? 'ចំណូលចិត្ត' : 'Favorited') : (locale === 'kh' ? 'ចូលចិត្ត' : 'Favorite')}</span>
