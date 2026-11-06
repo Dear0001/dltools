@@ -1,6 +1,5 @@
 ﻿import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/next';
 import { GeistSans } from 'geist/font/sans';
 import Topbar from '@/components/Topbar';
@@ -69,17 +68,6 @@ export default function RootLayout({
           <main className="relative min-h-screen bg-background text-foreground">
             {children}
           </main>
-
-          <Script
-            src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fdevtoolkit2501back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.20"
-            strategy="afterInteractive"
-            type="module"
-          />
-          <Script
-            src="https://static.rocket.new/rocket-shot.js?v=0.0.2"
-            strategy="afterInteractive"
-            type="module"
-          />
         </AuthProvider>
       </body>
     </html>
