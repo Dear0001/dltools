@@ -2,6 +2,8 @@
 
 import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { KH_TOOLS, translateKhPattern } from './khTools';
+
 export type Locale = 'en' | 'kh';
 
 const messages = {
@@ -467,6 +469,9 @@ export function translateText(text: string, locale: Locale) {
     'Copied output.txt': 'បានទាញយក output.txt',
   };
   if (translations[text]) return translations[text];
+  if (Object.prototype.hasOwnProperty.call(KH_TOOLS, text)) return KH_TOOLS[text];
+  const patterned = translateKhPattern(text);
+  if (patterned) return patterned;
   const lineCopy = text.match(/^Copy line (\d+)$/);
   if (lineCopy) return `ចម្លងបន្ទាត់ ${lineCopy[1]}`;
   const copiedLine = text.match(/^Line (\d+) copied$/);

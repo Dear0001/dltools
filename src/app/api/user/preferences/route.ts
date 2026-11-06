@@ -1,8 +1,9 @@
 import { auth } from '../../../../../auth';
 import { prisma } from '@/lib/prisma';
 
-const DEFAULT_PREFERENCES = { theme: 'light', locale: 'kh' };
-const THEMES = ['light', 'dark', 'nord', 'monokai'];
+const DEFAULT_PREFERENCES = { theme: 'alabaster-paper', locale: 'kh' };
+// Legacy values stay valid so older clients keep working; the client maps them onto the current themes.
+const THEMES = ['alabaster-paper', 'nordic-frost', 'midnight', 'warm-paper', 'solarized-light', 'light', 'dark', 'nord', 'monokai'];
 
 export async function GET() {
   const session = await auth();

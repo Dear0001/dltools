@@ -190,7 +190,7 @@ export default function GoogleAnalytics() {
                 </button>
               </div>
               {storageWarning && (
-                <p className="mt-3 text-xs text-amber-400" role="status">
+                <p className="mt-3 text-xs text-warning" role="status">
                   {storageWarning}
                 </p>
               )}

@@ -1,15 +1,16 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronRight, Heart, Home } from 'lucide-react';
+import { useFavorites } from '@/lib/favorites';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { CATEGORY_COLORS } from '@/data/tools';
+import { CATEGORIES } from '@/data/tools';
 import { trackToolOpen } from '@/components/GoogleAnalytics';
 import SavedToolDataDialog from './SavedToolDataDialog';
 import DocumentConverterPanel from './tools/DocumentConverterPanel';
-import { getToolName, useLocale } from '@/i18n/LocaleProvider';
+import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
 // Tool-specific panels
 import JsonFormatterPanel from './tools/JsonFormatterPanel';
@@ -100,7 +101,10 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
   const { locale, t } = useLocale();
   const { data: session, status: authStatus } = useSession();
   const trackedToolId = useRef('');
-  const colors = CATEGORY_COLORS[tool.category];
+  const category = CATEGORIES.find((c) => c.id === tool.category);
+  const { isFavorite, toggle } = useFavorites();
+  const favorite = isFavorite(tool.id);
+  const toolName = getToolName(tool.id, tool.name, locale);
   const PanelComponent = PANEL_MAP[tool.id] || GenericComingSoon;
   // Tool panels use browser-only APIs (DOMParser, window, localStorage), so render them after mount.
   const [mounted, setMounted] = useState(false);
@@ -143,44 +147,61 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
     trackToolOpen(tool);
   }, [tool]);
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-56px)]">
-      {/* Workspace header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-6 lg:px-8 xl:px-10 2xl:px-16 py-3 border-b border-border bg-secondary/50">
-        <div className="flex items-center gap-3">
-          <Link href="/frontend/public" className="btn-icon" aria-label={t('backToHub')}>
-            <ArrowLeft size={16} />
-          </Link>
-          <div className="w-px h-5 bg-border" />
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${colors.bg} border ${colors.border}`}>
-            <span className={`text-xs font-bold font-mono ${colors.text}`}>{tool.name.charAt(0)}</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-foreground leading-none">{getToolName(tool.id, tool.name, locale)}</h1>
-            <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-              {tool.id === 'tool-pdf-word-converter'
-                ? t('converterSubtitle')
-                : tool.id === 'tool-image-to-pdf' || tool.id === 'tool-image-to-word'
-                  ? t('imageConverterSubtitle')
-                  : tool.description}
-            </p>
-          </div>
-        </div>
+  const description =
+    tool.id === 'tool-pdf-word-converter'
+      ? t('converterSubtitle')
+      : tool.id === 'tool-image-to-pdf' || tool.id === 'tool-image-to-word'
+        ? t('imageConverterSubtitle')
+        : getToolDescription(tool.id, tool.description, locale);
 
-        <div className="flex items-center gap-2">
-          <span className={`tool-category-badge hidden sm:inline-flex ${colors.bg} ${colors.text} border ${colors.border}`}>
-            {tool.category === 'documents' ? t('documentTools') : tool.category}
-          </span>
-          <SavedToolDataDialog tool={tool} />
+  return (
+    <div className="flex flex-col lg:h-[calc(100dvh-56px)]">
+      {/* Workspace header: breadcrumb, title, description, actions */}
+      <div className="flex-shrink-0 border-b border-border bg-background-secondary px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16">
+        <nav aria-label="Breadcrumb" className="mb-2 text-xs text-muted-foreground">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li>
+              <Link href="/" className="inline-flex items-center gap-1 hover:text-primary" aria-label={t('backToHub')}>
+                <Home size={12} aria-hidden="true" /> {locale === 'kh' ? 'ទំព័រដើម' : 'Home'}
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li>
+              <Link href={`/tools?cat=${tool.category}`} className="hover:text-primary">
+                {category ? getCategoryName(category.id, category.label, locale) : tool.category}
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li aria-current="page" className="font-medium text-foreground">{toolName}</li>
+          </ol>
+        </nav>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{toolName}</h1>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => toggle(tool.id)}
+              aria-pressed={favorite}
+              className="btn-ghost"
+              title={favorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart size={15} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
+              <span className="hidden sm:inline">{favorite ? (locale === 'kh' ? 'ចំណូលចិត្ត' : 'Favorited') : (locale === 'kh' ? 'ចូលចិត្ត' : 'Favorite')}</span>
+            </button>
+            <SavedToolDataDialog tool={tool} />
+          </div>
         </div>
       </div>
 
       {/* Workspace body */}
-      <div className="flex-1 overflow-hidden">
+      <div className="min-h-[70vh] flex-1 p-3 sm:p-4 lg:min-h-0 lg:overflow-hidden lg:px-8 xl:px-10 2xl:px-16">
         {mounted ? (
           <PanelComponent tool={tool} />
         ) : (
-          <div className="flex h-full min-h-[40vh] items-center justify-center">
+          <div className="flex h-full min-h-[40vh] items-center justify-center" role="status" aria-label="Loading tool">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         )}

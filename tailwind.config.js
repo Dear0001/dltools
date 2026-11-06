@@ -11,14 +11,20 @@ module.exports = {
     },
     extend: {
       colors: {
-        background: { DEFAULT: 'var(--background)' },
+        background: { DEFAULT: 'var(--background)', secondary: 'var(--background-secondary)' },
+        surface: { DEFAULT: 'var(--surface)' },
+        success: { DEFAULT: 'var(--success)' },
+        warning: { DEFAULT: 'var(--warning)' },
+        error: { DEFAULT: 'var(--error)' },
+        editor: { DEFAULT: 'var(--editor)' },
+        overlay: { DEFAULT: 'var(--overlay)' },
         foreground: { DEFAULT: 'var(--foreground)' },
         primary: {
           DEFAULT: 'var(--primary)',
           foreground: 'var(--primary-foreground)',
         },
         secondary: {
-          DEFAULT: 'var(--secondary)',
+          DEFAULT: 'var(--background-secondary)',
           foreground: 'var(--secondary-foreground)',
         },
         accent: {
@@ -30,7 +36,7 @@ module.exports = {
           foreground: 'var(--muted-foreground)',
         },
         card: {
-          DEFAULT: 'var(--card)',
+          DEFAULT: 'var(--surface)',
           foreground: 'var(--card-foreground)',
         },
         border: { DEFAULT: 'var(--border)' },
@@ -45,8 +51,8 @@ module.exports = {
         '2xl': 'calc(var(--radius) + 8px)',
       },
       fontFamily: {
-        sans: ['var(--font-geist)', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
       },
       fontSize: {
         '2xs': ['10px', { lineHeight: '14px' }],
@@ -71,10 +77,8 @@ module.exports = {
         },
       },
       boxShadow: {
-        'glow-primary': '0 0 20px rgba(0, 212, 170, 0.25)',
-        'glow-accent': '0 0 20px rgba(124, 106, 247, 0.25)',
-        'card': '0 2px 12px rgba(0,0,0,0.4)',
-        'card-hover': '0 8px 32px rgba(0,0,0,0.5)',
+        card: '0 1px 3px rgb(var(--shadow-color) / 0.08)',
+        'card-hover': '0 6px 20px rgb(var(--shadow-color) / 0.14)',
       },
     },
   },

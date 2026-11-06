@@ -73,6 +73,6 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
       <section className="flex flex-col min-h-0"><label className="text-xs text-muted-foreground mb-1">JSON data</label><div className="flex-1 min-h-0 border border-border rounded-lg bg-input"><CodeEditor value={data} onChange={setData} minHeight="100%" placeholder="JSON data…" /></div></section>
       <section className="flex flex-col min-h-0"><label className="text-xs text-muted-foreground mb-1">JSON Schema</label><div className="flex-1 min-h-0 border border-border rounded-lg bg-input"><CodeEditor value={schema} onChange={setSchema} minHeight="100%" placeholder="JSON Schema…" /></div></section>
     </div>
-    <div className={`m-4 mt-0 p-3 rounded-lg border text-sm whitespace-pre-wrap ${error ? 'border-red-500/30 bg-red-500/5 text-red-300' : 'border-border bg-secondary/20 text-foreground'}`} aria-live="polite">{result || error || 'Validation results will appear here.'}{result && error && <div className="text-red-300 mt-1">{error}</div>}</div>
+    <div className={`m-4 mt-0 p-3 rounded-lg border text-sm whitespace-pre-wrap ${error ? 'border-error/30 bg-error/5 text-error' : 'border-border bg-secondary/20 text-foreground'}`} aria-live="polite">{result || error || 'Validation results will appear here.'}{result && error && <div className="text-error mt-1">{error}</div>}</div>
   </div>;
 }

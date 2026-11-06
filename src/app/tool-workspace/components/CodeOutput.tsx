@@ -141,7 +141,7 @@ export default function CodeOutput({ value, placeholder, language }: CodeOutputP
 
   return (
     <div
-      className="scrollbar-thin h-full overflow-auto bg-background py-3 font-mono-code text-[13px] leading-6 text-foreground"
+      className="scrollbar-thin h-full overflow-auto bg-editor py-3 font-mono-code text-[13px] leading-6 text-[color:var(--code-text)]"
       role="region"
       aria-label={locale === 'kh' ? 'លទ្ធផលកូដ' : 'Code output'}
     >
@@ -158,16 +158,16 @@ export default function CodeOutput({ value, placeholder, language }: CodeOutputP
               aria-label={locale === 'kh' ? `បន្ទាត់ ${lineNumber}` : `Line ${lineNumber}`}
             >
               <span
-                className="sticky left-0 w-8 shrink-0 select-none bg-background pr-1 text-right text-[11px] tabular-nums text-muted-foreground"
+                className="sticky left-0 w-8 shrink-0 select-none bg-editor pr-1 text-right text-[11px] tabular-nums text-[color:var(--editor-gutter)]"
                 aria-hidden="true"
               >
                 {lineNumber}
               </span>
-              <span className="whitespace-pre text-foreground">
+              <span className="whitespace-pre code-token-default">
                 {line ? renderHighlightedLine(line, language, index) : ' '}
               </span>
               <button
-                className="sticky right-0 z-10 ml-auto mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-background text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary group-hover:opacity-100 group-focus-within:opacity-100"
+                className="sticky right-0 z-10 ml-auto mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-editor text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary group-hover:opacity-100 group-focus-within:opacity-100"
                 onClick={() => copyLine(line, lineNumber)}
                 type="button"
                 title={translateText(`Copy line ${lineNumber}`, locale)}

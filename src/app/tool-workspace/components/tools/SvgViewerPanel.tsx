@@ -100,7 +100,7 @@ export default function SvgViewerPanel({ tool: _tool }: { tool: Tool }) {
           </div>
         </section>
       </div>
-      {error && <p role="alert" className="border-t border-red-500/20 px-4 py-2 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className="border-t border-error/20 px-4 py-2 text-sm text-error">{error}</p>}
       {output && <details className="max-h-48 shrink-0 overflow-auto border-t border-border"><summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-muted-foreground">Sanitized SVG output</summary><pre className="whitespace-pre-wrap px-4 pb-3 font-mono text-xs text-foreground">{output}</pre></details>}
     </div>
   );

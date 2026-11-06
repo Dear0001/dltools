@@ -42,7 +42,7 @@ export default function CodeEditor({
       onKeyDown={handleTab}
       placeholder={translateText(placeholder, locale)}
       readOnly={readOnly}
-      className={`input-code w-full h-full resize-none border-0 rounded-none bg-transparent focus:ring-0 focus:border-0 focus:shadow-none ${className}`}
+      className={`input-code w-full h-full flex-1 resize-none border-0 rounded-none bg-transparent focus:ring-0 focus:border-0 focus:shadow-none ${className}`}
       style={{ minHeight }}
       spellCheck={false}
       autoCapitalize="off"

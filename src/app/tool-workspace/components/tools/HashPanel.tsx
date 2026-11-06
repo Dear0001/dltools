@@ -122,7 +122,7 @@ export default function HashPanel({ tool }: { tool: Tool }) {
                   </button>
                 )}
               </div>
-              <div className="font-mono text-xs text-emerald-300 break-all min-h-[20px]">
+              <div className="font-mono text-xs text-success break-all min-h-[20px]">
                 {results[algo] || <span className="text-muted-foreground">—</span>}
               </div>
             </div>

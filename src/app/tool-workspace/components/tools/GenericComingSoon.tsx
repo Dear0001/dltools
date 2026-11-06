@@ -14,8 +14,8 @@ export default function GenericComingSoon({ tool }: { tool: Tool }) {
       </div>
       <h2 className="text-xl font-bold text-foreground mb-2">{tool.name}</h2>
       <p className="text-sm text-muted-foreground max-w-sm mb-6 leading-relaxed">{tool.description}</p>
-      <div className="flex items-center gap-2 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-6">
-        <span className="text-amber-400 text-xs font-medium">This tool panel is being built — check back soon.</span>
+      <div className="flex items-center gap-2 p-3.5 rounded-xl bg-warning/10 border border-warning/20 mb-6">
+        <span className="text-warning text-xs font-medium">This tool panel is being built — check back soon.</span>
       </div>
       <Link href="/frontend/public" className="btn-ghost text-xs">
         <ArrowLeft size={13} />

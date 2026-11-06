@@ -6,8 +6,9 @@ import {
   GitCompare, FileDiff, Code, QrCode, ShieldCheck, ScanLine,
   ImageIcon, Minimize2, PenTool, Fingerprint, Hash, Key, Files,
   Link2, SearchCode, Clock, Sparkles, FileCode, Terminal, TableProperties,
-  ArrowRight, Star, Zap
+  ArrowRight, Star, Zap, Heart
 } from 'lucide-react';
+import { useFavorites } from '@/lib/favorites';
 import { Tool, CATEGORY_COLORS, CATEGORIES, getToolPath } from '@/data/tools';
 import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
@@ -20,15 +21,18 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 export default function ToolCard({ tool }: { tool: Tool }) {
   const { locale, t } = useLocale();
+  const { isFavorite, toggle } = useFavorites();
+  const favorite = isFavorite(tool.id);
   const colors = CATEGORY_COLORS[tool.category];
   const IconComponent = ICON_MAP[tool.icon] || Braces;
   const category = CATEGORIES.find((item) => item.id === tool.category);
   const categoryLabel = category ? getCategoryName(category.id, category.label, locale) : tool.category;
 
   return (
+    <div className="group relative h-full">
     <Link
       href={getToolPath(tool)}
-      className="group relative flex min-h-44 flex-col gap-3 rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transform-none"
+      className="surface-hover relative flex h-full min-h-44 flex-col gap-3 rounded-xl border border-border bg-card p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       aria-label={`${t('open')} ${getToolName(tool.id, tool.name, locale)}`}
     >
       {/* Badges */}
@@ -36,9 +40,9 @@ export default function ToolCard({ tool }: { tool: Tool }) {
         <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border ${colors.bg} ${colors.border}`}>
           <IconComponent size={17} className={colors.text} />
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+        <div className="flex items-center gap-1.5 flex-wrap justify-end pr-9">
           {tool.popular && (
-            <span className="tool-category-badge bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+            <span className="tool-category-badge bg-warning/10 text-warning border border-warning/30 flex items-center gap-1">
               <Star size={8} />
               {t('popular')}
             </span>
@@ -73,5 +77,16 @@ export default function ToolCard({ tool }: { tool: Tool }) {
         </span>
       </div>
     </Link>
+    <button
+      type="button"
+      onClick={() => toggle(tool.id)}
+      aria-pressed={favorite}
+      aria-label={`${favorite ? (locale === 'kh' ? 'ដកចេញពីចំណូលចិត្ត' : 'Remove from favorites') : (locale === 'kh' ? 'បន្ថែមទៅចំណូលចិត្ត' : 'Add to favorites')}: ${getToolName(tool.id, tool.name, locale)}`}
+      title={favorite ? 'Remove from favorites' : 'Add to favorites'}
+      className="btn-icon absolute right-3 top-3"
+    >
+      <Heart size={16} className={favorite ? 'fill-primary text-primary' : ''} />
+    </button>
+    </div>
   );
 }

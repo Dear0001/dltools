@@ -1,12 +1,20 @@
 ﻿import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Analytics } from '@vercel/analytics/next';
-import { GeistSans } from 'geist/font/sans';
+import { Inter, JetBrains_Mono, Noto_Sans_Khmer } from 'next/font/google';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import Topbar from '@/components/Topbar';
+import SiteFooter from '@/components/SiteFooter';
+import AutoTranslate from '@/components/AutoTranslate';
 import AuthProvider from '@/components/AuthProvider';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import { SITE_NAME, SITE_TITLE, SITE_URL, SITE_DESCRIPTION } from '@/lib/site';
 import '../styles/tailwind.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', display: 'swap' });
+const khmer = Noto_Sans_Khmer({ subsets: ['khmer'], variable: '--font-khmer', display: 'swap' });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -56,19 +64,27 @@ export default function RootLayout({
   return (
     <html
       lang="km"
-      className={GeistSans.variable}
+      data-theme="alabaster-paper"
+      className={`${inter.variable} ${jetbrains.variable} ${khmer.variable}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body className={`${GeistSans.className} relative`} suppressHydrationWarning>
-        <AuthProvider>
-          <GoogleAnalytics />
-          <Analytics />
-          <Topbar />
-          <main className="relative min-h-screen bg-background text-foreground">
-            {children}
-          </main>
-        </AuthProvider>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="relative font-sans" suppressHydrationWarning>
+        <ThemeProvider>
+          <AuthProvider>
+            <GoogleAnalytics />
+            <Analytics />
+            <Topbar />
+            <main className="relative min-h-screen bg-background text-foreground">
+              {children}
+            </main>
+            <SiteFooter />
+            <AutoTranslate />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

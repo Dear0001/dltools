@@ -507,7 +507,7 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
             {khqrString && (
               <div className="bg-card border border-border rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">EMVCo String</h4>
-                <p className="font-mono text-xs text-emerald-300 break-all leading-relaxed">{khqrString}</p>
+                <p className="font-mono text-xs text-success break-all leading-relaxed">{khqrString}</p>
                 <p className="text-xs text-muted-foreground mt-2">
                   Length: <span className="text-foreground tabular-nums">{khqrString.length}</span> chars ·
                   CRC: <span className="text-primary font-mono">{khqrString.slice(-4)}</span>

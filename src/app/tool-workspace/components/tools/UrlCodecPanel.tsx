@@ -91,7 +91,7 @@ export default function UrlCodecPanel({ tool }: { tool: Tool }) {
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 font-mono">{error}</div>
+          <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-xs text-error font-mono">{error}</div>
         )}
 
         {/* Encoded */}
@@ -105,7 +105,7 @@ export default function UrlCodecPanel({ tool }: { tool: Tool }) {
           <textarea
             value={encoded}
             onChange={(e) => { setActiveSide('encoded'); setEncoded(e.target.value); setDecoded(''); setError(''); }}
-            className="input-code w-full text-emerald-300"
+            className="input-code w-full text-success"
             rows={4}
             placeholder="https%3A%2F%2Fexample.com%2Fpath%3Fquery%3Dvalue%26other%3Dhello%20world"
             spellCheck={false}
@@ -132,9 +132,9 @@ export default function UrlCodecPanel({ tool }: { tool: Tool }) {
               { char: ':', enc: '%3A' },
             ].map((item) => (
               <div key={`enc-${item.char}`} className="flex items-center gap-2 font-mono text-xs">
-                <span className="text-violet-400 w-12">{item.char}</span>
+                <span className="text-primary w-12">{item.char}</span>
                 <span className="text-muted-foreground">→</span>
-                <span className="text-emerald-400">{item.enc}</span>
+                <span className="text-success">{item.enc}</span>
               </div>
             ))}
           </div>

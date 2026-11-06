@@ -214,7 +214,7 @@ export default function CurlPanel({ tool }: { tool: Tool }) {
                 <Copy size={13} />
               </button>
             </div>
-            <pre className="output-code text-xs rounded-lg p-3 text-emerald-300 whitespace-pre-wrap">{output}</pre>
+            <pre className="output-code text-xs rounded-lg p-3 text-success whitespace-pre-wrap">{output}</pre>
           </div>
         )}
       </div>

@@ -42,7 +42,7 @@ export default function VisibleUnicodeText({ value }: { value: string }) {
         return (
           <span
             key={index}
-            className="inline-flex items-center gap-1 mx-0.5 align-middle text-red-400"
+            className="inline-flex items-center gap-1 mx-0.5 align-middle text-error"
             title={description}
             aria-label={description}
           >

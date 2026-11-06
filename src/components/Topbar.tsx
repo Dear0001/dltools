@@ -5,13 +5,15 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
 import { Menu, X, Zap, HandCoins, LogIn, LogOut, ChevronDown, CircleUserRound, Heart } from 'lucide-react';
+import ThemeSwitcher from '@/components/ui/ThemeSwitcher';
+import { useTheme } from '@/components/ThemeProvider';
+import { THEMES, THEME_META, normalizeTheme, type ThemeId } from '@/lib/theme';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { CATEGORIES, TOOLS, getToolPath } from '@/data/tools';
 import { getToolName, useLocale } from '@/i18n/LocaleProvider';
 
-type Theme = 'light' | 'dark' | 'nord' | 'monokai';
-const THEMES: Theme[] = ['light', 'dark', 'nord', 'monokai'];
+type Theme = ThemeId;
 
 // Inline GitHub SVG since brand icons were removed in lucide-react v1
 function GithubIcon({ size = 16 }: { size?: number }) {
@@ -62,22 +64,13 @@ export default function Topbar() {
   const { data: session, status: authStatus } = useSession();
   const { locale, setLocale, t } = useLocale();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>('light');
+  const { theme, setTheme } = useTheme();
   const [supportOpen, setSupportOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
   const [preferencesLoadedFor, setPreferencesLoadedFor] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const storedTheme = window.localStorage.getItem('devtoolkit-theme');
-      if (THEMES.includes(storedTheme as Theme)) setTheme(storedTheme as Theme);
-    } catch {
-      // ignore localStorage errors in unsupported environments
-    }
-  }, []);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -92,10 +85,8 @@ export default function Topbar() {
       })
       .then((preferences) => {
         if (!active) return;
-        if (THEMES.includes(preferences.theme as Theme)) {
-          setTheme(preferences.theme as Theme);
-          window.localStorage.setItem('devtoolkit-theme', preferences.theme as Theme);
-        }
+        const savedTheme = normalizeTheme(preferences.theme);
+        if (savedTheme) setTheme(savedTheme);
         if (preferences.locale === 'en' || preferences.locale === 'kh') setLocale(preferences.locale);
         setPreferencesLoadedFor(userId);
       })
@@ -112,8 +103,10 @@ export default function Topbar() {
 
   const texts = i18n[locale];
   const navLinks = [
-    { label: t('toolHub'), href: '/', key: 'nav-hub', menu: 'hub' },
-    { label: t('workspace'), href: '/tool-workspace', key: 'nav-workspace', menu: 'workspace' },
+    { label: locale === 'kh' ? 'ទំព័រដើម' : 'Home', href: '/', key: 'nav-home', menu: null },
+    { label: locale === 'kh' ? 'ស្វែងរកឧបករណ៍' : 'Explore Tools', href: '/tools', key: 'nav-explore', menu: null },
+    { label: locale === 'kh' ? 'ប្រភេទ' : 'Categories', href: '/tools', key: 'nav-categories', menu: 'hub' },
+    { label: locale === 'kh' ? 'ចំណូលចិត្ត' : 'Favorites', href: '/favorites', key: 'nav-favorites', menu: null },
   ];
   const categoryNames: Record<string, string> = {
     formatters: locale === 'kh' ? 'កម្មវិធីរៀបចំទ្រង់ទ្រាយ' : 'Formatters',
@@ -147,13 +140,6 @@ export default function Topbar() {
     };
   }, [profileMenuOpen]);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.theme = theme;
-    root.classList.toggle('light', theme === 'light');
-    root.classList.toggle('dark', theme !== 'light');
-  }, [theme]);
-
   const savePreference = async (preference: { theme?: Theme; locale?: 'en' | 'kh' }) => {
     if (authStatus !== 'authenticated' || !session?.user?.id || preferencesLoadedFor !== session.user.id) return;
 
@@ -173,11 +159,6 @@ export default function Topbar() {
 
   const handleThemeChange = (next: Theme) => {
     setTheme(next);
-    try {
-      window.localStorage.setItem('devtoolkit-theme', next);
-    } catch {
-      toast.error('Could not save the theme on this device.');
-    }
     void savePreference({ theme: next });
   };
 
@@ -188,12 +169,12 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
         <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16">
           <div className="flex h-14 items-center justify-between gap-3">
             {/* Logo */}
-            <Link href="/frontend/public" className="group flex min-w-0 items-center gap-2.5">
-              <div className="rounded-full border border-border/70 bg-white/80 p-0.5 shadow-sm ring-1 ring-black/5">
+            <Link href="/" className="group flex min-w-0 items-center gap-2.5">
+              <div className="rounded-full border border-border/70 bg-card p-0.5">
                 <AppLogo size={28} className="rounded-full overflow-hidden" />
               </div>
               <span className="whitespace-nowrap text-sm font-semibold tracking-tight text-foreground transition-colors duration-150 group-hover:text-primary sm:text-base">
@@ -208,7 +189,21 @@ export default function Topbar() {
             {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-1">
               {navLinks?.map((link) => {
-                        const isActive = pathname === link.href || (link.href !== '/' && pathname?.startsWith(link.href));
+                        const isActive = link.menu === 'hub' ? false : pathname === link.href || (link.href !== '/' && !!pathname?.startsWith(link.href));
+                if (!link.menu) {
+                  return (
+                    <Link
+                      key={link.key}
+                      href={link.href}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                        isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                }
                 return (
                           <div
                             key={link.key}
@@ -241,7 +236,7 @@ export default function Topbar() {
                             }`}>
                               <div className="nav-liquid-glass nav-tools-dropdown max-h-[min(70vh,34rem)] overflow-y-auto rounded-xl p-4">
                                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                                  {link.menu === 'hub' ? t('allTools') : t('popularTools')}
+                                  {t('allTools')}
                                 </p>
                                 {link.menu === 'hub' ? (
                                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -345,7 +340,7 @@ export default function Topbar() {
                           <button
                             type="button"
                             role="menuitem"
-                            className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-error/10 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             onClick={() => {
                               setProfileMenuOpen(false);
                               void signOut({ callbackUrl: '/' });
@@ -382,14 +377,7 @@ export default function Topbar() {
                     </div>
                   )}
               </div>
-              <select
-                className="nav-liquid-control hidden rounded-lg px-2.5 py-1.5 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary lg:inline-flex"
-                onChange={(event) => handleThemeChange(event.target.value as Theme)}
-                value={theme}
-                aria-label={texts.theme}
-              >
-                {THEMES.map((option) => <option key={option} value={option}>{texts[option]}</option>)}
-              </select>
+              <div className="hidden md:block"><ThemeSwitcher onChange={handleThemeChange} /></div>
               <select
                 value={locale}
                 onChange={(event) => handleLocaleChange(event.target.value as 'en' | 'kh')}
@@ -427,11 +415,11 @@ export default function Topbar() {
         </div>
       </header>
       {supportOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-md fade-in">
-          <div role="dialog" aria-modal="true" aria-labelledby="support-modal-title" className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl slide-up">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay p-4 fade-in">
+          <div role="dialog" aria-modal="true" aria-labelledby="support-modal-title" className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card shadow-card-hover slide-up">
             <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-red-500" aria-hidden="true">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-error/10 text-error" aria-hidden="true">
                   <Heart size={18} />
                 </span>
                 <h3 id="support-modal-title" className="text-base font-semibold tracking-normal text-foreground">{texts.support}</h3>
@@ -466,10 +454,24 @@ export default function Topbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-overlay" onClick={() => setMobileOpen(false)} />
           <div id="mobile-navigation" className="absolute top-14 left-0 right-0 flex flex-col gap-3 border-b border-border bg-card p-4 fade-in">
             {navLinks?.map((link) => {
               const isActive = pathname === link?.href;
+              if (!link.menu) {
+                return (
+                  <Link
+                    key={link.key}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
+                      isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              }
               return (
                 <section key={link.key}>
                   <div className="flex items-center gap-1">
@@ -494,7 +496,7 @@ export default function Topbar() {
                   </div>
                   {openMenu === link.menu && (
                     <ul className="mt-1 grid grid-cols-2 gap-1 px-2 pb-2">
-                      {(link.menu === 'hub' ? TOOLS.slice(0, 8) : workspaceTools).map((tool) => (
+                      {TOOLS.slice(0, 8).map((tool) => (
                         <li key={tool.id}>
                           <Link
                             href={getToolPath(tool)}
@@ -510,7 +512,7 @@ export default function Topbar() {
                       ))}
                       {link.menu === 'hub' && (
                         <li className="col-span-2">
-                          <Link href="/frontend/public" onClick={() => setMobileOpen(false)} className="block rounded-md px-3 py-2 text-xs font-medium text-primary">
+                          <Link href="/" onClick={() => setMobileOpen(false)} className="block rounded-md px-3 py-2 text-xs font-medium text-primary">
                             {t('allTools')}
                           </Link>
                         </li>
@@ -580,7 +582,7 @@ export default function Topbar() {
                   className="bg-transparent text-sm text-foreground outline-none"
                   aria-label={texts.theme}
                 >
-                  {THEMES.map((option) => <option key={option} value={option}>{texts[option]}</option>)}
+                  {THEMES.map((option) => <option key={option} value={option}>{locale === 'kh' ? THEME_META[option].labelKh : THEME_META[option].label}</option>)}
                 </select>
               </label>
               <label className="nav-liquid-control flex items-center justify-between gap-3 px-4 py-2 rounded-md text-sm text-foreground">

@@ -385,13 +385,13 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
     <div className="h-full overflow-auto bg-background">
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8">
-          <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-rose-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-error/10 blur-3xl" />
           <div className="relative flex items-start gap-4">
-            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-rose-400">
+            <div className="rounded-xl border border-error/20 bg-error/10 p-3 text-error">
               <Files size={24} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-error">
                 {locale === 'kh' ? 'ឯកសារ · អង់គ្លេស + ខ្មែរ' : 'DOCUMENTS · ENGLISH + KHMER'}
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
@@ -482,7 +482,7 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
           )}
 
           {error && (
-            <p role="alert" className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2.5 text-sm text-red-400">
+            <p role="alert" className="mt-4 rounded-lg border border-error/20 bg-error/5 px-3 py-2.5 text-sm text-error">
               {error}
             </p>
           )}
@@ -504,9 +504,9 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
 
           {result ? (
             <div className="mt-5 space-y-5">
-              <div className="flex flex-col justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 sm:flex-row sm:items-center">
+              <div className="flex flex-col justify-between gap-3 rounded-xl border border-success/20 bg-success/5 p-4 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 items-center gap-3">
-                  <Check size={18} className="shrink-0 text-emerald-400" aria-hidden="true" />
+                  <Check size={18} className="shrink-0 text-success" aria-hidden="true" />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">{t('conversionReady')}</p>
                     <p className="truncate text-xs text-muted-foreground">{t('resultFile')}: {result.filename}</p>

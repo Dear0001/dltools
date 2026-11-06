@@ -22,13 +22,13 @@ export default function EmvQrSummary({ data }: { data: string }) {
           {isEmvQr ? (
             <CheckCircle2 size={14} className="text-primary" />
           ) : (
-            <CircleHelp size={14} className="text-amber-400" />
+            <CircleHelp size={14} className="text-warning" />
           )}
           <h3 id="emv-qr-summary-heading" className="text-xs font-semibold uppercase tracking-wider text-foreground">
             EMV® QR Analysis
           </h3>
         </div>
-        <span className={`text-xs ${isEmvQr ? 'text-primary' : 'text-amber-400'}`}>
+        <span className={`text-xs ${isEmvQr ? 'text-primary' : 'text-warning'}`}>
           {isEmvQr ? 'EMVCo format detected' : 'EMVCo format not confirmed'}
         </span>
       </div>
@@ -50,7 +50,7 @@ export default function EmvQrSummary({ data }: { data: string }) {
         <div className="bg-card p-3 sm:col-span-2">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {hasDualCurrency === null ? (
-              <CircleHelp size={14} className="text-amber-400" />
+              <CircleHelp size={14} className="text-warning" />
             ) : hasDualCurrency ? (
               <CheckCircle2 size={14} className="text-primary" />
             ) : (
@@ -72,10 +72,10 @@ export default function EmvQrSummary({ data }: { data: string }) {
             ) : crcValid ? (
               <CheckCircle2 size={14} className="text-primary" />
             ) : (
-              <XCircle size={14} className="text-red-400" />
+              <XCircle size={14} className="text-error" />
             )}
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CRC-16</p>
-            <span className={`text-xs font-semibold ${crcValid === null ? 'text-muted-foreground' : crcValid ? 'text-primary' : 'text-red-400'}`}>
+            <span className={`text-xs font-semibold ${crcValid === null ? 'text-muted-foreground' : crcValid ? 'text-primary' : 'text-error'}`}>
               {crcValid === null ? 'Not present' : crcValid ? 'Valid' : 'Mismatch'}
             </span>
           </div>

@@ -89,9 +89,9 @@ export default function RegexPanel({ tool }: { tool: Tool }) {
           </div>
 
           {result.error && (
-            <div className="flex items-center gap-2 mt-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertTriangle size={13} className="text-red-400" />
-              <span className="text-xs text-red-400 font-mono">{result.error}</span>
+            <div className="flex items-center gap-2 mt-3 p-2.5 rounded-lg bg-error/10 border border-error/20">
+              <AlertTriangle size={13} className="text-error" />
+              <span className="text-xs text-error font-mono">{result.error}</span>
             </div>
           )}
 
@@ -164,7 +164,7 @@ export default function RegexPanel({ tool }: { tool: Tool }) {
                     {m.groups.length > 0 && (
                       <div className="flex gap-2 mt-1 flex-wrap">
                         {m.groups.map((g, gi) => (
-                          <span key={`group-${i}-${gi}`} className="font-mono text-xs text-violet-400">
+                          <span key={`group-${i}-${gi}`} className="font-mono text-xs text-primary">
                             ${gi + 1}: {g}
                           </span>
                         ))}

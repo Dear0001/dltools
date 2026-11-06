@@ -43,7 +43,7 @@ function renderTlvChildren(children: EmvTlvTag[], level = 1): React.ReactNode {
   return children.map((child, index) => (
     <div key={`${child.tag}-${level}-${index}`}>
       <div className={`flex items-start gap-3 px-4 py-2 transition-colors ${level % 2 === 1 ? 'bg-muted/10' : 'bg-muted/05'} ${level > 1 ? 'pl-10' : ''}`}>
-        <span className="font-mono text-xs text-amber-400 w-8 flex-shrink-0 tabular-nums">{child.tag}</span>
+        <span className="font-mono text-xs text-warning w-8 flex-shrink-0 tabular-nums">{child.tag}</span>
         <span className="text-xs text-muted-foreground w-48 flex-shrink-0 truncate">{child.label}</span>
         <span className="text-xs text-muted-foreground w-6 flex-shrink-0 tabular-nums">{child.length}</span>
         <span className="font-mono text-xs text-foreground flex-1 break-all">
@@ -316,16 +316,16 @@ export default function QrReaderPanel({ tool }: { tool: Tool }) {
             className="flex flex-col items-center gap-2 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:bg-primary/5 transition-all duration-150 cursor-pointer"
             onClick={handlePaste}
           >
-            <ClipboardPaste size={22} className="text-violet-400" />
+            <ClipboardPaste size={22} className="text-primary" />
             <span className="text-xs font-medium text-foreground">Paste Image</span>
             <span className="text-xs text-muted-foreground text-center">Ctrl+V / clipboard</span>
           </button>
 
           <button
-            className={`flex flex-col items-center gap-2 p-5 bg-card border rounded-xl transition-all duration-150 cursor-pointer ${scanning ? 'border-red-500/30 bg-red-500/5' : 'border-border hover:border-primary/30 hover:bg-primary/5'}`}
+            className={`flex flex-col items-center gap-2 p-5 bg-card border rounded-xl transition-all duration-150 cursor-pointer ${scanning ? 'border-error/30 bg-error/5' : 'border-border hover:border-primary/30 hover:bg-primary/5'}`}
             onClick={scanning ? stopCamera : startCamera}
           >
-            <ScanLine size={22} className={scanning ? 'text-red-400' : 'text-amber-400'} />
+            <ScanLine size={22} className={scanning ? 'text-error' : 'text-warning'} />
             <span className="text-xs font-medium text-foreground">{scanning ? 'Stop Camera' : 'Live Camera'}</span>
             <span className="text-xs text-muted-foreground text-center">{scanning ? 'Scanning…' : 'Webcam scan'}</span>
           </button>
@@ -347,7 +347,7 @@ export default function QrReaderPanel({ tool }: { tool: Tool }) {
         {previewUrl && !scanning && (
           <div className="bg-card border border-border rounded-xl p-4">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-3">Scanned Image</span>
-            <div className="bg-[#0a0a0c] rounded-lg flex items-center justify-center p-4">
+            <div className="bg-background-secondary rounded-lg flex items-center justify-center p-4">
               <AppImage
                 key={previewUrl}
                 src={previewUrl}
@@ -363,9 +363,9 @@ export default function QrReaderPanel({ tool }: { tool: Tool }) {
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20">
-            <span className="text-red-400 mt-0.5 flex-shrink-0">⚠</span>
-            <span className="text-xs text-red-400">{error}</span>
+          <div className="flex items-start gap-2 p-3.5 rounded-xl bg-error/10 border border-error/20">
+            <span className="text-error mt-0.5 flex-shrink-0">⚠</span>
+            <span className="text-xs text-error">{error}</span>
           </div>
         )}
 
@@ -389,9 +389,9 @@ export default function QrReaderPanel({ tool }: { tool: Tool }) {
         {result && tags.length > 0 && <EmvQrSummary data={result} />}
 
         {parseError && (
-          <div className="flex items-start gap-2 p-3.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-            <span className="text-yellow-500 mt-0.5">⚠</span>
-            <span className="text-xs text-yellow-500">{parseError}</span>
+          <div className="flex items-start gap-2 p-3.5 rounded-xl bg-warning/10 border border-warning/20">
+            <span className="text-warning mt-0.5">⚠</span>
+            <span className="text-xs text-warning">{parseError}</span>
           </div>
         )}
 
@@ -410,7 +410,7 @@ export default function QrReaderPanel({ tool }: { tool: Tool }) {
               {tags.map((tag, i) => (
                 <div key={`tlv-${i}-${tag.tag}`}>
                   <div className="flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
-                    <span className="font-mono text-xs text-violet-400 w-8 flex-shrink-0 tabular-nums">{tag.tag}</span>
+                    <span className="font-mono text-xs text-primary w-8 flex-shrink-0 tabular-nums">{tag.tag}</span>
                     <span className="text-xs text-muted-foreground w-48 flex-shrink-0 truncate">{tag.label}</span>
                     <span className="text-xs text-muted-foreground w-6 flex-shrink-0 tabular-nums">{tag.length}</span>
                     <span className="font-mono text-xs text-foreground flex-1 break-all">
@@ -422,10 +422,10 @@ export default function QrReaderPanel({ tool }: { tool: Tool }) {
               ))}
               {crcValid !== null && (
                 <div className="flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
-                  <span className="font-mono text-xs text-violet-400 w-8 flex-shrink-0">63</span>
+                  <span className="font-mono text-xs text-primary w-8 flex-shrink-0">63</span>
                   <span className="text-xs text-muted-foreground w-48 flex-shrink-0 truncate">CRC</span>
                   <span className="text-xs text-muted-foreground w-6 flex-shrink-0 tabular-nums">04</span>
-                  <span className={`font-mono text-xs flex-1 ${crcValid ? 'text-primary' : 'text-red-400'}`}>
+                  <span className={`font-mono text-xs flex-1 ${crcValid ? 'text-primary' : 'text-error'}`}>
                     {crcValid ? 'CRC valid' : 'CRC mismatch'}
                   </span>
                 </div>

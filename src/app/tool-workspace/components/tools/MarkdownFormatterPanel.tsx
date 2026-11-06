@@ -127,7 +127,7 @@ export default function MarkdownFormatterPanel({ tool: _tool }: { tool: Tool }) 
           <article className="prose prose-sm max-w-none p-5 dark:prose-invert" dangerouslySetInnerHTML={{ __html: safeHtml }} />
         </section>}
       </div>
-      {formatted && formatted !== input && <div className="flex shrink-0 items-center gap-2 border-t border-border px-4 py-2 text-xs text-emerald-500"><Check size={14} />Formatted output is ready to copy or edit in the source pane.</div>}
+      {formatted && formatted !== input && <div className="flex shrink-0 items-center gap-2 border-t border-border px-4 py-2 text-xs text-success"><Check size={14} />Formatted output is ready to copy or edit in the source pane.</div>}
     </div>
   );
 }

@@ -118,7 +118,7 @@ export default function CertificateInspectorPanel({ tool: _tool }: { tool: Tool 
   return <div className="h-full overflow-auto p-4 space-y-4">
     <label className="block text-xs text-muted-foreground">PEM certificate<textarea className="input-code mt-1 w-full h-48 p-3 resize-y" value={pem} onChange={(event) => setPem(event.target.value)} placeholder="-----BEGIN CERTIFICATE-----" spellCheck={false} /></label>
     <p className="text-xs text-muted-foreground">Local inspection only. This tool does not verify the certificate chain, hostname, revocation status, or trust.</p>
-    {result.error && <p className="text-sm text-red-300">{result.error}</p>}
+    {result.error && <p className="text-sm text-error">{result.error}</p>}
     <dl className="grid md:grid-cols-2 gap-2">{result.rows.map(([label, value]) => <div key={label} className="p-3 rounded-lg bg-secondary/30"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="font-mono text-xs mt-1 whitespace-pre-wrap break-words">{value}</dd></div>)}</dl>
   </div>;
 }

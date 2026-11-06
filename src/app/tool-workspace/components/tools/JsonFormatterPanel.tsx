@@ -1047,13 +1047,13 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                                   <span className="font-semibold text-foreground">{item.currencyName} ({item.currencyCode})</span>
                                   {item.crcValid !== null && item.crcValid !== undefined && (
-                                    <span className={item.crcValid ? 'text-primary' : 'text-red-400'}>
+                                    <span className={item.crcValid ? 'text-primary' : 'text-error'}>
                                       CRC {item.crcValid ? 'valid' : 'mismatch'}
                                     </span>
                                   )}
                                 </div>
                               ) : (
-                                <p className="text-xs text-amber-400">{item.error}</p>
+                                <p className="text-xs text-warning">{item.error}</p>
                               )}
                               {item.hasDualCurrency !== undefined && (
                                 <p className="text-xs text-muted-foreground">

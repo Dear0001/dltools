@@ -93,9 +93,9 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
             spellCheck={false}
           />
           {error && (
-            <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertTriangle size={13} className="text-red-400 mt-0.5 flex-shrink-0" />
-              <span className="text-xs text-red-400 font-mono">{error}</span>
+            <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-error/10 border border-error/20">
+              <AlertTriangle size={13} className="text-error mt-0.5 flex-shrink-0" />
+              <span className="text-xs text-error font-mono">{error}</span>
             </div>
           )}
         </div>
@@ -107,9 +107,9 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
 
         {/* Expiry status */}
         {payload && expiresIn !== null && (
-          <div className={`flex items-center gap-2 p-3 rounded-lg border mb-4 ${isExpired ? 'bg-red-500/10 border-red-500/20' : 'bg-primary/10 border-primary/20'}`}>
-            {isExpired ? <AlertTriangle size={14} className="text-red-400" /> : <CheckCircle2 size={14} className="text-primary" />}
-            <span className={`text-xs font-medium ${isExpired ? 'text-red-400' : 'text-primary'}`}>
+          <div className={`flex items-center gap-2 p-3 rounded-lg border mb-4 ${isExpired ? 'bg-error/10 border-error/20' : 'bg-primary/10 border-primary/20'}`}>
+            {isExpired ? <AlertTriangle size={14} className="text-error" /> : <CheckCircle2 size={14} className="text-primary" />}
+            <span className={`text-xs font-medium ${isExpired ? 'text-error' : 'text-primary'}`}>
               {isExpired ? `Token expired ${Math.abs(expiresIn)}s ago` : `Token valid — expires in ${expiresIn}s`}
             </span>
           </div>
@@ -120,13 +120,13 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-sky-400" />
-                <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">Header</span>
+                <div className="w-2 h-2 rounded-full bg-primary" />
+                <span className="text-xs font-semibold text-primary uppercase tracking-wider">Header</span>
               </div>
               <div className="space-y-2">
                 {Object.entries(header).map(([k, v]) => (
                   <div key={`header-${k}`} className="flex gap-3">
-                    <span className="font-mono text-xs text-violet-400 flex-shrink-0 w-16 truncate">{k}</span>
+                    <span className="font-mono text-xs text-primary flex-shrink-0 w-16 truncate">{k}</span>
                     <span className="font-mono text-xs text-foreground">{String(v)}</span>
                   </div>
                 ))}
@@ -141,7 +141,7 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
               <div className="space-y-2">
                 {payload && Object.entries(payload).map(([k, v]) => (
                   <div key={`payload-${k}`} className="flex gap-3">
-                    <span className="font-mono text-xs text-violet-400 flex-shrink-0 w-20 truncate">{k}</span>
+                    <span className="font-mono text-xs text-primary flex-shrink-0 w-20 truncate">{k}</span>
                     <span className="font-mono text-xs text-foreground break-all">{formatValue(v)}</span>
                   </div>
                 ))}
@@ -153,11 +153,11 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
         {signature && (
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-amber-400" />
-              <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Signature</span>
+              <div className="w-2 h-2 rounded-full bg-warning" />
+              <span className="text-xs font-semibold text-warning uppercase tracking-wider">Signature</span>
               <span className="text-xs text-muted-foreground ml-auto">Not verified — provide secret to verify</span>
             </div>
-            <p className="font-mono text-xs text-amber-300 break-all">{signature}</p>
+            <p className="font-mono text-xs text-warning break-all">{signature}</p>
           </div>
         )}
       </div>

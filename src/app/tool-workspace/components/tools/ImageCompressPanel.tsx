@@ -147,7 +147,7 @@ export default function ImageCompressPanel({ tool }: { tool: Tool }) {
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Original</span>
                   <span className="text-xs text-muted-foreground tabular-nums">{(original.size / 1024).toFixed(1)} KB · {original.width}×{original.height}</span>
                 </div>
-                <div className="bg-[#0a0a0c] rounded-lg overflow-hidden flex items-center justify-center min-h-32">
+                <div className="bg-background-secondary rounded-lg overflow-hidden flex items-center justify-center min-h-32">
                   <AppImage src={original.url} alt={`Original image: ${original.name}`} width={300} height={200} className="max-h-40 object-contain" unoptimized />
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function ImageCompressPanel({ tool }: { tool: Tool }) {
                     </div>
                   )}
                 </div>
-                <div className="bg-[#0a0a0c] rounded-lg overflow-hidden flex items-center justify-center min-h-32">
+                <div className="bg-background-secondary rounded-lg overflow-hidden flex items-center justify-center min-h-32">
                   {compressed ? (
                     <AppImage src={compressed.url} alt="Compressed output image" width={300} height={200} className="max-h-40 object-contain" unoptimized />
                   ) : (

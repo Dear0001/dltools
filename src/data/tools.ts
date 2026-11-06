@@ -14,13 +14,13 @@ export interface Tool {
 }
 
 export const CATEGORIES: { id: ToolCategory; label: string; icon: string; color: string }[] = [
-  { id: 'formatters', label: 'Formatters', icon: 'FileCode2', color: 'text-sky-400' },
-  { id: 'diff', label: 'Diff & Compare', icon: 'GitCompare', color: 'text-amber-400' },
+  { id: 'formatters', label: 'Formatters', icon: 'FileCode2', color: 'text-primary' },
+  { id: 'diff', label: 'Diff & Compare', icon: 'GitCompare', color: 'text-primary' },
   { id: 'qr', label: 'QR & KHQR', icon: 'QrCode', color: 'text-primary' },
-  { id: 'image', label: 'Image & Base64', icon: 'ImageIcon', color: 'text-pink-400' },
-  { id: 'utilities', label: 'Utilities', icon: 'Wrench', color: 'text-violet-400' },
-  { id: 'generators', label: 'Generators', icon: 'Sparkles', color: 'text-orange-400' },
-  { id: 'documents', label: 'PDF & Word', icon: 'Files', color: 'text-rose-400' },
+  { id: 'image', label: 'Image & Base64', icon: 'ImageIcon', color: 'text-primary' },
+  { id: 'utilities', label: 'Utilities', icon: 'Wrench', color: 'text-primary' },
+  { id: 'generators', label: 'Generators', icon: 'Sparkles', color: 'text-primary' },
+  { id: 'documents', label: 'PDF & Word', icon: 'Files', color: 'text-primary' },
 ];
 
 export const TOOLS: Tool[] = [
@@ -408,14 +408,16 @@ export const TOOLS: Tool[] = [
   },
 ];
 
+// One restrained tone for every category; categories are told apart by icon and label, not by hue.
+const NEUTRAL_CATEGORY_COLOR = { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' };
 export const CATEGORY_COLORS: Record<ToolCategory, { bg: string; text: string; border: string }> = {
-  formatters: { bg: 'bg-sky-500/10', text: 'text-sky-400', border: 'border-sky-500/20' },
-  diff: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
-  qr: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
-  image: { bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/20' },
-  utilities: { bg: 'bg-violet-500/10', text: 'text-violet-400', border: 'border-violet-500/20' },
-  generators: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' },
-  documents: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20' },
+  formatters: NEUTRAL_CATEGORY_COLOR,
+  diff: NEUTRAL_CATEGORY_COLOR,
+  qr: NEUTRAL_CATEGORY_COLOR,
+  image: NEUTRAL_CATEGORY_COLOR,
+  utilities: NEUTRAL_CATEGORY_COLOR,
+  generators: NEUTRAL_CATEGORY_COLOR,
+  documents: NEUTRAL_CATEGORY_COLOR,
 };
 
 export function getToolSlug(tool: Pick<Tool, 'id'>): string {

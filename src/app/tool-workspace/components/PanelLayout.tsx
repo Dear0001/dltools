@@ -63,9 +63,11 @@ export default function PanelLayout({
   };
 
   const containerClass = vertical
-    ? 'flex flex-col h-full' :'flex flex-col lg:flex-row h-full';
+    ? 'flex flex-col lg:h-full' :'flex flex-col gap-3 lg:gap-0 lg:flex-row lg:h-full';
 
-  const panelClass = vertical ? 'flex-1 flex flex-col min-h-0' : 'flex-1 flex flex-col min-w-0 min-h-0';
+  const panelClass = vertical
+    ? 'flex-1 flex flex-col min-h-[18rem] lg:min-h-0'
+    : 'flex-1 flex flex-col min-w-0 min-h-[18rem] lg:min-h-0';
 
   return (
     <div className={containerClass}>
@@ -90,7 +92,7 @@ export default function PanelLayout({
             )}
           </div>
         </div>
-        <div className="flex-1 overflow-hidden bg-input border-x border-b border-border rounded-b-lg">
+        <div className="flex flex-1 flex-col overflow-hidden bg-input border-x border-b border-border rounded-b-lg">
           {localizeControlContent(inputPanel, locale)}
         </div>
       </div>
@@ -107,7 +109,7 @@ export default function PanelLayout({
             {outputStatus === 'idle' && <span className="status-dot-idle" />}
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{translateText(outputLabel, locale)}</span>
             {errorMessage && (
-              <span className="text-xs text-red-400 font-mono truncate max-w-xs">{errorMessage}</span>
+              <span className="text-xs text-error font-mono truncate max-w-xs">{errorMessage}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -132,7 +134,7 @@ export default function PanelLayout({
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-hidden bg-background border-x border-b border-border rounded-b-lg">
+        <div className="flex flex-1 flex-col overflow-hidden bg-editor border-x border-b border-border rounded-b-lg">
           {localizeControlContent(outputPanel, locale)}
         </div>
       </div>

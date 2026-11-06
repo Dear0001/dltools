@@ -17,7 +17,7 @@ function renderTlvChildren(children: EmvTlvTag[], level: number): React.ReactNod
   return children.map((child, ci) => (
     <div key={`tlv-child-${level}-${ci}-${child.tag}`}>
       <div className={`flex items-start gap-3 px-4 py-2 transition-colors ${level % 2 === 1 ? 'bg-muted/10' : 'bg-muted/05'} ${level > 1 ? 'pl-10' : ''}`}>
-        <span className="font-mono text-xs text-amber-400 w-8 flex-shrink-0 tabular-nums">{child.tag}</span>
+        <span className="font-mono text-xs text-warning w-8 flex-shrink-0 tabular-nums">{child.tag}</span>
         <span className="text-xs text-muted-foreground w-48 flex-shrink-0 truncate">{child.label}</span>
         <span className="text-xs text-muted-foreground w-6 flex-shrink-0 tabular-nums">{child.length}</span>
         <span className="font-mono text-xs text-foreground flex-1 break-all">
@@ -116,21 +116,21 @@ export default function KhqrValidatorPanel({ tool }: { tool: Tool }) {
           <button className="btn-primary mt-3 text-xs" onClick={() => validate(input, true)}>
             Validate & Decode
           </button>
-          {validationError && <p className="mt-2 text-xs text-red-400" role="status">{validationError}</p>}
+          {validationError && <p className="mt-2 text-xs text-error" role="status">{validationError}</p>}
         </div>
 
         {/* Validation summary */}
         {validated && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className={`flex items-center gap-3 p-3.5 rounded-xl border ${crcValid ? 'bg-primary/5 border-primary/20' : 'bg-red-500/5 border-red-500/20'}`}>
-              {crcValid ? <CheckCircle2 size={18} className="text-primary" /> : <XCircle size={18} className="text-red-400" />}
+            <div className={`flex items-center gap-3 p-3.5 rounded-xl border ${crcValid ? 'bg-primary/5 border-primary/20' : 'bg-error/5 border-error/20'}`}>
+              {crcValid ? <CheckCircle2 size={18} className="text-primary" /> : <XCircle size={18} className="text-error" />}
               <div>
                 <p className="text-xs font-semibold text-foreground">CRC-16</p>
-                <p className={`text-xs ${crcValid ? 'text-primary' : 'text-red-400'}`}>{crcValid ? 'Valid' : 'Invalid'}</p>
+                <p className={`text-xs ${crcValid ? 'text-primary' : 'text-error'}`}>{crcValid ? 'Valid' : 'Invalid'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card">
-              <div className={`w-2 h-2 rounded-full ${isDynamic ? 'bg-amber-400' : 'bg-violet-400'}`} />
+              <div className={`w-2 h-2 rounded-full ${isDynamic ? 'bg-warning' : 'bg-primary'}`} />
               <div>
                 <p className="text-xs font-semibold text-foreground">Mode</p>
                 <p className="text-xs text-muted-foreground">
@@ -139,7 +139,7 @@ export default function KhqrValidatorPanel({ tool }: { tool: Tool }) {
               </div>
             </div>
             <div className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card">
-              <div className="w-2 h-2 rounded-full bg-sky-400" />
+              <div className="w-2 h-2 rounded-full bg-primary" />
               <div>
                 <p className="text-xs font-semibold text-foreground">Currency</p>
                 <p className="text-xs text-muted-foreground">{currency}</p>
@@ -166,7 +166,7 @@ export default function KhqrValidatorPanel({ tool }: { tool: Tool }) {
               {tags.map((tag, i) => (
                 <div key={`tlv-${i}-${tag.tag}`}>
                   <div className="flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
-                    <span className="font-mono text-xs text-violet-400 w-8 flex-shrink-0 tabular-nums">{tag.tag}</span>
+                    <span className="font-mono text-xs text-primary w-8 flex-shrink-0 tabular-nums">{tag.tag}</span>
                     <span className="text-xs text-muted-foreground w-48 flex-shrink-0 truncate">{tag.label}</span>
                     <span className="text-xs text-muted-foreground w-6 flex-shrink-0 tabular-nums">{tag.length}</span>
                     <span className="font-mono text-xs text-foreground flex-1 break-all">
@@ -178,10 +178,10 @@ export default function KhqrValidatorPanel({ tool }: { tool: Tool }) {
               ))}
               {/* CRC row */}
               <div className="flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
-                <span className="font-mono text-xs text-violet-400 w-8 flex-shrink-0">63</span>
+                <span className="font-mono text-xs text-primary w-8 flex-shrink-0">63</span>
                 <span className="text-xs text-muted-foreground w-48 flex-shrink-0">CRC</span>
                 <span className="text-xs text-muted-foreground w-6 flex-shrink-0">04</span>
-                <span className={`font-mono text-xs flex-1 ${crcValid ? 'text-primary' : 'text-red-400'}`}>
+                <span className={`font-mono text-xs flex-1 ${crcValid ? 'text-primary' : 'text-error'}`}>
                   {input.slice(-4).toUpperCase()} {crcValid ? '✓ valid' : '✗ mismatch'}
                 </span>
               </div>

@@ -82,8 +82,8 @@ export default function DiffPanel({ tool }: { tool: Tool }) {
           </select>
         </div>
         <div className="flex items-center gap-3 ml-auto text-xs font-mono">
-          <span className="text-emerald-400">+{stats.added} added</span>
-          <span className="text-red-400">-{stats.removed} removed</span>
+          <span className="text-success">+{stats.added} added</span>
+          <span className="text-error">-{stats.removed} removed</span>
           <span className="text-muted-foreground">{stats.unchanged} unchanged</span>
         </div>
       </div>
@@ -158,10 +158,10 @@ export default function DiffPanel({ tool }: { tool: Tool }) {
               }`}
             >
               <span className="w-8 flex-shrink-0 text-muted-foreground select-none tabular-nums text-right mr-4">{line.lineNum}</span>
-              <span className={`flex-shrink-0 w-4 ${line.type === 'added' ? 'text-emerald-400' : line.type === 'removed' ? 'text-red-400' : 'text-muted-foreground'}`}>
+              <span className={`flex-shrink-0 w-4 ${line.type === 'added' ? 'text-success' : line.type === 'removed' ? 'text-error' : 'text-muted-foreground'}`}>
                 {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
               </span>
-              <span className={line.type === 'added' ? 'text-emerald-300' : line.type === 'removed' ? 'text-red-300' : 'text-foreground'}>
+              <span className={line.type === 'added' ? 'text-success' : line.type === 'removed' ? 'text-error' : 'text-foreground'}>
                 {line.value || ' '}
               </span>
             </div>

@@ -157,19 +157,19 @@ export default function Base64ImagePanel({ tool }: { tool: Tool }) {
                   <textarea
                     value={rawBase64}
                     readOnly
-                    className="input-code w-full text-emerald-300 text-xs"
+                    className="input-code w-full text-success text-xs"
                     rows={5}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     Length: <span className="text-foreground tabular-nums">{rawBase64.length.toLocaleString()}</span> chars
-                    · Data URI prefix: <span className="text-violet-400 font-mono">{base64.split(',')[0]}</span>
+                    · Data URI prefix: <span className="text-primary font-mono">{base64.split(',')[0]}</span>
                   </p>
                 </div>
 
                 {previewUrl && mimeType.startsWith('image/') && (
                   <div className="bg-card border border-border rounded-xl p-4">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-3">Preview</span>
-                    <div className="flex items-center justify-center bg-[#0a0a0c] rounded-lg p-4 min-h-32">
+                    <div className="flex items-center justify-center bg-background-secondary rounded-lg p-4 min-h-32">
                       <AppImage
                         src={previewUrl}
                         alt={`Preview of uploaded file ${fileName}`}
@@ -191,7 +191,7 @@ export default function Base64ImagePanel({ tool }: { tool: Tool }) {
               <textarea
                 value={base64}
                 onChange={(e) => setBase64(e.target.value)}
-                className="input-code w-full text-emerald-300 text-xs"
+                className="input-code w-full text-success text-xs"
                 rows={6}
                 placeholder="Paste Base64 string here… or data:image/png;base64,iVBORw0KGgo..."
                 spellCheck={false}
@@ -211,7 +211,7 @@ export default function Base64ImagePanel({ tool }: { tool: Tool }) {
                     Download
                   </button>
                 </div>
-                <div className="flex items-center justify-center bg-[#0a0a0c] rounded-lg p-4 min-h-32">
+                <div className="flex items-center justify-center bg-background-secondary rounded-lg p-4 min-h-32">
                   <AppImage
                     src={previewUrl}
                     alt="Decoded image preview from Base64 string"
