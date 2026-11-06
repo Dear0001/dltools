@@ -1,7 +1,7 @@
-import 'next-auth';
-import type { DefaultSession } from 'next-auth';
+import '@/types/next-auth';
+import type { DefaultSession } from '@/types/next-auth';
 
-declare module 'next-auth' {
+declare module '@/types/next-auth' {
   interface Session {
     user: {
       id: string;

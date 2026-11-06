@@ -21,7 +21,7 @@ export default function NoToolSelected() {
         <p className="text-muted-foreground text-sm max-w-sm">
           {t('chooseTool')}
         </p>
-        <Link href="/" className="btn-primary mt-5">
+        <Link href="/frontend/public" className="btn-primary mt-5">
           <ArrowLeft size={14} />
           {t('allTools')}
         </Link>

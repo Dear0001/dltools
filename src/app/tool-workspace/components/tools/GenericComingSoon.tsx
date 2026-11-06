@@ -17,7 +17,7 @@ export default function GenericComingSoon({ tool }: { tool: Tool }) {
       <div className="flex items-center gap-2 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-6">
         <span className="text-amber-400 text-xs font-medium">This tool panel is being built — check back soon.</span>
       </div>
-      <Link href="/" className="btn-ghost text-xs">
+      <Link href="/frontend/public" className="btn-ghost text-xs">
         <ArrowLeft size={13} />
         Back to Tool Hub
       </Link>

@@ -192,7 +192,7 @@ export default function Topbar() {
         <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16">
           <div className="flex h-14 items-center justify-between gap-3">
             {/* Logo */}
-            <Link href="/" className="group flex min-w-0 items-center gap-2.5">
+            <Link href="/frontend/public" className="group flex min-w-0 items-center gap-2.5">
               <div className="rounded-full border border-border/70 bg-white/80 p-0.5 shadow-sm ring-1 ring-black/5">
                 <AppLogo size={28} className="rounded-full overflow-hidden" />
               </div>
@@ -510,7 +510,7 @@ export default function Topbar() {
                       ))}
                       {link.menu === 'hub' && (
                         <li className="col-span-2">
-                          <Link href="/" onClick={() => setMobileOpen(false)} className="block rounded-md px-3 py-2 text-xs font-medium text-primary">
+                          <Link href="/frontend/public" onClick={() => setMobileOpen(false)} className="block rounded-md px-3 py-2 text-xs font-medium text-primary">
                             {t('allTools')}
                           </Link>
                         </li>

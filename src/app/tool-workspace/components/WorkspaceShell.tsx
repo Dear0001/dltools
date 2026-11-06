@@ -145,7 +145,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
       {/* Workspace header */}
       <div className="flex-shrink-0 flex items-center justify-between px-6 lg:px-8 xl:px-10 2xl:px-16 py-3 border-b border-border bg-secondary/50">
         <div className="flex items-center gap-3">
-          <Link href="/" className="btn-icon" aria-label={t('backToHub')}>
+          <Link href="/frontend/public" className="btn-icon" aria-label={t('backToHub')}>
             <ArrowLeft size={16} />
           </Link>
           <div className="w-px h-5 bg-border" />
