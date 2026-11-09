@@ -6,6 +6,7 @@ import AppImage from './AppImage';
 
 interface AppLogoProps {
   src?: string; // Image source (optional)
+  alt?: string; // Accessible description of the logo
   iconName?: string; // Icon name when no image
   size?: number; // Size for icon/image
   className?: string; // Additional classes
@@ -14,6 +15,7 @@ interface AppLogoProps {
 
 const AppLogo = memo(function AppLogo({
   src = '/assets/images/app_logo.jpg',
+  alt = 'DLTools logo',
   iconName = 'SparklesIcon',
   size = 64,
   className = '',
@@ -33,7 +35,7 @@ const AppLogo = memo(function AppLogo({
       {src ? (
         <AppImage
           src={src}
-          alt="Logo" 
+          alt={alt}
           width={size}
           height={size}
           className="flex-shrink-0"

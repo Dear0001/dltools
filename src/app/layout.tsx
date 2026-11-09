@@ -9,7 +9,9 @@ import SiteFooter from '@/components/SiteFooter';
 import AutoTranslate from '@/components/AutoTranslate';
 import AuthProvider from '@/components/AuthProvider';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import JsonLd from '@/components/JsonLd';
 import { SITE_NAME, SITE_TITLE, SITE_URL, SITE_DESCRIPTION } from '@/lib/site';
+import { DEFAULT_OG_IMAGE, buildSiteJsonLd } from '@/lib/seo';
 import '../styles/tailwind.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -36,26 +38,21 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: '/' },
   robots: { index: true, follow: true },
+  // No `url` here: every page without its own openGraph would inherit it and report "/" as its og:url.
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    url: '/',
-    images: [{ url: '/assets/images/app_logo.jpg' }],
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ['/assets/images/app_logo.jpg'],
+    images: [{ url: DEFAULT_OG_IMAGE.url, alt: DEFAULT_OG_IMAGE.alt }],
   },
-  icons: {
-    icon: [
-      { url: '/assets/images/app_logo.jpg', type: 'image/jpeg' },
-      { url: '/assets/images/app_logo.jpg', type: 'image/png' },
-    ],
-  },
+  // Favicons come from the app/icon.png and app/apple-icon.png file conventions.
 };
 
 export default function RootLayout({
@@ -71,6 +68,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <JsonLd data={buildSiteJsonLd()} />
       </head>
       <body className="relative font-sans" suppressHydrationWarning>
         <ThemeProvider>
