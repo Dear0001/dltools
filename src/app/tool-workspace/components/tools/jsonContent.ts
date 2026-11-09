@@ -91,6 +91,61 @@ export function findJsonFragments(input: string): JsonFragment[] {
   return fragments;
 }
 
+function isJsonContainer(text: string): boolean {
+  const trimmed = text.trim();
+  if (!/^[{[]/.test(trimmed)) return false;
+  try {
+    const parsed = JSON.parse(trimmed);
+    return parsed !== null && typeof parsed === 'object';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Converts stringified JSON back into JSON text. Handles:
+ *  - JSON string literals:        "{\"a\":1}"  (also multiply-encoded)
+ *  - escaped text without quotes: {\"a\":1}
+ * Returns the input unchanged when it does not decode to a JSON object/array.
+ */
+export function unwrapStringifiedJson(input: string): string {
+  let current = input.trim();
+
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (isJsonContainer(current)) return current;
+
+    // Quoted JSON string literal -> decode it.
+    if (current.length >= 2 && current.startsWith('"') && current.endsWith('"')) {
+      try {
+        const decoded = JSON.parse(current);
+        if (typeof decoded === 'string') {
+          current = decoded.trim();
+          continue;
+        }
+      } catch {
+        // fall through to the escaped-text attempt
+      }
+    }
+
+    // Escaped text lacking outer quotes, e.g. {\"a\":1}
+    if (current.includes('\\"')) {
+      try {
+        const decoded = JSON.parse(`"${current.replace(/(?<!\\)"/g, '\\"')}"`);
+        if (typeof decoded === 'string' && decoded !== current) {
+          current = decoded.trim();
+          continue;
+        }
+      } catch {
+        // not decodable
+      }
+    }
+
+    break;
+  }
+
+  return isJsonContainer(current) ? current : input;
+}
+
 export function detectInputFormat(input: string): {
   format: DetectedInputFormat;
   error?: string;

@@ -45,13 +45,14 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Provide between one and eight valid tool IDs.' }, { status: 400 });
   }
 
+  const userId = session.user.id;
   const uniqueIds = [...new Set(toolIds as string[])];
   await prisma.$transaction(
     uniqueIds.map((toolId, index) =>
       prisma.recentTool.upsert({
-        where: { userId_toolId: { userId: session.user.id, toolId } },
+        where: { userId_toolId: { userId, toolId } },
         create: {
-          userId: session.user.id,
+          userId,
           toolId,
           lastOpenedAt: new Date(Date.now() - index),
         },

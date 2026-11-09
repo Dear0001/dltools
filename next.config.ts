@@ -16,10 +16,8 @@ const nextConfig = {
     qualities: [75, 85, 100],
   },
   webpack(
-    config,
-    {
-      dev: dev
-    }
+    config: { module: { rules: unknown[] }; watchOptions?: { ignored?: string[] } },
+    { dev }: { dev: boolean },
   ) {
     if (dev) {
       config.module.rules.push({

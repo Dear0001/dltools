@@ -42,7 +42,7 @@ function generateCode(value: unknown, root: string, target: Target): string {
   collect(root, value as Record<string, unknown>);
 
   const typeOf = (item: unknown, name: string): string => {
-    if (item === null) return target === 'rust' ? 'Option<serde_json::Value>' : target === 'typescript' ? 'unknown' : 'Any';
+    if (item === null) return target === 'rust' ? 'Option<serde_json::Value>' : 'Any';
     if (Array.isArray(item)) {
       if (!item.length) return target === 'rust' ? 'Vec<serde_json::Value>' : target === 'go' ? '[]any' : target === 'dart' ? 'List<dynamic>' : 'List[Any]';
       const sample = item[0];
@@ -51,9 +51,9 @@ function generateCode(value: unknown, root: string, target: Target): string {
       return target === 'rust' ? `Vec<${scalar}>` : target === 'go' ? `[]${scalar}` : target === 'dart' ? `List<${scalar}>` : `List[${scalar}]`;
     }
     if (item && typeof item === 'object') return pascal(name);
-    if (typeof item === 'string') return target === 'go' ? 'string' : target === 'dart' ? 'String' : target === 'rust' ? 'String' : target === 'typescript' || target === 'zod' ? 'string' : 'str';
-    if (typeof item === 'boolean') return target === 'go' ? 'bool' : target === 'dart' ? 'bool' : target === 'rust' ? 'bool' : target === 'typescript' || target === 'zod' ? 'boolean' : 'bool';
-    if (typeof item === 'number') return target === 'go' ? (Number.isInteger(item) ? 'int64' : 'float64') : target === 'dart' ? (Number.isInteger(item) ? 'int' : 'double') : target === 'rust' ? (Number.isInteger(item) ? 'i64' : 'f64') : target === 'typescript' || target === 'zod' ? 'number' : (target === 'python' || target === 'pydantic') ? (Number.isInteger(item) ? 'int' : 'float') : 'number';
+    if (typeof item === 'string') return target === 'go' ? 'string' : target === 'dart' ? 'String' : target === 'rust' ? 'String' : target === 'zod' ? 'string' : 'str';
+    if (typeof item === 'boolean') return target === 'go' ? 'bool' : target === 'dart' ? 'bool' : target === 'rust' ? 'bool' : target === 'zod' ? 'boolean' : 'bool';
+    if (typeof item === 'number') return target === 'go' ? (Number.isInteger(item) ? 'int64' : 'float64') : target === 'dart' ? (Number.isInteger(item) ? 'int' : 'double') : target === 'rust' ? (Number.isInteger(item) ? 'i64' : 'f64') : target === 'zod' ? 'number' : (target === 'python' || target === 'pydantic') ? (Number.isInteger(item) ? 'int' : 'float') : 'number';
     return 'Any';
   };
 
