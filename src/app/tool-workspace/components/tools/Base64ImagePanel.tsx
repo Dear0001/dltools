@@ -1,9 +1,14 @@
 'use client';
-import React, { useState, useRef, useCallback } from 'react';
-import { Tool } from '@/data/tools';
-import { Upload, Copy, Download, ClipboardPaste, ArrowLeftRight } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { Tool, getToolPath } from '@/data/tools';
+import { Upload, Copy, Download, ClipboardPaste, AlertTriangle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AppImage from '../../../../components/ui/AppImage';
+import { useDebouncedValue } from '../useDebouncedValue';
+import { parseBase64Input } from './base64Document';
+import { describeBinary } from './base64Media';
+import DocumentPreview, { type PreviewKind } from './DocumentPreview';
 
 type Mode = 'encode' | 'decode';
 
@@ -54,21 +59,90 @@ export default function Base64ImagePanel({ tool }: { tool: Tool }) {
           return;
         }
       }
-      toast.error('No image found in clipboard');
+      for (const item of items) {
+        if (item.types.includes('text/plain')) {
+          const text = await (await item.getType('text/plain')).text();
+          if (acceptPastedText(text)) return;
+        }
+      }
+      toast.error('No image or Base64 string found in clipboard');
     } catch {
       toast.error('Clipboard access denied — try uploading the file directly');
     }
   }, []);
 
-  const decodeBase64 = () => {
-    try {
-      const dataUrl = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`;
-      setPreviewUrl(dataUrl);
-      toast.success('Base64 decoded — preview updated');
-    } catch {
-      toast.error('Invalid Base64 string');
+  // Pasted text is only taken over automatically when it is clearly a Base64 payload
+  // (a data URI, or bytes that match a known file type) so ordinary text is never hijacked.
+  function acceptPastedText(text: string): boolean {
+    const trimmed = text.trim();
+    if (trimmed.length < 16) return false;
+    const parsed = parseBase64Input(trimmed);
+    if (!parsed.ok) return false;
+    if (!/^data:/i.test(trimmed) && !describeBinary(parsed.bytes, parsed.mime).known) return false;
+    setMode('decode');
+    setBase64(trimmed);
+    toast.success('Base64 detected — decoding automatically');
+    return true;
+  }
+
+  // Decode mode converts automatically (debounced) whenever the input changes.
+  const debouncedBase64 = useDebouncedValue(base64);
+  const decodePending = mode === 'decode' && base64.trim() !== '' && base64 !== debouncedBase64;
+  const decoded = useMemo(() => {
+    if (mode !== 'decode' || !debouncedBase64.trim()) return null;
+    const parsed = parseBase64Input(debouncedBase64);
+    if (!parsed.ok) return { ok: false as const, error: parsed.error };
+    return { ok: true as const, bytes: parsed.bytes, info: describeBinary(parsed.bytes, parsed.mime) };
+  }, [mode, debouncedBase64]);
+
+  const documentKind: PreviewKind | null =
+    decoded?.ok && (['pdf', 'docx', 'xlsx'] as const).includes(decoded.info.ext as PreviewKind)
+      ? (decoded.info.ext as PreviewKind)
+      : null;
+
+  const [decodedUrl, setDecodedUrl] = useState('');
+  useEffect(() => {
+    if (!decoded?.ok) {
+      setDecodedUrl('');
+      return;
     }
+    const url = URL.createObjectURL(new Blob([new Uint8Array(decoded.bytes)], { type: decoded.info.mime }));
+    setDecodedUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [decoded]);
+
+  const downloadDecoded = () => {
+    if (!decoded?.ok || !decodedUrl) return;
+    const a = document.createElement('a');
+    a.href = decodedUrl;
+    a.download = `decoded.${decoded.info.ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
+
+  // Ctrl+V anywhere on the page: an image switches to encode, a Base64 string to decode.
+  const pasteHandlerRef = useRef<(event: ClipboardEvent) => void>(() => {});
+  pasteHandlerRef.current = (event: ClipboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable)) return;
+    const data = event.clipboardData;
+    if (!data) return;
+
+    const file = Array.from(data.files).find((f) => f.type.startsWith('image/'));
+    if (file) {
+      event.preventDefault();
+      setMode('encode');
+      processFile(file);
+      return;
+    }
+    if (acceptPastedText(data.getData('text/plain'))) event.preventDefault();
+  };
+  useEffect(() => {
+    const listener = (event: ClipboardEvent) => pasteHandlerRef.current(event);
+    document.addEventListener('paste', listener);
+    return () => document.removeEventListener('paste', listener);
+  }, []);
 
   const downloadFile = () => {
     if (!previewUrl) return;
@@ -125,7 +199,7 @@ export default function Base64ImagePanel({ tool }: { tool: Tool }) {
                 <ClipboardPaste size={13} />
                 Paste from Clipboard
               </button>
-              <span className="text-xs text-muted-foreground">Ctrl+V works on image data</span>
+              <span className="text-xs text-muted-foreground">Ctrl+V pastes an image or a Base64 string</span>
             </div>
 
             {fileName && (
@@ -193,34 +267,71 @@ export default function Base64ImagePanel({ tool }: { tool: Tool }) {
                 onChange={(e) => setBase64(e.target.value)}
                 className="input-code w-full text-success text-xs"
                 rows={6}
-                placeholder="Paste Base64 string here… or data:image/png;base64,iVBORw0KGgo..."
+                placeholder="Paste a Base64 string or data URI — it converts automatically…"
                 spellCheck={false}
               />
-              <button className="btn-primary mt-3 text-xs" onClick={decodeBase64}>
-                <ArrowLeftRight size={12} />
-                Decode & Preview
-              </button>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground" aria-live="polite">
+                  {!base64.trim()
+                    ? 'Converts automatically as you paste or type.'
+                    : decodePending
+                      ? 'Decoding…'
+                      : decoded?.ok
+                        ? `Detected: ${decoded.info.label} · ${(decoded.bytes.length / 1024).toFixed(1)} KB`
+                        : ''}
+                </p>
+                <button className="btn-ghost text-xs" onClick={() => setBase64('')} disabled={!base64}>
+                  <Trash2 size={12} />
+                  Clear
+                </button>
+              </div>
             </div>
 
-            {previewUrl && (
+            {!decodePending && decoded && !decoded.ok && (
+              <div className="flex items-start gap-2 rounded-lg border border-error/40 bg-error/5 p-3 text-xs text-error">
+                <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                <span>{decoded.error}</span>
+              </div>
+            )}
+
+            {!decodePending && decoded?.ok && decodedUrl && (
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview</span>
-                  <button className="btn-ghost text-xs" onClick={downloadFile}>
+                  <button className="btn-ghost text-xs" onClick={downloadDecoded}>
                     <Download size={12} />
-                    Download
+                    Download .{decoded.info.ext}
                   </button>
                 </div>
-                <div className="flex items-center justify-center bg-background-secondary rounded-lg p-4 min-h-32">
-                  <AppImage
-                    src={previewUrl}
-                    alt="Decoded image preview from Base64 string"
-                    width={320}
-                    height={240}
-                    className="max-h-48 object-contain rounded"
-                    unoptimized
-                  />
-                </div>
+                {decoded.info.isImage ? (
+                  <div className="flex items-center justify-center bg-background-secondary rounded-lg p-4 min-h-32">
+                    <AppImage
+                      src={decodedUrl}
+                      alt="Decoded image preview from Base64 string"
+                      width={320}
+                      height={240}
+                      className="max-h-48 object-contain rounded"
+                      unoptimized
+                    />
+                  </div>
+                ) : documentKind ? (
+                  <div className="flex flex-col gap-3">
+                    <DocumentPreview bytes={decoded.bytes} kind={documentKind} />
+                    <p className="text-xs text-muted-foreground">
+                      Need a custom file name or a different format?{' '}
+                      <Link href={getToolPath({ id: 'tool-base64-document' })} className="text-primary underline">
+                        Open Base64 to PDF / Word / Excel
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+                    This is {decoded.info.known ? 'a ' : ''}
+                    <span className="font-medium text-foreground">{decoded.info.label.toLowerCase()}</span>, not an
+                    image, so there is no preview. You can still download it.
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -85,6 +85,11 @@ const C: Record<string, ToolContent> = {
     steps: ['Upload a file or paste Base64 text.', 'Choose the conversion direction.', 'Copy the Base64 string or download the decoded file.'],
     uses: ['Embedding small images as data URIs', 'Decoding Base64 attachments from an API response', 'Checking whether a Base64 string is a valid image'],
   },
+  'base64-document': {
+    about: 'Decode a Base64 string or data URI back into a real PDF, Word or Excel file. The file type is detected from its contents, so you can paste an API response and download the document with the right extension.',
+    steps: ['Paste the Base64 string or data URI.', 'Check the detected type, or choose PDF, Word or Excel yourself.', 'Preview the document if one is available, then download it.'],
+    uses: ['Saving a PDF or report returned as Base64 by an API', 'Recovering a Word or Excel attachment from a JSON response', 'Checking that a Base64 payload is a valid document before sending it'],
+  },
   'image-compress': {
     about: 'Resize and compress images in the browser using the Canvas API. Output as JPEG, PNG or WebP and tune the quality to find the smallest file that still looks good.',
     steps: ['Upload an image.', 'Set the target size, format and quality.', 'Download the compressed image.'],

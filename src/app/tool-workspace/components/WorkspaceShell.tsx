@@ -29,6 +29,7 @@ import UrlCodecPanel from './tools/UrlCodecPanel';
 import RegexPanel from './tools/RegexPanel';
 import TimestampPanel from './tools/TimestampPanel';
 import Base64ImagePanel from './tools/Base64ImagePanel';
+import Base64DocumentPanel from './tools/Base64DocumentPanel';
 import CurlPanel from './tools/CurlPanel';
 import KhqrBuilderPanel from './tools/KhqrBuilderPanel';
 import KhqrValidatorPanel from './tools/KhqrValidatorPanel';
@@ -71,6 +72,7 @@ const PANEL_MAP: Record<string, React.ComponentType<{ tool: Tool }>> = {
   'tool-regex-tester': RegexPanel,
   'tool-timestamp': TimestampPanel,
   'tool-base64-image': Base64ImagePanel,
+  'tool-base64-document': Base64DocumentPanel,
   'tool-image-compress': ImageCompressPanel,
   'tool-json-to-ts': JsonToCodePanel,
   'tool-json-to-java': JsonToJavaPanel,

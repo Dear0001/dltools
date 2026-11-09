@@ -389,6 +389,15 @@ export const TOOLS: Tool[] = [
     isNew: true,
   },
   {
+    id: 'tool-base64-document',
+    name: 'Base64 to PDF / Word / Excel',
+    description: 'Decode a Base64 string into a downloadable PDF, Word (.docx) or Excel (.xlsx) file, with automatic type detection and preview.',
+    category: 'documents',
+    tags: ['base64', 'pdf', 'word', 'docx', 'excel', 'xlsx', 'decode', 'convert'],
+    icon: 'Files',
+    isNew: true,
+  },
+  {
     id: 'tool-image-to-pdf',
     name: 'Image to PDF',
     description: 'Convert an image into a downloadable PDF document.',
