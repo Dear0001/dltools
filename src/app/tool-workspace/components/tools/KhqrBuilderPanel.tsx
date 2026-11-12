@@ -1,93 +1,14 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool } from '@/data/tools';
-import { Download, Copy } from 'lucide-react';
-// no form library needed - simple raw input + upload
+import { Download, Copy, ImageIcon, Wrench, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
-import crc16 from './crc16';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { analyzeKhqr, formatAmount, withCorrectCrc } from './emvQr';
 
-function tlv(tag: string, value: string): string {
-  const len = value.length.toString().padStart(2, '0');
-  return `${tag}${len}${value}`;
-}
-
-function readMerchantName(payload: string): string {
-  let offset = 0;
-  while (offset + 4 <= payload.length) {
-    const tag = payload.slice(offset, offset + 2);
-    const length = Number(payload.slice(offset + 2, offset + 4));
-    if (!Number.isFinite(length) || length < 0) return '';
-    const value = payload.slice(offset + 4, offset + 4 + length);
-    if (value.length !== length) return '';
-    if (tag === '59') return value;
-    offset += 4 + length;
-  }
-  return '';
-}
-
-function readEmvTag(payload: string, targetTag: string): string {
-  let offset = 0;
-  while (offset + 4 <= payload.length) {
-    const tag = payload.slice(offset, offset + 2);
-    const length = Number(payload.slice(offset + 2, offset + 4));
-    if (!Number.isFinite(length) || length < 0) return '';
-    const value = payload.slice(offset + 4, offset + 4 + length);
-    if (value.length !== length) return '';
-    if (tag === targetTag) return value;
-    offset += 4 + length;
-  }
-  return '';
-}
-
-function buildKhqr(data: any): string {
-  const isDynamic = data.mode === 'dynamic';
-  let payload = '';
-
-  // 00: Payload Format Indicator
-  payload += tlv('00', '01');
-  // 01: Point of Initiation Method
-  payload += tlv('01', isDynamic ? '12' : '11');
-
-  // 29: Merchant Account Info (KHQR)
-  let merchantInfo = '';
-  merchantInfo += tlv('00', 'bakong.io');
-  merchantInfo += tlv('01', data.bakongId);
-  if (data.merchantId) merchantInfo += tlv('02', data.merchantId);
-  if (data.acquiringBank) merchantInfo += tlv('03', data.acquiringBank);
-  payload += tlv('29', merchantInfo);
-
-  // 52: Merchant Category Code
-  payload += tlv('52', data.mcc || '5999');
-  // 53: Transaction Currency
-  payload += tlv('53', data.currency === 'KHR' ? '116' : '840');
-  // 54: Transaction Amount
-  const amountValue = data.amount == null ? '' : String(data.amount).trim();
-  if (isDynamic && amountValue !== '') payload += tlv('54', amountValue);
-  // 58: Country Code
-  payload += tlv('58', 'KH');
-  // 59: Merchant Name
-  payload += tlv('59', data.merchantName);
-  // 60: Merchant City
-  payload += tlv('60', data.merchantCity || 'Phnom Penh');
-
-  // 62: Additional Data
-  if (data.billNumber || data.mobileNumber || data.storeLabel || data.terminalLabel) {
-    let addData = '';
-    if (data.billNumber) addData += tlv('01', data.billNumber);
-    if (data.mobileNumber) addData += tlv('02', data.mobileNumber);
-    if (data.storeLabel) addData += tlv('03', data.storeLabel);
-    if (data.terminalLabel) addData += tlv('07', data.terminalLabel);
-    payload += tlv('62', addData);
-  }
-
-  // 63: CRC (4 chars placeholder, then compute)
-  const withCrcTag = payload + '6304';
-  let crc = crc16(withCrcTag);
-  return withCrcTag + crc;
-}
-
+/** Render scale for crisp PNG export (card is 400×560 CSS px). */
+const EXPORT_SCALE = 3;
 
 export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,11 +39,11 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
     const cardWidth = 400;
     const cardHeight = 560;
     const qrSize = 300;
-    canvas.width = cardWidth;
-    canvas.height = cardHeight;
+    canvas.width = cardWidth * EXPORT_SCALE;
+    canvas.height = cardHeight * EXPORT_SCALE;
     const qrCanvas = document.createElement('canvas');
     const opts: any = {
-      width: qrSize,
+      width: qrSize * EXPORT_SCALE,
       margin: 2,
       color: { dark: fgColor, light: bgColor },
       errorCorrectionLevel: 'H',
@@ -132,6 +53,8 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
     if (requestId !== renderRequestRef.current) return false;
     const ctx = canvas.getContext('2d');
     if (!ctx) return false;
+    ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
+    ctx.imageSmoothingEnabled = false;
 
     ctx.save();
     ctx.beginPath();
@@ -173,20 +96,19 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
       ctx.fillText(headerText.slice(0, 24) || 'KHQR', cardWidth / 2, headerContentCenterY);
     }
 
-    const merchantName = readMerchantName(content);
+    const { fields } = analyzeKhqr(content);
+    const merchantName = fields.merchantName ?? '';
     if (merchantName) {
       ctx.fillStyle = '#1f2937';
       ctx.font = '400 15px Arial, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(merchantName.slice(0, 38), 40, 101);
     }
-    const amount = readEmvTag(content, '54');
-    const currencyCode = readEmvTag(content, '53');
-    const currency = currencyCode === '116' ? 'KHR' : currencyCode === '840' ? 'USD' : currencyCode;
+    const amount = fields.amount ?? '';
+    const currencyCode = fields.currencyCode ?? '';
+    const currency = currencyCode === '116' || currencyCode === '840' ? fields.currency ?? '' : currencyCode;
     const hasKnownCurrency = currencyCode === '116' || currencyCode === '840';
-    const formattedAmount = amount !== ''
-      ? Number(amount).toLocaleString(undefined, { maximumFractionDigits: 4 })
-      : currencyCode === '840' ? '0.0' : '0';
+    const formattedAmount = formatAmount(fields, currencyCode === '840' ? '0.0' : '0');
     if (amount !== '' || hasKnownCurrency) {
       ctx.fillStyle = '#080808';
       ctx.font = '700 34px Arial, sans-serif';
@@ -245,9 +167,9 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
     if (requestId !== renderRequestRef.current) return false;
     const outputContext = outputCanvas.getContext('2d');
     if (!outputContext) return false;
-    outputCanvas.width = cardWidth;
-    outputCanvas.height = cardHeight;
-    outputContext.clearRect(0, 0, cardWidth, cardHeight);
+    outputCanvas.width = canvas.width;
+    outputCanvas.height = canvas.height;
+    outputContext.clearRect(0, 0, canvas.width, canvas.height);
     outputContext.drawImage(canvas, 0, 0);
     return true;
   };
@@ -341,13 +263,39 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
     toast.success('KHQR string copied');
   };
 
+  const analysis = khqrString ? analyzeKhqr(khqrString) : null;
+  const fileBase = (analysis?.fields.merchantName || 'khqr').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'khqr';
+
   const downloadQr = () => {
     if (!canvasRef.current) return;
     const url = canvasRef.current.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'khqr.png';
+    a.download = `${fileBase}-khqr.png`;
     a.click();
+  };
+
+  const copyImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof ClipboardItem === 'undefined') {
+      toast.error('Copying images is not supported in this browser');
+      return;
+    }
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        toast.success('QR image copied');
+      } catch {
+        toast.error('Clipboard access denied');
+      }
+    }, 'image/png');
+  };
+
+  const fixCrc = () => {
+    renderRequestRef.current += 1;
+    setCustomString(withCorrectCrc(customString));
+    toast.success('CRC recalculated');
   };
 
   return (
@@ -491,26 +439,68 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
                 <canvas ref={canvasRef} className="h-auto w-full max-w-[300px] rounded-xl shadow-lg" />
               </div>
               {generated && (
-                <div className="flex gap-2 mt-4 w-full">
-                  <button className="btn-primary flex-1 justify-center text-xs" onClick={downloadQr}>
+                <div className="flex flex-col gap-2 mt-4 w-full">
+                  <button className="btn-primary w-full justify-center text-xs" onClick={downloadQr}>
                     <Download size={12} />
-                    Download PNG
+                    Download PNG · {400 * EXPORT_SCALE}×{560 * EXPORT_SCALE}
                   </button>
-                  <button className="btn-ghost text-xs" onClick={copyString}>
-                    <Copy size={12} />
-                    Copy String
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button className="btn-ghost justify-center text-xs" onClick={copyImage}>
+                      <ImageIcon size={12} />
+                      Copy image
+                    </button>
+                    <button className="btn-ghost justify-center text-xs" onClick={copyString}>
+                      <Copy size={12} />
+                      Copy string
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
-            {khqrString && (
+            {khqrString && analysis && (
               <div className="bg-card border border-border rounded-xl p-4">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">EMVCo String</h4>
-                <p className="font-mono text-xs text-success break-all leading-relaxed">{khqrString}</p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payload check</h4>
+                  {analysis.verdict === 'khqr' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary"><CheckCircle2 size={12} /> Valid KHQR</span>
+                  ) : analysis.verdict === 'emv' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-warning"><AlertTriangle size={12} /> EMV, not KHQR</span>
+                  ) : analysis.verdict === 'invalid' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-error"><XCircle size={12} /> Invalid KHQR</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Plain QR content</span>
+                  )}
+                </div>
+                {analysis.verdict !== 'not-emv' && (
+                  <>
+                    {(analysis.fields.merchantName || analysis.fields.amount) && (
+                      <p className="mb-2 text-xs text-foreground">
+                        {analysis.fields.merchantName}
+                        {analysis.fields.amount && (
+                          <span className="ml-1 font-semibold tabular-nums">· {analysis.fields.amount} {analysis.fields.currency}</span>
+                        )}
+                      </p>
+                    )}
+                    {analysis.checks.filter((c) => c.level !== 'pass').slice(0, 4).map((c) => (
+                      <p key={c.id} className={`text-xs ${c.level === 'fail' ? 'text-error' : 'text-warning'}`}>
+                        • {c.title}: {c.detail}
+                      </p>
+                    ))}
+                    {analysis.crcValid !== true && analysis.tags.length > 0 && !analysis.trailing && (
+                      <button type="button" className="btn-ghost mt-2 text-xs" onClick={fixCrc}>
+                        <Wrench size={12} /> Recalculate CRC
+                      </button>
+                    )}
+                  </>
+                )}
                 <p className="text-xs text-muted-foreground mt-2">
-                  Length: <span className="text-foreground tabular-nums">{khqrString.length}</span> chars ·
-                  CRC: <span className="text-primary font-mono">{khqrString.slice(-4)}</span>
+                  Length: <span className="text-foreground tabular-nums">{khqrString.length}</span> chars
+                  {analysis.fields.crc && (
+                    <>
+                      {' '}· CRC: <span className={`font-mono ${analysis.crcValid ? 'text-primary' : 'text-error'}`}>{analysis.fields.crc}</span>
+                    </>
+                  )}
                 </p>
               </div>
             )}
