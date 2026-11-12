@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -72,10 +73,9 @@ export default function SqlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground font-medium">Dialect</label>
+    <ToolFrame
+      toolbar={<>
+        <ToolbarField label="Dialect">
           <select className="select-input" value={dialect} onChange={(e) => setDialect(e.target.value as Dialect)}>
             <option value="sql">Standard SQL</option>
             <option value="mysql">MySQL</option>
@@ -84,35 +84,33 @@ export default function SqlFormatterPanel({ tool: _tool }: { tool: Tool }) {
             <option value="bigquery">BigQuery</option>
             <option value="tsql">T-SQL</option>
           </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground font-medium">Indent</label>
+        </ToolbarField>
+        <ToolbarField label="Indent">
           <select className="select-input" value={indent} onChange={(e) => setIndent(Number(e.target.value))}>
             <option value={2}>2 spaces</option>
             <option value={4}>4 spaces</option>
           </select>
-        </div>
+        </ToolbarField>
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input type="checkbox" checked={uppercase} onChange={(e) => setUppercase(e.target.checked)} className="w-3.5 h-3.5 accent-primary" />
           <span className="text-xs text-muted-foreground">Uppercase keywords</span>
         </label>
         <div className="ml-auto">
-          <button className="btn-primary text-xs" onClick={format}>Format SQL</button>
+          <button type="button" className="btn-primary text-xs" onClick={format}>Format SQL</button>
         </div>
-      </div>
-      <div className="flex-1 overflow-hidden p-4">
-        <PanelLayout
-          inputPanel={<CodeEditor value={input} onChange={setInput} placeholder="Paste SQL query here…" minHeight="100%" />}
-          outputPanel={<CodeOutput value={output} language="sql" placeholder="Formatted SQL appears here…" />}
-          outputText={output}
-          outputStatus={status}
-          errorMessage={error}
-          onSample={() => setInput(SAMPLE)}
-          downloadName="formatted.sql"
-          onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
-          onSwap={() => { if (output) setInput(output); }}
-        />
-      </div>
-    </div>
+      </>}
+    >
+      <PanelLayout
+        inputPanel={<CodeEditor value={input} onChange={setInput} placeholder="Paste SQL query here…" minHeight="100%" />}
+        outputPanel={<CodeOutput value={output} language="sql" placeholder="Formatted SQL appears here…" />}
+        outputText={output}
+        outputStatus={status}
+        errorMessage={error}
+        onSample={() => setInput(SAMPLE)}
+        downloadName="formatted.sql"
+        onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
+        onSwap={() => { if (output) setInput(output); }}
+      />
+    </ToolFrame>
   );
 }

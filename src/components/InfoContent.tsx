@@ -1,7 +1,27 @@
 'use client';
 import React from 'react';
 import InfoPage from '@/components/InfoPage';
-import { useLocale } from '@/i18n/LocaleProvider';
+import Link from 'next/link';
+import { CATEGORIES, CATEGORY_COUNTS, TOOLS } from '@/data/tools';
+import { fill, getCategoryName, useLocale } from '@/i18n/LocaleProvider';
+
+/** The live category list, so the About page always matches the homepage, footer and filters. */
+function CategoryList() {
+  const { locale, t } = useLocale();
+  return (
+    <>
+      <p>{fill(t('aboutCategoriesIntro'), { n: CATEGORIES.length })}</p>
+      <ul>
+        {CATEGORIES.map((category) => (
+          <li key={category.id}>
+            <Link href={`/tools?cat=${category.id}`}>{getCategoryName(category.id, category.label, locale)}</Link>{' '}
+            <span className="tabular-nums">({CATEGORY_COUNTS[category.id]})</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
 const GITHUB = 'https://github.com/Dear0001';
 
@@ -17,15 +37,17 @@ export function AboutContent() {
   const kh = useLocale().locale === 'kh';
   return kh ? (
     <InfoPage title="អំពី DLTools">
-      <p>DLTools គឺជាប្រអប់ឧបករណ៍ឥតគិតថ្លៃដែលដំណើរការលើ កម្មវិធីរុករក សម្រាប់អ្នកអភិវឌ្ឍន៍ សិស្ស និស្សិត និងអ្នកប្រើប្រាស់កុំព្យូទ័រទូទៅ។ វាប្រមូលផ្តុំកម្មវិធីរៀបចំទ្រង់ទ្រាយ ឧបករណ៍ប្រៀបធៀប ឧបករណ៍ QR និង KHQR កម្មវិធីបម្លែងរូបភាព និង Base64 កម្មវិធីបង្កើត និងកម្មវិធីបម្លែង PDF/Word មកក្នុងកន្លែងធ្វើការតែមួយដែលមានលំនាំស្របគ្នា។</p>
+      <p>DLTools គឺជាប្រអប់ឧបករណ៍ឥតគិតថ្លៃដែលដំណើរការក្នុងកម្មវិធីរុករក សម្រាប់អ្នកអភិវឌ្ឍន៍ សិស្ស និស្សិត និងអ្នកប្រើប្រាស់កុំព្យូទ័រទូទៅ។ វាប្រមូលផ្តុំឧបករណ៍ចំនួន {TOOLS.length} មកក្នុងកន្លែងធ្វើការតែមួយ ដែលមានរបៀបប្រើដូចគ្នា។</p>
+      <CategoryList />
       <h2>របៀបដំណើរការ</h2>
-      <p>ឧបករណ៍ភាគច្រើនដំណើរការទាំងស្រុងក្នុង កម្មវិធីរុករក របស់អ្នក ដូច្នេះអត្ថបទ ឯកសារ និង token ដែលអ្នកបិទភ្ជាប់ត្រូវបានដំណើរការនៅលើឧបករណ៍របស់អ្នកផ្ទាល់។ ឧបករណ៍ដែលត្រូវការម៉ាស៊ីនមេនឹងប្រាប់ច្បាស់នៅលើទំព័ររបស់វា។</p>
+      <p>ឧបករណ៍ភាគច្រើនដំណើរការទាំងស្រុងក្នុងកម្មវិធីរុករករបស់អ្នក ដូច្នេះអត្ថបទ ឯកសារ និង token ដែលអ្នកបិទភ្ជាប់ត្រូវបានដំណើរការនៅលើឧបករណ៍របស់អ្នកផ្ទាល់។ ឧបករណ៍ដែលត្រូវការម៉ាស៊ីនមេនឹងប្រាប់ច្បាស់នៅលើទំព័ររបស់វា។</p>
       <h2>គណនី</h2>
       <p>មិនចាំបាច់មានគណនីដើម្បីប្រើឧបករណ៍ណាមួយទេ។ ការចូលដោយប្រើ Google គ្រាន់តែធ្វើសមកាលកម្មការកំណត់ ឧបករណ៍ដែលបានប្រើថ្មីៗ និងទិន្នន័យដែលបានរក្សាទុករបស់អ្នកនៅលើឧបករណ៍ផ្សេងៗប៉ុណ្ណោះ។</p>
     </InfoPage>
   ) : (
     <InfoPage title="About DLTools">
-      <p>DLTools is a free, browser-based toolbox for developers, students and everyday computer users. It brings formatters, diff checkers, QR and KHQR utilities, image and Base64 converters, generators and PDF/Word converters into one consistent workspace.</p>
+      <p>DLTools is a free, browser-based toolbox for developers, students and everyday computer users. It brings {TOOLS.length} tools together in one consistent workspace.</p>
+      <CategoryList />
       <h2>How it works</h2>
       <p>Most tools run entirely in your browser, so the text, files and tokens you paste are processed on your own device. Tools that need a server say so on their page.</p>
       <h2>Accounts</h2>
@@ -40,7 +62,7 @@ export function PrivacyContent() {
     <InfoPage title="គោលការណ៍ឯកជនភាព">
       <p>ទំព័រនេះសង្ខេបពីរបៀបដែល DLTools គ្រប់គ្រងព័ត៌មាន។ វាគឺជាសេចក្តីសង្ខេបជាភាសាងាយយល់ មិនមែនជាប្រឹក្សាផ្លូវច្បាប់ទេ។</p>
       <h2>ទិន្នន័យបញ្ចូលក្នុងឧបករណ៍របស់អ្នក</h2>
-      <p>ឧបករណ៍ភាគច្រើនដំណើរការទិន្នន័យបញ្ចូលក្នុងមូលដ្ឋានក្នុង កម្មវិធីរុករក របស់អ្នក ហើយមិនផ្ញើវាទៅម៉ាស៊ីនមេរបស់យើងទេ។ ការបម្លែងឯកសារដែលប្រើម៉ាស៊ីនមេត្រូវបានដាក់ស្លាកឱ្យឃើញច្បាស់នៅលើទំព័រឧបករណ៍។</p>
+      <p>ឧបករណ៍ភាគច្រើនដំណើរការទិន្នន័យបញ្ចូលក្នុងមូលដ្ឋានក្នុងកម្មវិធីរុករករបស់អ្នក ហើយមិនផ្ញើវាទៅម៉ាស៊ីនមេរបស់យើងទេ។ ការបម្លែងឯកសារដែលប្រើម៉ាស៊ីនមេត្រូវបានដាក់ស្លាកឱ្យឃើញច្បាស់នៅលើទំព័រឧបករណ៍។</p>
       <h2>ទុកនៅលើឧបករណ៍របស់អ្នក</h2>
       <ul>
         <li>ធីម និងភាសាដែលអ្នកជ្រើសរើស ឧបករណ៍ដែលបានប្រើថ្មីៗ និងចំណូលចិត្ត (ទំហំផ្ទុកក្នុងមូលដ្ឋានរបស់ កម្មវិធីរុករក)។</li>
@@ -112,7 +134,7 @@ export function ContactContent() {
   return kh ? (
     <InfoPage title="ទំនាក់ទំនង">
       <p>សម្រាប់សំណួរ ភាពជាដៃគូ ឬការគាំទ្រ សូមទាក់ទងអ្នកថែទាំតាមរយៈ <GithubLink>GitHub</GithubLink>។</p>
-      <p>ដើម្បីគាំទ្រគម្រោងនេះ សូមប្រើប៊ូតុង “ជួយគាំទ្រ” នៅរបារគ្រប់គ្រងខាងលើ។</p>
+      <p>ដើម្បីគាំទ្រគម្រោងនេះ សូមប្រើប៊ូតុង “ជួយគាំទ្រ” នៅរបារខាងលើ។</p>
     </InfoPage>
   ) : (
     <InfoPage title="Contact">

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -44,14 +45,13 @@ export default function TextToolkitPanel({ tool: _tool }: { tool: Tool }) {
     return `Characters: ${Array.from(input).length}\nCharacters (excluding spaces): ${Array.from(input).filter((character) => !/\s/u.test(character)).length}\nWords: ${words}\nLines: ${lines}\nUTF-8 bytes: ${new TextEncoder().encode(input).length}`;
   }, [input, mode, caseMode, count]);
 
-  return <div className="h-full flex flex-col">
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-      <select className="select-input" value={mode} onChange={(event) => setMode(event.target.value as Mode)}><option value="analyze">Text analyzer</option><option value="case">Case converter</option><option value="lists">List comparer</option><option value="lorem">Lorem Ipsum</option></select>
-      {mode === 'case' && <select className="select-input" value={caseMode} onChange={(event) => setCaseMode(event.target.value)}><option value="camel">camelCase</option><option value="pascal">PascalCase</option><option value="snake">snake_case</option><option value="kebab">kebab-case</option><option value="constant">CONSTANT_CASE</option><option value="title">Title Case</option><option value="upper">UPPERCASE</option><option value="lower">lowercase</option></select>}
+  return <ToolFrame
+    toolbar={<>
+      <ToolbarField label="Tool"><select className="select-input" value={mode} onChange={(event) => setMode(event.target.value as Mode)}><option value="analyze">Text analyzer</option><option value="case">Case converter</option><option value="lists">List comparer</option><option value="lorem">Lorem Ipsum</option></select></ToolbarField>
+      {mode === 'case' && <ToolbarField label="Case"><select className="select-input" value={caseMode} onChange={(event) => setCaseMode(event.target.value)}><option value="camel">camelCase</option><option value="pascal">PascalCase</option><option value="snake">snake_case</option><option value="kebab">kebab-case</option><option value="constant">CONSTANT_CASE</option><option value="title">Title Case</option><option value="upper">UPPERCASE</option><option value="lower">lowercase</option></select></ToolbarField>}
       {mode === 'lists' && <span className="text-xs text-muted-foreground">Separate List A and List B with a blank line.</span>}
-      {mode === 'lorem' && <label className="text-xs text-muted-foreground ml-auto">Paragraphs <input className="input-code w-16 p-1 ml-1" type="number" min={1} max={50} value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>}
-    </div>
-    <div className="flex-1 min-h-0 p-4"><PanelLayout inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder={mode === 'lists' ? 'List A items…\n\nList B items…' : 'Enter text…'} />} outputPanel={<CodeOutput value={output} language="text" placeholder="Result appears here…" />} outputText={output} outputStatus={output ? 'success' : 'idle'} onClear={() => setInput('')} />
-    </div>
-  </div>;
+      {mode === 'lorem' && <ToolbarField label="Paragraphs"><input className="input-code w-16 p-1" type="number" min={1} max={50} value={count} onChange={(event) => setCount(Number(event.target.value))} /></ToolbarField>}
+    </>}
+  ><PanelLayout inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder={mode === 'lists' ? 'List A items…\n\nList B items…' : 'Enter text…'} />} outputPanel={<CodeOutput value={output} language="text" placeholder="Result appears here…" />} outputText={output} outputStatus={output ? 'success' : 'idle'} onClear={() => setInput('')} />
+  </ToolFrame>;
 }

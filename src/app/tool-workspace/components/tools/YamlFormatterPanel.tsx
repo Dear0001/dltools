@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -99,26 +100,25 @@ export default function YamlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
+    <ToolFrame
+      toolbar={<>
         <div className="flex items-center gap-1.5 ml-auto">
-          <button className="btn-ghost text-xs" onClick={validate}>Validate</button>
-          <button className="btn-primary text-xs" onClick={format}>Format YAML</button>
+          <button type="button" className="btn-ghost text-xs" onClick={validate}>Validate</button>
+          <button type="button" className="btn-primary text-xs" onClick={format}>Format YAML</button>
         </div>
-      </div>
-      <div className="flex-1 overflow-hidden p-4">
-        <PanelLayout
-          inputPanel={<CodeEditor value={input} onChange={setInput} placeholder="Paste YAML here…" minHeight="100%" />}
-          outputPanel={<CodeOutput value={output} language="yaml" placeholder="Formatted YAML appears here…" />}
-          outputText={output}
-          outputStatus={status}
-          errorMessage={error}
-          onSample={() => setInput(SAMPLE)}
-          downloadName="formatted.yaml"
-          onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
-          onSwap={() => { if (output) setInput(output); }}
-        />
-      </div>
-    </div>
+      </>}
+    >
+      <PanelLayout
+        inputPanel={<CodeEditor value={input} onChange={setInput} placeholder="Paste YAML here…" minHeight="100%" />}
+        outputPanel={<CodeOutput value={output} language="yaml" placeholder="Formatted YAML appears here…" />}
+        outputText={output}
+        outputStatus={status}
+        errorMessage={error}
+        onSample={() => setInput(SAMPLE)}
+        downloadName="formatted.yaml"
+        onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
+        onSwap={() => { if (output) setInput(output); }}
+      />
+    </ToolFrame>
   );
 }

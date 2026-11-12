@@ -100,13 +100,26 @@ export function useRecentTools() {
  * `compact` renders a row of small removable tiles (homepage); `cards` renders
  * full tool cards (workspace).
  */
-export default function RecentTools({ variant = 'compact', headingLevel = 2 }: { variant?: 'compact' | 'cards'; headingLevel?: 2 | 3 }) {
+export default function RecentTools({
+  variant = 'compact',
+  headingLevel = 2,
+  hideWhenEmpty = false,
+  className = '',
+}: {
+  variant?: 'compact' | 'cards';
+  headingLevel?: 2 | 3;
+  /** Render nothing (not even a placeholder) until there is at least one recent tool. */
+  hideWhenEmpty?: boolean;
+  className?: string;
+}) {
   const { locale, t } = useLocale();
   const { ready, tools, remove } = useRecentTools();
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
 
+  if (hideWhenEmpty && (!ready || tools.length === 0)) return null;
+
   return (
-    <div>
+    <div className={className}>
       <div className="mb-4 flex items-center gap-2">
         <History size={18} className="text-muted-foreground" aria-hidden="true" />
         <Heading className="section-title">{t('recentTools')}</Heading>

@@ -38,6 +38,12 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
     return [...matched].sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
   }, [active, query, sort, locale]);
 
+  // When a category filter hides matches, say how many exist elsewhere so the user can widen the search.
+  const otherMatches = useMemo(
+    () => (active !== 'all' && query.trim() && results.length === 0 ? searchTools(query, locale).length : 0),
+    [active, query, results.length, locale],
+  );
+
   const chip = (isActive: boolean) =>
     `inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
       isActive ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -95,11 +101,17 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
           <EmptyState
             icon={<SearchX size={28} />}
             title={t('noToolsMatch')}
-            description={t('noToolsMatchHelp')}
+            description={otherMatches > 0 ? fill(t('matchesInOtherCategories'), { n: otherMatches }) : t('noToolsMatchHelp')}
             action={
-              <button type="button" className="btn-primary" onClick={() => { setQuery(''); setCategory('all'); }}>
-                {t('clearFilters')}
-              </button>
+              otherMatches > 0 ? (
+                <button type="button" className="btn-primary" onClick={() => setCategory('all')}>
+                  {t('searchAllCategories')}
+                </button>
+              ) : (
+                <button type="button" className="btn-primary" onClick={() => { setQuery(''); setCategory('all'); }}>
+                  {t('clearFilters')}
+                </button>
+              )
             }
           />
         ) : (

@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -101,33 +102,31 @@ export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground font-medium">Indent</label>
+    <ToolFrame
+      toolbar={<>
+        <ToolbarField label="Indent">
           <select className="select-input" value={indent} onChange={(e) => setIndent(Number(e.target.value))}>
             <option value={2}>2 spaces</option>
             <option value={4}>4 spaces</option>
           </select>
-        </div>
+        </ToolbarField>
         <div className="flex items-center gap-1.5 ml-auto">
-          <button className="btn-ghost text-xs" onClick={minify}>Minify</button>
-          <button className="btn-primary text-xs" onClick={format}>Format XML</button>
+          <button type="button" className="btn-ghost text-xs" onClick={minify}>Minify</button>
+          <button type="button" className="btn-primary text-xs" onClick={format}>Format XML</button>
         </div>
-      </div>
-      <div className="flex-1 overflow-hidden p-4">
-        <PanelLayout
-          inputPanel={<CodeEditor value={input} onChange={setInput} placeholder="Paste XML here…" minHeight="100%" />}
-          outputPanel={<CodeOutput value={output} language="xml" placeholder="Formatted XML appears here…" />}
-          outputText={output}
-          outputStatus={status}
-          errorMessage={error}
-          onSample={() => setInput(SAMPLE)}
-          downloadName="formatted.xml"
-          onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
-          onSwap={() => { if (output) setInput(output); }}
-        />
-      </div>
-    </div>
+      </>}
+    >
+      <PanelLayout
+        inputPanel={<CodeEditor value={input} onChange={setInput} placeholder="Paste XML here…" minHeight="100%" />}
+        outputPanel={<CodeOutput value={output} language="xml" placeholder="Formatted XML appears here…" />}
+        outputText={output}
+        outputStatus={status}
+        errorMessage={error}
+        onSample={() => setInput(SAMPLE)}
+        downloadName="formatted.xml"
+        onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
+        onSwap={() => { if (output) setInput(output); }}
+      />
+    </ToolFrame>
   );
 }

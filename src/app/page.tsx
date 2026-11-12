@@ -97,12 +97,12 @@ export default function HomePage() {
 
       <div className="page-container pb-16">
         {/* 2. Recently used */}
-        <section className="pt-10" aria-label={t('recentTools')}>
-          <RecentTools />
+        <section aria-label={t('recentTools')}>
+          <RecentTools hideWhenEmpty className="pt-10" />
         </section>
 
         {/* 3. Popular tools */}
-        <section className="pt-12" aria-labelledby="popular-heading">
+        <section className="pt-10" aria-labelledby="popular-heading">
           <SectionHeader id="popular-heading" title={t('popularTools')} description={t('popularHelp')} action={viewAll} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {POPULAR.map((tool) => <ToolCard key={tool.id} tool={tool} />)}

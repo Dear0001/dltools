@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -20,6 +21,8 @@ import {
   type JsonFragment,
   type OutputFormatOption,
 } from './jsonContent';
+
+const SAMPLE = '{"id":1024,"name":"DLTools","active":true,"tags":["json","formatter"],"owner":{"name":"Dara","city":"Phnom Penh"},"stats":{"tools":44,"languages":["en","km"]}}';
 
 type Status = 'idle' | 'success' | 'error';
 type ProcessingAction = 'format' | 'minify' | 'validate';
@@ -517,6 +520,13 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
     }
   };
 
+  const format = () => {
+    setShowImagePreviews(false);
+    setPreviews([]);
+    setDecodedQrItems([]);
+    processContent(input, 'format');
+  };
+
   const minify = () => {
     setShowImagePreviews(false);
     setPreviews([]);
@@ -544,9 +554,8 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
   }, [input, debouncedInput, inputFormat, outputFormat, sortKeys, indent]);
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Config bar */}
-      <div className="flex-shrink-0 flex flex-wrap items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30">
+    <ToolFrame
+      toolbar={<>
         <div className="flex items-center gap-2">
           <label htmlFor="json-input-format" className="text-xs text-muted-foreground font-medium">Input</label>
           <select
@@ -587,8 +596,7 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
             <option value="json">JSON</option>
           </select>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground font-medium">Indent</label>
+        <ToolbarField label="Indent">
           <select
             className="select-input"
             value={indent}
@@ -598,7 +606,7 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
             <option value={4}>4 spaces</option>
             <option value={1}>1 space</option>
           </select>
-        </div>
+        </ToolbarField>
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input
             type="checkbox"
@@ -609,22 +617,23 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
           <span className="text-xs text-muted-foreground">Sort keys</span>
         </label>
         <div className="flex items-center gap-1.5 ml-auto">
-          <button className="btn-ghost text-xs" onClick={validate}>
-            Validate
-          </button>
-          <button className="btn-ghost text-xs" onClick={minify}>
-            <Minimize2 size={12} />
-            Minify
-          </button>
-          <button className="btn-primary text-xs" onClick={previewImages}>
-            <ImageIcon size={12} />
+          <button type="button" className="btn-ghost text-xs" onClick={previewImages}>
+            <ImageIcon size={12} aria-hidden="true" />
             Preview image
           </button>
+          <button type="button" className="btn-ghost text-xs" onClick={validate}>
+            Validate
+          </button>
+          <button type="button" className="btn-ghost text-xs" onClick={minify}>
+            <Minimize2 size={12} aria-hidden="true" />
+            Minify
+          </button>
+          <button type="button" className="btn-primary text-xs" onClick={format}>
+            Format JSON
+          </button>
         </div>
-      </div>
-
-      {/* Panels */}
-      <div className="flex-1 overflow-hidden p-4">
+      </>}
+    >
         <PanelLayout
           inputPanel={
             <CodeEditor
@@ -810,11 +819,11 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
             setShowImagePreviews(false);
             setDecodedQrItems([]);
           }}
+          onSample={() => handleInputChange(SAMPLE)}
           onSwap={() => {
             if (output) handleInputChange(output);
           }}
         />
-      </div>
-    </div>
+    </ToolFrame>
   );
 }

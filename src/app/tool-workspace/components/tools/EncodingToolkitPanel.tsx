@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -71,12 +72,11 @@ export default function EncodingToolkitPanel({ tool: _tool }: { tool: Tool }) {
     return () => { processId.current += 1; };
   }, [input, debouncedInput, mode, direction, process]);
 
-  return <div className="h-full flex flex-col">
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-      <select className="select-input" value={mode} onChange={(event) => setMode(event.target.value as Mode)}><option value="html">HTML entities</option><option value="hex">UTF-8 hex</option><option value="gzip">Gzip</option></select>
-      <select className="select-input" value={direction} onChange={(event) => setDirection(event.target.value as Direction)}><option value="encode">Encode</option><option value="decode">Decode</option></select>
-      <button className="btn-primary text-xs ml-auto" onClick={() => void process()}>{mode === 'gzip' ? 'Compress / decompress' : direction === 'encode' ? 'Encode' : 'Decode'}</button>
-    </div>
-    <div className="flex-1 min-h-0 p-4"><PanelLayout inputPanel={<CodeEditor value={input} onChange={changeInput} minHeight="100%" placeholder="Input text…" />} outputPanel={<CodeOutput value={output} language="text" placeholder="Result appears here…" />} outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error} onClear={() => { processId.current += 1; setInput(''); setOutput(''); setError(''); }} /></div>
-  </div>;
+  return <ToolFrame
+    toolbar={<>
+      <ToolbarField label="Encoding"><select className="select-input" value={mode} onChange={(event) => setMode(event.target.value as Mode)}><option value="html">HTML entities</option><option value="hex">UTF-8 hex</option><option value="gzip">Gzip</option></select></ToolbarField>
+      <ToolbarField label="Direction"><select className="select-input" value={direction} onChange={(event) => setDirection(event.target.value as Direction)}><option value="encode">{mode === 'gzip' ? 'Compress' : 'Encode'}</option><option value="decode">{mode === 'gzip' ? 'Decompress' : 'Decode'}</option></select></ToolbarField>
+      <button type="button" className="btn-primary ml-auto" onClick={() => void process()}>{mode === 'gzip' ? (direction === 'encode' ? 'Compress' : 'Decompress') : direction === 'encode' ? 'Encode' : 'Decode'}</button>
+    </>}
+  ><PanelLayout inputPanel={<CodeEditor value={input} onChange={changeInput} minHeight="100%" placeholder="Input text…" />} outputPanel={<CodeOutput value={output} language="text" placeholder="Result appears here…" />} outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error} onClear={() => { processId.current += 1; setInput(''); setOutput(''); setError(''); }} /></ToolFrame>;
 }

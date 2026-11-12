@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import ToolBrowser from '@/app/components/ToolBrowser';
 import ExploreHeader from './ExploreHeader';
+import { CATEGORIES, TOOLS } from '@/data/tools';
 
 export const metadata: Metadata = {
   title: 'Explore Tools',
-  description: 'Search and filter every DLTools utility: formatters, diff checkers, QR and KHQR tools, image and Base64 converters, generators and PDF/Word converters.',
+  // Built from the category list so it can never drift from the taxonomy.
+  description: `Search and filter all ${TOOLS.length} DLTools utilities across ${CATEGORIES.length} categories: ${CATEGORIES.map((c) => c.label).join(', ')}.`,
   alternates: { canonical: '/tools' },
 };
 

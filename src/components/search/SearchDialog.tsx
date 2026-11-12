@@ -114,7 +114,12 @@ export default function SearchDialog({ open, onClose }: { open: boolean; onClose
             {query.trim() ? t('searchResults') : t('searchSuggested')}
           </p>
           {results.length === 0 ? (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">{t('noSearchMatches')}</p>
+            <div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
+              <p className="text-sm text-muted-foreground">{t('noSearchMatches')}</p>
+              <button type="button" className="btn-ghost" onClick={() => { onClose(); router.push('/tools'); }}>
+                {t('viewAllTools')}
+              </button>
+            </div>
           ) : (
             <ul ref={listRef} id={listId} role="listbox" aria-label={t('searchResults')}>
               {results.map((tool, index) => {

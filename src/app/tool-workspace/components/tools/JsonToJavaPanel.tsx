@@ -1,6 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -127,37 +128,33 @@ export default function JsonToJavaPanel({ tool: _tool }: { tool: Tool }) {
   }, [input, debouncedInput, lang, rootName, generate]);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground font-medium">Root name</label>
+    <ToolFrame
+      toolbar={<>
+        <ToolbarField label="Root name">
           <input type="text" value={rootName} onChange={(e) => setRootName(e.target.value)} className="input-code py-1 px-2 text-xs w-36" />
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-muted-foreground">Language</label>
+        </ToolbarField>
+        <ToolbarField label="Language">
           <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} className="select-input text-xs">
             <option value="java">Java</option>
             <option value="kotlin">Kotlin</option>
             <option value="csharp">C#</option>
           </select>
-        </div>
+        </ToolbarField>
         <div className="ml-auto">
-          <button className="btn-primary text-xs" onClick={() => generate()}>Generate Models</button>
+          <button type="button" className="btn-primary text-xs" onClick={() => generate()}>Generate Models</button>
         </div>
-      </div>
-
-      <div className="flex-1 overflow-hidden p-4">
-        <PanelLayout
-          inputPanel={<CodeEditor value={input} onChange={setInput} placeholder='Paste JSON here… {"key": "value"}' minHeight="100%" />}
-          outputPanel={<CodeOutput value={output} language="java" placeholder="Generated models appear here…" />}
-          outputText={output}
-          outputStatus={error ? 'error' : output ? 'success' : 'idle'}
-          errorMessage={error}
-          onSample={() => setInput(SAMPLE)}
-          onClear={() => { setInput(''); setOutput(''); setError(''); }}
-        />
-      </div>
-    </div>
+      </>}
+    >
+      <PanelLayout
+        inputPanel={<CodeEditor value={input} onChange={setInput} placeholder='Paste JSON here… {"key": "value"}' minHeight="100%" />}
+        outputPanel={<CodeOutput value={output} language="java" placeholder="Generated models appear here…" />}
+        outputText={output}
+        outputStatus={error ? 'error' : output ? 'success' : 'idle'}
+        errorMessage={error}
+        onSample={() => setInput(SAMPLE)}
+        onClear={() => { setInput(''); setOutput(''); setError(''); }}
+      />
+    </ToolFrame>
   );
 }
 

@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
+import { ArrowLeftRight } from 'lucide-react';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 
 type Format = 'json' | 'yaml' | 'csv' | 'xml';
+const FORMATS: Format[] = ['json', 'yaml', 'csv', 'xml'];
 
 const SAMPLE = `[{"name":"Dara","role":"developer"},{"name":"Sophea","role":"designer"}]`;
 
@@ -147,19 +150,19 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
     return () => { conversionId.current += 1; };
   }, [input, debouncedInput, inputFormat, outputFormat, convert]);
 
-  return <div className="h-full flex flex-col">
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-      <label className="text-xs text-muted-foreground">From <select className="select-input ml-1" value={inputFormat} onChange={(event) => setInputFormat(event.target.value as Format)}>{['json', 'yaml', 'csv', 'xml'].map((format) => <option key={format}>{format}</option>)}</select></label>
-      <span className="text-muted-foreground">→</span>
-      <label className="text-xs text-muted-foreground">To <select className="select-input ml-1" value={outputFormat} onChange={(event) => setOutputFormat(event.target.value as Format)}>{['json', 'yaml', 'csv', 'xml'].map((format) => <option key={format}>{format}</option>)}</select></label>
-      <button className="btn-primary text-xs ml-auto" onClick={() => void convert()}>Convert</button>
-    </div>
-    <div className="flex-1 min-h-0 p-4"><PanelLayout
+  const formatOptions = FORMATS.map((format) => <option key={format} value={format}>{format.toUpperCase()}</option>);
+  return <ToolFrame
+    toolbar={<>
+      <ToolbarField label="From"><select className="select-input" value={inputFormat} onChange={(event) => setInputFormat(event.target.value as Format)}>{formatOptions}</select></ToolbarField>
+      <button type="button" className="btn-icon" onClick={() => { setInputFormat(outputFormat); setOutputFormat(inputFormat); }} title="Swap formats" aria-label="Swap formats"><ArrowLeftRight size={14} aria-hidden="true" /></button>
+      <ToolbarField label="To"><select className="select-input" value={outputFormat} onChange={(event) => setOutputFormat(event.target.value as Format)}>{formatOptions}</select></ToolbarField>
+      <button type="button" className="btn-primary ml-auto" onClick={() => void convert()}>Convert</button>
+    </>}
+  ><PanelLayout
       inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Paste JSON, YAML, CSV, or XML…" />}
       outputPanel={<CodeOutput value={output} language={outputFormat === 'yaml' ? 'yaml' : outputFormat === 'json' ? 'json' : 'text'} placeholder="Converted data appears here…" />}
       outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error}
       onSample={() => setInput(SAMPLE)}
       onClear={() => { setInput(''); setOutput(''); setError(''); }}
-    /></div>
-  </div>;
+    /></ToolFrame>;
 }

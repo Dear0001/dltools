@@ -5,6 +5,7 @@ import { Heart, Search } from 'lucide-react';
 import ToolCard from '@/app/components/ToolCard';
 import RecentTools from '@/app/components/RecentTools';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/PageHeader';
 import { TOOLS } from '@/data/tools';
 import { useFavorites } from '@/lib/favorites';
 import { useLocale } from '@/i18n/LocaleProvider';
@@ -19,16 +20,16 @@ export default function NoToolSelected() {
 
   return (
     <div className="page-container pb-16 pt-10">
-      <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="eyebrow">{t('navWorkspace')}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{t('workspaceTitle')}</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">{t('workspaceHelp')}</p>
-        </div>
-        <Link href="/tools" className="btn-primary self-start sm:self-auto">
-          <Search size={15} aria-hidden="true" /> {t('exploreTools')}
-        </Link>
-      </header>
+      <PageHeader
+        crumbs={[{ label: t('navWorkspace') }]}
+        title={t('workspaceTitle')}
+        description={t('workspaceHelp')}
+        action={
+          <Link href="/tools" className="btn-primary">
+            <Search size={15} aria-hidden="true" /> {t('exploreTools')}
+          </Link>
+        }
+      />
 
       <section aria-labelledby="workspace-favorites" className="mb-12">
         <div className="mb-4 flex items-center gap-2">
@@ -38,7 +39,7 @@ export default function NoToolSelected() {
         {!ready ? (
           <div className="h-40 animate-pulse rounded-2xl bg-muted" aria-hidden="true" />
         ) : favorites.length === 0 ? (
-          <EmptyState icon={<Heart size={28} />} title={t('favoritesEmptyTitle')} description={t('favoritesEmptyBody')} />
+          <EmptyState icon={<Heart size={28} />} title={t('favoritesEmptyTitle')} description={t('favoritesEmptyBody')} action={<Link href="/tools" className="btn-ghost">{t('exploreTools')}</Link>} />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {favorites.map((tool) => <ToolCard key={tool.id} tool={tool} />)}

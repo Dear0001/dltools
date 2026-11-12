@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import ToolCard from '@/app/components/ToolCard';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/PageHeader';
 import { TOOLS } from '@/data/tools';
 import { useFavorites } from '@/lib/favorites';
 import { useLocale } from '@/i18n/LocaleProvider';
@@ -15,13 +16,11 @@ export default function FavoritesView() {
 
   return (
     <div className="page-container pb-16 pt-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-xs text-muted-foreground">
-        <Link href="/tool-workspace" className="hover:text-primary">{t('navWorkspace')}</Link> / <span className="text-foreground">{t('favorites')}</span>
-      </nav>
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{t('favorites')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('favoritesHelp')}</p>
-      </header>
+      <PageHeader
+        crumbs={[{ label: t('navWorkspace'), href: '/tool-workspace' }, { label: t('favorites') }]}
+        title={t('favorites')}
+        description={t('favoritesHelp')}
+      />
       {!ready ? (
         <div className="h-40 animate-pulse rounded-2xl bg-muted" aria-hidden="true" />
       ) : tools.length === 0 ? (

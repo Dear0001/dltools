@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
@@ -111,14 +112,13 @@ export default function JsonToCodePanel({ tool }: { tool: Tool }) {
   }, [input, debouncedInput, generate]);
 
   const language: 'typescript' | 'text' = target === 'zod' || target === 'typescript' ? 'typescript' : 'text';
-  return <div className="h-full flex flex-col">
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-      <label className="text-xs text-muted-foreground">Root name <input className="input-code ml-1 py-1 px-2 text-xs w-32" value={rootName} onChange={(event) => setRootName(event.target.value)} /></label>
-      <label className="text-xs text-muted-foreground">Language <select className="select-input ml-1" value={target} onChange={(event) => setTarget(event.target.value as Target)}>
+  return <ToolFrame
+    toolbar={<>
+      <ToolbarField label="Root name"><input className="input-code w-32 px-2 py-1 text-xs" value={rootName} onChange={(event) => setRootName(event.target.value)} /></ToolbarField>
+      <ToolbarField label="Language"><select className="select-input" value={target} onChange={(event) => setTarget(event.target.value as Target)}>
         <option value="typescript">TypeScript</option><option value="go">Go</option><option value="python">Python dataclass</option><option value="pydantic">Python Pydantic</option><option value="rust">Rust</option><option value="zod">Zod</option><option value="dart">Dart</option>
-      </select></label>
-      <button className="btn-primary text-xs ml-auto" onClick={() => generate()}>Generate</button>
-    </div>
-    <div className="flex-1 min-h-0 p-4"><PanelLayout inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Paste a JSON object…" />} outputPanel={<CodeOutput value={output} language={language} placeholder="Generated types appear here…" />} outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error} onSample={() => setInput(SAMPLE)} onClear={() => { setInput(''); setOutput(''); setError(''); }} /></div>
-  </div>;
+      </select></ToolbarField>
+      <button type="button" className="btn-primary ml-auto" onClick={() => generate()}>Generate</button>
+    </>}
+  ><PanelLayout inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Paste a JSON object…" />} outputPanel={<CodeOutput value={output} language={language} placeholder="Generated types appear here…" />} outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error} onSample={() => setInput(SAMPLE)} onClear={() => { setInput(''); setOutput(''); setError(''); }} /></ToolFrame>;
 }

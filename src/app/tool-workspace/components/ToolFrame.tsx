@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { localizeControlContent, useLocale } from '@/i18n/LocaleProvider';
+import { localizeControlContent, translateText, useLocale } from '@/i18n/LocaleProvider';
 
 /**
  * Standard tool layout: an optional options toolbar on top, then the tool body
@@ -10,13 +10,14 @@ import { localizeControlContent, useLocale } from '@/i18n/LocaleProvider';
 export default function ToolFrame({ toolbar, children, notice }: { toolbar?: React.ReactNode; children: React.ReactNode; notice?: React.ReactNode }) {
   const { locale } = useLocale();
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col gap-3">
       {toolbar && (
-        <div className="flex flex-shrink-0 flex-wrap items-center gap-3 border-b border-border bg-secondary/30 px-4 py-2.5">
+        <div className="flex flex-shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--radius)] border border-border bg-card px-3 py-2.5 shadow-card">
           {localizeControlContent(toolbar, locale)}
         </div>
       )}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 lg:overflow-hidden">
+      {/* Panels share the toolbar's outer edges, which match the page header's gutter. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-hidden">
         <div className="min-h-0 flex-1">{children}</div>
         {notice && <p className="flex-shrink-0 text-xs leading-relaxed text-muted-foreground">{notice}</p>}
       </div>
@@ -26,9 +27,10 @@ export default function ToolFrame({ toolbar, children, notice }: { toolbar?: Rea
 
 /** Label + control pair used inside a ToolFrame toolbar. */
 export function ToolbarField({ label, children }: { label: string; children: React.ReactNode }) {
+  const { locale } = useLocale();
   return (
     <label className="flex items-center gap-2">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">{translateText(label, locale)}</span>
       {children}
     </label>
   );

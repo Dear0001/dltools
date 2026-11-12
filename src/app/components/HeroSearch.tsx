@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import ToolIcon from '@/components/ui/ToolIcon';
@@ -116,7 +117,10 @@ export default function HeroSearch() {
               ))}
             </ul>
           ) : (
-            <p id={listId} className="px-3 py-3 text-sm text-muted-foreground">{t('noSearchMatches')}</p>
+            <div id={listId} className="flex flex-wrap items-center justify-between gap-2 px-3 py-3">
+              <p className="text-sm text-muted-foreground">{t('noSearchMatches')}</p>
+              <Link href="/tools" className="text-sm font-medium text-primary hover:underline">{t('viewAllTools')}</Link>
+            </div>
           )}
         </div>
       )}

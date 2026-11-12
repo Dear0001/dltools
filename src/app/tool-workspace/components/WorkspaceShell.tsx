@@ -1,7 +1,8 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { ChevronRight, Heart, Home, Link2, ShieldCheck } from 'lucide-react';
+import { Heart, Link2, ShieldCheck } from 'lucide-react';
+import { Breadcrumbs } from '@/components/PageHeader';
 import ToolIcon from '@/components/ui/ToolIcon';
 import { useFavorites } from '@/lib/favorites';
 import Link from 'next/link';
@@ -174,25 +175,14 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
       {/* Workspace header: breadcrumb, title, description, actions */}
       <div className="flex-shrink-0 border-b border-border bg-background-secondary">
         <div className="px-4 py-4 sm:px-6 lg:px-8">
-          <nav aria-label={translateText('Breadcrumb', locale)} className="mb-3 text-xs text-muted-foreground">
-            <ol className="flex flex-wrap items-center gap-1">
-              <li>
-                <Link href="/" className="inline-flex items-center gap-1 rounded hover:text-primary">
-                  <Home size={13} aria-hidden="true" /> {t('home')}
-                </Link>
-              </li>
-              <li aria-hidden="true"><ChevronRight size={12} /></li>
-              <li><Link href="/tools" className="rounded hover:text-primary">{t('navAllTools')}</Link></li>
-              <li aria-hidden="true"><ChevronRight size={12} /></li>
-              <li>
-                <Link href={`/tools?cat=${tool.category}`} className="rounded hover:text-primary">
-                  {category ? getCategoryName(category.id, category.label, locale) : tool.category}
-                </Link>
-              </li>
-              <li aria-hidden="true"><ChevronRight size={12} /></li>
-              <li aria-current="page" className="font-medium text-foreground">{toolName}</li>
-            </ol>
-          </nav>
+          <Breadcrumbs
+            className="mb-3"
+            items={[
+              { label: t('navAllTools'), href: '/tools' },
+              { label: category ? getCategoryName(category.id, category.label, locale) : tool.category, href: `/tools?cat=${tool.category}` },
+              { label: toolName },
+            ]}
+          />
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex min-w-0 items-start gap-3.5">
               <ToolIcon tool={tool} size="lg" className="hidden sm:inline-flex" />
@@ -222,7 +212,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
       </div>
 
       {/* Workspace body */}
-      <div className="min-h-[70vh] flex-1 p-3 sm:p-4 lg:min-h-0 lg:overflow-hidden lg:px-8">
+      <div className="min-h-[70vh] flex-1 px-4 py-4 sm:px-6 lg:min-h-0 lg:overflow-hidden lg:px-8">
         {mounted ? (
           <PanelComponent tool={tool} />
         ) : (
