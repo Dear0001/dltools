@@ -119,6 +119,6 @@ export default function JsonToCodePanel({ tool }: { tool: Tool }) {
       </select></label>
       <button className="btn-primary text-xs ml-auto" onClick={() => generate()}>Generate</button>
     </div>
-    <div className="flex-1 min-h-0 p-4"><PanelLayout inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Paste a JSON object…" />} outputPanel={<CodeOutput value={output} language={language} placeholder="Generated types appear here…" />} outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error} onClear={() => { setInput(''); setOutput(''); setError(''); }} /></div>
+    <div className="flex-1 min-h-0 p-4"><PanelLayout inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Paste a JSON object…" />} outputPanel={<CodeOutput value={output} language={language} placeholder="Generated types appear here…" />} outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error} onSample={() => setInput(SAMPLE)} onClear={() => { setInput(''); setOutput(''); setError(''); }} /></div>
   </div>;
 }

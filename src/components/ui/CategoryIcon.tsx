@@ -1,13 +1,15 @@
 import React from 'react';
-import { Braces, GitCompare, QrCode, ImageIcon, Wrench, Sparkles, Files, type LucideProps } from 'lucide-react';
+import { Braces, Database, GitCompare, QrCode, ImageIcon, Wrench, Sparkles, Files, ShieldCheck, type LucideProps } from 'lucide-react';
 
 const ICONS: Record<string, React.ComponentType<LucideProps>> = {
   FileCode2: Braces,
+  Database,
   GitCompare,
   QrCode,
   ImageIcon,
   Wrench,
   Sparkles,
+  ShieldCheck,
   Files,
 };
 

@@ -38,6 +38,8 @@ const CATEGORY_APPLICATION_TYPE: Record<ToolCategory, 'DeveloperApplication' | '
   diff: 'DeveloperApplication',
   qr: 'DeveloperApplication',
   generators: 'DeveloperApplication',
+  data: 'DeveloperApplication',
+  security: 'DeveloperApplication',
   utilities: 'UtilitiesApplication',
   image: 'UtilitiesApplication',
   documents: 'UtilitiesApplication',

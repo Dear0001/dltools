@@ -6,10 +6,13 @@ export type ThemeId = (typeof THEMES)[number];
 export const DEFAULT_THEME: ThemeId = 'alabaster-paper';
 
 export const THEME_META: Record<ThemeId, { label: string; labelKh: string; dark: boolean; swatch: [string, string, string] }> = {
-  'alabaster-paper': { label: 'Alabaster Paper', labelKh: 'ក្រដាសស្រាល', dark: false, swatch: ['#F7F6F2', '#FAF7F2', '#3F5FE0'] },
-  'nordic-frost': { label: 'Nordic Frost', labelKh: 'ទឹកកកនរឌិក', dark: false, swatch: ['#ECEFF4', '#D8DEE9', '#5E81AC'] },
-  midnight: { label: 'Midnight Charcoal', labelKh: 'ខ្មៅអ័រ​ធ្យូង', dark: true, swatch: ['#1E1E2E', '#282839', '#89B4FA'] },
+  'alabaster-paper': { label: 'Light', labelKh: 'ភ្លឺ', dark: false, swatch: ['#FDFBF7', '#FFFFFF', '#2563EB'] },
+  midnight: { label: 'Dark', labelKh: 'ងងឹត', dark: true, swatch: ['#0F141B', '#161D27', '#60A5FA'] },
+  'nordic-frost': { label: 'Nordic (cool light)', labelKh: 'ណរឌិក (ភ្លឺត្រជាក់)', dark: false, swatch: ['#ECEFF4', '#D8DEE9', '#4C6E9C'] },
 };
+
+/** Order shown in the theme menu: the two main modes first. */
+export const THEME_MENU_ORDER: ThemeId[] = ['alabaster-paper', 'midnight', 'nordic-frost'];
 
 /** Maps values saved by earlier versions (light/dark/nord/monokai) onto the new themes. */
 const LEGACY_THEMES: Record<string, ThemeId> = {
@@ -33,6 +36,7 @@ export function normalizeTheme(value: unknown): ThemeId | null {
 
 /**
  * Runs before first paint (inlined in <head>) so the saved theme is applied
- * without a flash of the default one.
+ * without a flash of the default one. With nothing saved, it follows the
+ * operating system's light/dark preference.
  */
-export const THEME_INIT_SCRIPT = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var t=localStorage.getItem(k);var m={'warm-paper':'alabaster-paper','solarized-light':'nordic-frost',light:'alabaster-paper',dark:'midnight',nord:'midnight',monokai:'midnight'};var ok=['alabaster-paper','nordic-frost','midnight'];if(ok.indexOf(t)<0)t=m[t]||'alabaster-paper';var r=document.documentElement;r.setAttribute('data-theme',t);r.classList.toggle('dark',t==='midnight');r.style.colorScheme=t==='midnight'?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','alabaster-paper');}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var t=localStorage.getItem(k);var m={'warm-paper':'alabaster-paper','solarized-light':'nordic-frost',light:'alabaster-paper',dark:'midnight',nord:'midnight',monokai:'midnight'};var ok=['alabaster-paper','nordic-frost','midnight'];if(ok.indexOf(t)<0)t=m[t]||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'midnight':'alabaster-paper');var r=document.documentElement;r.setAttribute('data-theme',t);r.classList.toggle('dark',t==='midnight');r.style.colorScheme=t==='midnight'?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','alabaster-paper');}})();`;

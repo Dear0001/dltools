@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import { BadgeCheck } from 'lucide-react';
+import ToolFrame, { DetailList, OutputPlaceholder } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeEditor from '../CodeEditor';
 
 type Tlv = { tag: number; start: number; valueStart: number; end: number };
 function readTlv(bytes: Uint8Array, offset: number): Tlv {
@@ -115,10 +119,22 @@ function inspectPem(pem: string): Array<[string, string]> {
 export default function CertificateInspectorPanel({ tool: _tool }: { tool: Tool }) {
   const [pem, setPem] = useState('');
   const result = useMemo(() => { if (!pem.trim()) return { rows: [], error: '' }; try { return { rows: inspectPem(pem), error: '' }; } catch (cause) { return { rows: [], error: cause instanceof Error ? cause.message : 'Could not inspect certificate.' }; } }, [pem]);
-  return <div className="h-full overflow-auto p-4 space-y-4">
-    <label className="block text-xs text-muted-foreground">PEM certificate<textarea className="input-code mt-1 w-full h-48 p-3 resize-y" value={pem} onChange={(event) => setPem(event.target.value)} placeholder="-----BEGIN CERTIFICATE-----" spellCheck={false} /></label>
-    <p className="text-xs text-muted-foreground">Local inspection only. This tool does not verify the certificate chain, hostname, revocation status, or trust.</p>
-    {result.error && <p className="text-sm text-error">{result.error}</p>}
-    <dl className="grid md:grid-cols-2 gap-2">{result.rows.map(([label, value]) => <div key={label} className="p-3 rounded-lg bg-secondary/30"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="font-mono text-xs mt-1 whitespace-pre-wrap break-words">{value}</dd></div>)}</dl>
-  </div>;
+  const outputText = result.rows.map(([label, value]) => `${label}: ${value}`).join('\n');
+  return (
+    <ToolFrame notice="Local inspection only. This tool does not verify the certificate chain, hostname, revocation status, or trust.">
+      <PanelLayout
+        inputLabel="PEM certificate"
+        outputLabel="Certificate details"
+        outputBody="content"
+        inputPanel={<CodeEditor value={pem} onChange={setPem} minHeight="100%" placeholder="-----BEGIN CERTIFICATE-----" />}
+        outputPanel={result.error
+          ? <p className="notice notice-error" role="alert">{result.error}</p>
+          : result.rows.length ? <DetailList rows={result.rows} /> : <OutputPlaceholder icon={<BadgeCheck size={26} />} title="Paste a PEM certificate to inspect it." />}
+        outputText={outputText}
+        outputStatus={result.error ? 'error' : result.rows.length ? 'success' : 'idle'}
+        downloadName="certificate.txt"
+        onClear={() => setPem('')}
+      />
+    </ToolFrame>
+  );
 }

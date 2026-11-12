@@ -1,7 +1,9 @@
 'use client';
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { Tool } from '@/data/tools';
-import { RefreshCw, Copy } from 'lucide-react';
+import ToolFrame, { OutputPlaceholder } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import { Clock, RefreshCw, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TIMEZONES = [
@@ -80,8 +82,12 @@ export default function TimestampPanel({ tool: _tool }: { tool: Tool }) {
   };
 
   const copyResult = async (value: string) => {
-    await navigator.clipboard.writeText(value);
-    toast.success('Copied');
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success('Copied');
+    } catch {
+      toast.error('Could not copy. Allow clipboard access and try again.');
+    }
   };
 
   const useNow = () => {
@@ -91,80 +97,51 @@ export default function TimestampPanel({ tool: _tool }: { tool: Tool }) {
     setTsInput(String(ts));
   };
 
+  const outputText = results.map((r) => `${r.label}: ${r.value}`).join('\n');
   return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        {/* Now strip */}
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
-          <span className="text-xs text-muted-foreground">Current Unix timestamp:</span>
-          <span className="font-mono text-sm text-primary tabular-nums">{nowTs}</span>
-          <button className="btn-icon ml-auto" onClick={useNow} title="Use current timestamp">
-            <RefreshCw size={13} />
-          </button>
-        </div>
-
-        {/* Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-card border border-border rounded-xl p-5">
-            <label className="block text-xs text-muted-foreground font-medium mb-2">Unix Timestamp</label>
-            <input
-              type="text"
-              value={tsInput}
-              onChange={(e) => { activeInput.current = 'timestamp'; setTsInput(e.target.value); }}
-              className="input-code w-full py-2 mb-3"
-              placeholder="1753928000"
-            />
-            <button className="btn-primary text-xs w-full justify-center" onClick={() => { activeInput.current = 'timestamp'; convertFromTs(); }}>
-              Convert Timestamp →
-            </button>
+    <ToolFrame toolbar={<>
+      <span className="text-xs text-muted-foreground">Current Unix timestamp:</span>
+      <span className="font-mono text-sm tabular-nums text-primary">{nowTs}</span>
+      <button type="button" className="btn-ghost py-1" onClick={useNow} title="Use current timestamp"><RefreshCw size={13} />Now</button>
+      <label className="ml-auto flex items-center gap-2"><span className="text-xs font-medium text-muted-foreground">Timezone</span>
+        <select className="select-input" value={tz} onChange={(e) => setTz(e.target.value)}>
+          {TIMEZONES.map((zone) => <option key={`tz-${zone}`} value={zone}>{zone}</option>)}
+        </select>
+      </label>
+    </>}>
+      <PanelLayout
+        inputBody="content"
+        outputBody="content"
+        outputLabel="Formats"
+        inputPanel={<div className="space-y-5">
+          <div>
+            <label className="field-label" htmlFor="ts-unix">Unix Timestamp</label>
+            <input id="ts-unix" type="text" value={tsInput} onChange={(e) => { activeInput.current = 'timestamp'; setTsInput(e.target.value); }} className="input-field font-mono" placeholder="1753928000" />
+            <button type="button" className="btn-primary mt-2 w-full" onClick={() => { activeInput.current = 'timestamp'; convertFromTs(); }}>Convert Timestamp →</button>
           </div>
-
-          <div className="bg-card border border-border rounded-xl p-5">
-            <label className="block text-xs text-muted-foreground font-medium mb-2">Date / Time String</label>
-            <input
-              type="datetime-local"
-              value={dateInput}
-              onChange={(e) => { activeInput.current = 'date'; setDateInput(e.target.value); }}
-              className="input-code w-full py-2 mb-3"
-            />
-            <button className="btn-ghost text-xs w-full justify-center" onClick={() => { activeInput.current = 'date'; convertFromDate(); }}>
-              ← Convert Date
-            </button>
+          <div>
+            <label className="field-label" htmlFor="ts-date">Date / Time String</label>
+            <input id="ts-date" type="datetime-local" value={dateInput} onChange={(e) => { activeInput.current = 'date'; setDateInput(e.target.value); }} className="input-field" />
+            <button type="button" className="btn-ghost mt-2 w-full" onClick={() => { activeInput.current = 'date'; convertFromDate(); }}>← Convert Date</button>
           </div>
-        </div>
-
-        {/* Timezone */}
-        <div className="bg-card border border-border rounded-xl p-4">
-          <label className="block text-xs text-muted-foreground font-medium mb-2">Timezone</label>
-          <select className="select-input w-full sm:w-64" value={tz} onChange={(e) => setTz(e.target.value)}>
-            {TIMEZONES.map((zone) => (
-              <option key={`tz-${zone}`} value={zone}>{zone}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Results */}
-        {results.length > 0 && (
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+        </div>}
+        outputPanel={results.length === 0
+          ? <OutputPlaceholder icon={<Clock size={24} />} title="Enter a Unix timestamp or pick a date." />
+          : <ul className="overflow-hidden rounded-lg border border-border">
             {results.map((r, i) => (
-              <div
-                key={`ts-result-${i}`}
-                className="group flex items-center justify-between gap-3 px-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors duration-100"
-              >
-                <span className="text-xs text-muted-foreground w-40 flex-shrink-0">{r.label}</span>
-                <span className="font-mono text-xs text-foreground flex-1 truncate">{r.value}</span>
-                <button
-                  className="btn-icon opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => copyResult(r.value)}
-                  aria-label={`Copy ${r.label}`}
-                >
-                  <Copy size={12} />
-                </button>
-              </div>
+              <li key={`ts-result-${i}`} className="group flex items-center justify-between gap-3 border-b border-border px-3 py-2.5 last:border-b-0 hover:bg-muted/50">
+                <span className="w-36 flex-shrink-0 text-xs text-muted-foreground">{r.label}</span>
+                <span className="flex-1 truncate font-mono text-xs text-foreground" title={r.value}>{r.value}</span>
+                <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0 opacity-60 group-hover:opacity-100 focus-visible:opacity-100" onClick={() => copyResult(r.value)} aria-label={`Copy ${r.label}`}><Copy size={12} /></button>
+              </li>
             ))}
-          </div>
-        )}
-      </div>
-    </div>
+          </ul>}
+        outputText={outputText}
+        outputStatus={results.length ? 'success' : 'idle'}
+        downloadName="timestamp.txt"
+        onSample={useNow}
+        onClear={() => { activeInput.current = 'timestamp'; setTsInput(''); setDateInput(''); }}
+      />
+    </ToolFrame>
   );
 }

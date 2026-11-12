@@ -96,6 +96,8 @@ export default function JsonToTsPanel({ tool: _tool }: { tool: Tool }) {
           outputText={output}
           outputStatus={status}
           errorMessage={error}
+          onSample={() => setInput(SAMPLE)}
+          downloadName="types.ts"
           onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
         />
       </div>

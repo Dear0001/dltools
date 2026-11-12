@@ -122,6 +122,8 @@ export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
           outputText={output}
           outputStatus={status}
           errorMessage={error}
+          onSample={() => setInput(SAMPLE)}
+          downloadName="formatted.xml"
           onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
           onSwap={() => { if (output) setInput(output); }}
         />

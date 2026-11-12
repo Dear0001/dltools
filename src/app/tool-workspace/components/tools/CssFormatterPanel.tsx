@@ -74,6 +74,8 @@ export default function CssFormatterPanel({ tool: _tool }: { tool: Tool }) {
           outputPanel={<CodeOutput value={output} language="css" placeholder="Formatted CSS appears here…" />}
           outputText={output}
           outputStatus={status}
+          onSample={() => setInput(SAMPLE)}
+          downloadName="formatted.css"
           onClear={() => { setInput(''); setOutput(''); setStatus('idle'); }}
           onSwap={() => { if (output) setInput(output); }}
         />

@@ -1,3 +1,10 @@
+/**
+ * Theme colours are CSS variables (see src/styles/tailwind.css). `withAlpha`
+ * wraps them in color-mix() so opacity modifiers such as `bg-primary/10`
+ * generate real CSS; plain `var(--x)` values silently drop those classes.
+ */
+const withAlpha = (variable) => `color-mix(in srgb, var(${variable}) calc(<alpha-value> * 100%), transparent)`;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -11,37 +18,37 @@ module.exports = {
     },
     extend: {
       colors: {
-        background: { DEFAULT: 'var(--background)', secondary: 'var(--background-secondary)' },
-        surface: { DEFAULT: 'var(--surface)' },
-        success: { DEFAULT: 'var(--success)' },
-        warning: { DEFAULT: 'var(--warning)' },
-        error: { DEFAULT: 'var(--error)' },
-        editor: { DEFAULT: 'var(--editor)' },
-        overlay: { DEFAULT: 'var(--overlay)' },
-        foreground: { DEFAULT: 'var(--foreground)' },
+        background: { DEFAULT: withAlpha('--background'), secondary: withAlpha('--background-secondary') },
+        surface: { DEFAULT: withAlpha('--surface') },
+        success: { DEFAULT: withAlpha('--success') },
+        warning: { DEFAULT: withAlpha('--warning') },
+        error: { DEFAULT: withAlpha('--error') },
+        editor: { DEFAULT: withAlpha('--editor') },
+        overlay: { DEFAULT: withAlpha('--overlay') },
+        foreground: { DEFAULT: withAlpha('--foreground') },
         primary: {
-          DEFAULT: 'var(--primary)',
-          foreground: 'var(--primary-foreground)',
+          DEFAULT: withAlpha('--primary'),
+          foreground: withAlpha('--primary-foreground'),
         },
         secondary: {
-          DEFAULT: 'var(--background-secondary)',
-          foreground: 'var(--secondary-foreground)',
+          DEFAULT: withAlpha('--background-secondary'),
+          foreground: withAlpha('--secondary-foreground'),
         },
         accent: {
-          DEFAULT: 'var(--accent)',
-          foreground: 'var(--accent-foreground)',
+          DEFAULT: withAlpha('--accent'),
+          foreground: withAlpha('--accent-foreground'),
         },
         muted: {
-          DEFAULT: 'var(--muted)',
-          foreground: 'var(--muted-foreground)',
+          DEFAULT: withAlpha('--muted'),
+          foreground: withAlpha('--muted-foreground'),
         },
         card: {
-          DEFAULT: 'var(--surface)',
-          foreground: 'var(--card-foreground)',
+          DEFAULT: withAlpha('--surface'),
+          foreground: withAlpha('--card-foreground'),
         },
-        border: { DEFAULT: 'var(--border)' },
-        input: { DEFAULT: 'var(--input)' },
-        ring: { DEFAULT: 'var(--ring)' },
+        border: { DEFAULT: withAlpha('--border'), strong: withAlpha('--border-strong') },
+        input: { DEFAULT: withAlpha('--input') },
+        ring: { DEFAULT: withAlpha('--ring') },
       },
       borderRadius: {
         DEFAULT: 'var(--radius)',
@@ -77,8 +84,9 @@ module.exports = {
         },
       },
       boxShadow: {
-        card: '0 1px 3px rgb(var(--shadow-color) / 0.08)',
-        'card-hover': '0 6px 20px rgb(var(--shadow-color) / 0.14)',
+        card: '0 1px 2px rgb(var(--shadow-color) / 0.05)',
+        'card-hover': '0 8px 24px -8px rgb(var(--shadow-color) / 0.16)',
+        popover: '0 12px 32px -8px rgb(var(--shadow-color) / 0.22)',
       },
     },
   },

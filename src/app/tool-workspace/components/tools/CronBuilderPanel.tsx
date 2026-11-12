@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame, { DetailList, ToolbarField } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
 
 const SAMPLE = '*/15 9-17 * * 1-5';
 const FIELD_RANGES: Array<[number, number]> = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 7]];
@@ -60,12 +62,27 @@ export default function CronBuilderPanel({ tool: _tool }: { tool: Tool }) {
     try { return { ...explain(expression), error: '' }; }
     catch (cause) { return { fields: [], summary: '', next: [], error: cause instanceof Error ? cause.message : 'Invalid cron expression.' }; }
   }, [expression, ready]);
-  return <div className="h-full overflow-auto p-5 space-y-5">
-    <label className="block text-xs text-muted-foreground">Start with a schedule preset<select className="select-input mt-1 w-full" defaultValue="custom" onChange={(event) => { if (event.target.value !== 'custom') setExpression(event.target.value); }}><option value="custom">Custom expression</option><option value="* * * * *">Every minute</option><option value="*/5 * * * *">Every 5 minutes</option><option value="0 * * * *">Every hour</option><option value="0 0 * * *">Every day at midnight UTC</option><option value="0 9 * * 1-5">Weekdays at 09:00 UTC</option><option value="0 9 * * 1">Every Monday at 09:00 UTC</option><option value="0 9 1 * *">First day of each month at 09:00 UTC</option></select></label>
-    <section><label className="block text-xs text-muted-foreground mb-2">Five-field cron expression</label><input value={expression} onChange={(event) => setExpression(event.target.value)} className="input-code w-full p-3" placeholder="minute hour day-of-month month day-of-week" /><p className="text-xs text-muted-foreground mt-2">Fields use UTC. Supports *, lists, ranges, and steps.</p></section>
-    {result.error ? <div className="p-3 rounded-lg border border-error/30 text-error text-sm">{result.error}</div> : <>
-      <section><h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Field breakdown</h3><pre className="p-3 rounded-lg bg-secondary/30 text-sm whitespace-pre-wrap">{result.summary}</pre></section>
-      <section><h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Next run times (UTC)</h3><ol className="space-y-1 text-sm font-mono">{result.next.map((date) => <li key={date.toISOString()}>{date.toISOString().replace('T', ' ').slice(0, 16)}</li>)}</ol>{ready && !result.next.length && <p className="text-sm text-muted-foreground">No run found in the next year.</p>}</section>
-    </>}
-  </div>;
+  const nextRuns = result.next.map((date) => date.toISOString().replace('T', ' ').slice(0, 16));
+  const outputText = result.error ? '' : `${result.summary}\n\nNext run times (UTC)\n${nextRuns.join('\n')}`;
+  return (
+    <ToolFrame
+      toolbar={<ToolbarField label="Preset"><select className="select-input" defaultValue="custom" onChange={(event) => { if (event.target.value !== 'custom') setExpression(event.target.value); }}><option value="custom">Custom expression</option><option value="* * * * *">Every minute</option><option value="*/5 * * * *">Every 5 minutes</option><option value="0 * * * *">Every hour</option><option value="0 0 * * *">Every day at midnight UTC</option><option value="0 9 * * 1-5">Weekdays at 09:00 UTC</option><option value="0 9 * * 1">Every Monday at 09:00 UTC</option><option value="0 9 1 * *">First day of each month at 09:00 UTC</option></select></ToolbarField>}
+      notice="Fields use UTC. Supports *, lists, ranges, and steps."
+    >
+      <PanelLayout
+        inputBody="content"
+        outputBody="content"
+        inputPanel={<label className="block"><span className="field-label">Five-field cron expression</span><input value={expression} onChange={(event) => setExpression(event.target.value)} className="input-field font-mono" placeholder="minute hour day-of-month month day-of-week" aria-invalid={Boolean(result.error)} /></label>}
+        outputPanel={result.error ? <p className="notice notice-error" role="alert">{result.error}</p> : <div className="space-y-5">
+          <section><h3 className="field-label">Field breakdown</h3><DetailList rows={result.fields.map((value, index) => [['Minute', 'Hour', 'Day of month', 'Month', 'Day of week'][index], value] as [string, string])} /></section>
+          <section><h3 className="field-label">Next run times (UTC)</h3>{nextRuns.length ? <ol className="space-y-1.5 font-mono text-sm text-foreground">{nextRuns.map((run) => <li key={run} className="rounded-md bg-background-secondary/60 px-3 py-1.5">{run}</li>)}</ol> : ready && <p className="text-sm text-muted-foreground">No run found in the next year.</p>}</section>
+        </div>}
+        outputText={outputText}
+        outputStatus={result.error ? 'error' : result.fields.length ? 'success' : 'idle'}
+        downloadName="cron.txt"
+        onSample={() => setExpression(SAMPLE)}
+        onClear={() => setExpression('')}
+      />
+    </ToolFrame>
+  );
 }

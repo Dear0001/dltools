@@ -1,72 +1,73 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
-import { CATEGORIES, TOOLS, getToolPath, getToolSlug, type Tool } from '@/data/tools';
+import { ArrowRight } from 'lucide-react';
+import ToolCard from '@/app/components/ToolCard';
+import { getRelatedTools, getToolSlug, type Tool } from '@/data/tools';
 import { getToolContent } from '@/data/toolContent';
 import { getToolContentKh } from '@/data/toolContentKh';
-import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
+import { fill, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
+/** Below the workspace: related tools, then the how-to/about copy for the tool. */
 export default function ToolContent({ tool }: { tool: Tool }) {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const kh = locale === 'kh';
   const slug = getToolSlug(tool);
   const content = (kh ? getToolContentKh(slug) : undefined) ?? getToolContent(slug);
-  const category = CATEGORIES.find((c) => c.id === tool.category);
-  const related = TOOLS.filter((t) => t.category === tool.category && t.id !== tool.id).slice(0, 6);
+  const related = getRelatedTools(tool, 4);
   const name = getToolName(tool.id, tool.name, locale);
 
   return (
-    <section className="mx-auto w-full max-w-4xl px-4 py-10 text-sm leading-relaxed text-muted-foreground sm:px-6" aria-labelledby="tool-about-heading">
-      <h2 id="tool-about-heading" className="text-xl font-semibold text-foreground">
-        {kh ? `អំពី ${name}` : `About the ${tool.name}`}
-      </h2>
-      <p className="mt-2">{content?.about ?? getToolDescription(tool.id, tool.description, locale)}</p>
-
-      {content && (
-        <>
-          <h3 className="mt-6 text-base font-semibold text-foreground">{kh ? 'របៀបប្រើ' : 'How to use it'}</h3>
-          <ol className="mt-2 list-decimal space-y-1 pl-5">
-            {content.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-
-          <h3 className="mt-6 text-base font-semibold text-foreground">{kh ? 'ការប្រើប្រាស់ទូទៅ' : 'Common uses'}</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {content.uses.map((use) => (
-              <li key={use}>{use}</li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      <p className="mt-6">
-        {kh
-          ? `${name} គឺជាផ្នែកមួយនៃ DLTools ដែលជាបណ្តុំឧបករណ៍អភិវឌ្ឍន៍ឥតគិតថ្លៃដំណើរការលើ browser។ មិនចាំបាច់ដំឡើងអ្វីទេ។`
-          : `${tool.name} is part of DLTools, a free set of browser-based developer tools. No installation is required.`}
-      </p>
-
+    <div className="border-t border-border bg-background">
       {related.length > 0 && (
-        <>
-          <h3 className="mt-6 text-base font-semibold text-foreground">
-            {kh
-              ? `ឧបករណ៍ ${category ? getCategoryName(category.id, category.label, locale) : 'ដែលពាក់ព័ន្ធ'} ផ្សេងទៀត`
-              : `More ${category?.label ?? 'related'} tools`}
-          </h3>
-          <ul className="mt-2 grid gap-1 sm:grid-cols-2">
-            {related.map((t) => (
-              <li key={t.id}>
-                <Link href={getToolPath(t)} className="font-medium text-foreground hover:text-primary">
-                  {getToolName(t.id, t.name, locale)}
-                </Link>
-                {' — '}
-                {getToolDescription(t.id, t.description, locale).split(/[.។]/)[0]}
-                {kh ? '។' : '.'}
-              </li>
-            ))}
-          </ul>
-        </>
+        <section className="page-container py-12" aria-labelledby="related-tools-heading">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id="related-tools-heading" className="section-title">{t('relatedTools')}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t('relatedHelp')}</p>
+            </div>
+            <Link href={`/tools?cat=${tool.category}`} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              {t('viewAll')} <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {related.map((item) => <ToolCard key={item.id} tool={item} />)}
+          </div>
+        </section>
       )}
-    </section>
+
+      <section className="border-t border-border bg-background-secondary" aria-labelledby="tool-about-heading">
+        <div className={`mx-auto w-full max-w-3xl px-4 py-12 text-[15px] text-muted-foreground sm:px-6 ${kh ? 'leading-8' : 'leading-7'}`}>
+          <h2 id="tool-about-heading" className="section-title">{fill(t('aboutTool'), { name })}</h2>
+          <p className="mt-3">{content?.about ?? getToolDescription(tool.id, tool.description, locale)}</p>
+
+          {content && (
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{t('howToUse')}</h3>
+                <ol className="mt-3 space-y-2">
+                  {content.steps.map((step, index) => (
+                    <li key={step} className="flex gap-3">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary tabular-nums">{index + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{t('commonUses')}</h3>
+                <ul className="mt-3 list-disc space-y-2 pl-5 marker:text-primary">
+                  {content.uses.map((use) => (
+                    <li key={use}>{use}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <p className="mt-8 text-sm">{fill(t('partOfDltools'), { name })}</p>
+        </div>
+      </section>
+    </div>
   );
 }

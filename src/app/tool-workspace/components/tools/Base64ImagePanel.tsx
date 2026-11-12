@@ -2,7 +2,10 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Tool, getToolPath } from '@/data/tools';
-import { Upload, Copy, Download, ClipboardPaste, AlertTriangle, Trash2 } from 'lucide-react';
+import { Upload, ClipboardPaste, AlertTriangle, ImageIcon } from 'lucide-react';
+import ToolFrame, { OutputPlaceholder } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeEditor from '../CodeEditor';
 import { toast } from 'sonner';
 import AppImage from '../../../../components/ui/AppImage';
 import { useDebouncedValue } from '../useDebouncedValue';
@@ -152,191 +155,115 @@ export default function Base64ImagePanel({ tool: _tool }: { tool: Tool }) {
     a.click();
   };
 
-  const copyBase64 = async () => {
-    if (!base64) return;
-    await navigator.clipboard.writeText(base64);
-    toast.success('Base64 string copied');
-  };
-
   const rawBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
 
-  return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-3xl mx-auto flex flex-col gap-4">
-        {/* Mode tabs */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
-          {(['encode', 'decode'] as Mode[]).map((m) => (
-            <button
-              key={`b64-mode-${m}`}
-              onClick={() => setMode(m)}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all duration-150 capitalize ${mode === m ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              {m === 'encode' ? 'File → Base64' : 'Base64 → File'}
-            </button>
-          ))}
-        </div>
+  const decodeStatus = !base64.trim()
+    ? 'Converts automatically as you paste or type.'
+    : decodePending
+      ? 'Decoding…'
+      : decoded?.ok
+        ? `Detected: ${decoded.info.label} · ${(decoded.bytes.length / 1024).toFixed(1)} KB`
+        : '';
 
-        {mode === 'encode' ? (
-          <>
-            {/* Upload zone */}
-            <div
-              className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-150 cursor-pointer ${dragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/20'}`}
+  return (
+    <ToolFrame toolbar={<>
+      <div className="segmented" role="group" aria-label="Mode">
+        {(['encode', 'decode'] as Mode[]).map((m) => (
+          <button key={`b64-mode-${m}`} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>{m === 'encode' ? 'File → Base64' : 'Base64 → File'}</button>
+        ))}
+      </div>
+      <button type="button" className="btn-ghost" onClick={handlePaste}><ClipboardPaste size={14} />Paste from Clipboard</button>
+      <span className="text-xs text-muted-foreground">Ctrl+V pastes an image or a Base64 string</span>
+    </>}>
+      {mode === 'encode' ? (
+        <PanelLayout
+          inputLabel="File"
+          outputLabel="Base64 Output"
+          inputBody="content"
+          inputPanel={<div className="flex flex-1 flex-col gap-3">
+            <button
+              type="button"
+              className={`flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors ${dragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/40'}`}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={handleDrop}
               onClick={() => fileRef.current?.click()}
             >
               <Upload size={28} className="text-muted-foreground" />
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">Drop file here or click to upload</p>
-                <p className="text-xs text-muted-foreground mt-1">Images, PDFs, any binary file</p>
-              </div>
-              <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange} accept="*/*" />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button className="btn-ghost text-xs" onClick={handlePaste}>
-                <ClipboardPaste size={13} />
-                Paste from Clipboard
-              </button>
-              <span className="text-xs text-muted-foreground">Ctrl+V pastes an image or a Base64 string</span>
-            </div>
-
+              <span className="text-sm font-medium text-foreground">Drop file here or click to upload</span>
+              <span className="text-xs text-muted-foreground">Images, PDFs, any binary file</span>
+            </button>
             {fileName && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-bold text-primary">{mimeType.split('/')[0].charAt(0).toUpperCase()}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{fileName}</p>
+              <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-primary/10 text-xs font-bold text-primary">{mimeType.split('/')[0].charAt(0).toUpperCase()}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-foreground">{fileName}</p>
                   <p className="text-xs text-muted-foreground">{mimeType} · {fileSize}</p>
                 </div>
               </div>
             )}
-
+            {previewUrl && mimeType.startsWith('image/') && (
+              <div className="flex min-h-32 flex-1 items-center justify-center rounded-lg border border-border bg-background-secondary p-4">
+                <AppImage src={previewUrl} alt={`Preview of uploaded file ${fileName}`} width={320} height={240} className="max-h-48 rounded object-contain" unoptimized />
+              </div>
+            )}
+          </div>}
+          outputPanel={<div className="flex flex-1 flex-col">
+            <textarea value={rawBase64} readOnly aria-label="Base64 Output" placeholder="Upload a file to see its Base64 string…" className="input-code flex-1 resize-none rounded-none border-0 bg-transparent text-xs focus:shadow-none" />
             {base64 && (
-              <>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Base64 Output</span>
-                    <div className="flex items-center gap-1">
-                      <button className="btn-icon" onClick={copyBase64} title="Copy Base64">
-                        <Copy size={13} />
-                      </button>
-                      <button className="btn-icon" onClick={downloadFile} title="Download file">
-                        <Download size={13} />
-                      </button>
-                    </div>
-                  </div>
-                  <textarea
-                    value={rawBase64}
-                    readOnly
-                    className="input-code w-full text-success text-xs"
-                    rows={5}
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Length: <span className="text-foreground tabular-nums">{rawBase64.length.toLocaleString()}</span> chars
-                    · Data URI prefix: <span className="text-primary font-mono">{base64.split(',')[0]}</span>
+              <p className="border-t border-border px-3.5 py-2 text-xs text-muted-foreground">
+                Length: <span className="tabular-nums text-foreground">{rawBase64.length.toLocaleString()}</span> chars
+                · Data URI prefix: <span className="font-mono text-primary">{base64.split(',')[0]}</span>
+              </p>
+            )}
+          </div>}
+          outputText={base64}
+          outputStatus={base64 ? 'success' : 'idle'}
+          onDownload={downloadFile}
+          canDownload={Boolean(previewUrl)}
+          onClear={() => { setBase64(''); setPreviewUrl(''); setFileName(''); setFileSize(''); setMimeType(''); }}
+        />
+      ) : (
+        <PanelLayout
+          inputLabel="Base64 String"
+          outputLabel="Preview"
+          outputBody="content"
+          copyable={false}
+          inputPanel={<div className="flex flex-1 flex-col">
+            <CodeEditor value={base64} onChange={setBase64} minHeight="100%" placeholder="Paste a Base64 string or data URI — it converts automatically…" />
+            <p className="border-t border-border px-3.5 py-2 text-xs text-muted-foreground" aria-live="polite">{decodeStatus}</p>
+          </div>}
+          outputPanel={<div className="flex flex-1 flex-col gap-3">
+            {!decodePending && decoded && !decoded.ok && <p className="notice notice-error" role="alert"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /><span>{decoded.error}</span></p>}
+            {!decodePending && decoded?.ok && decodedUrl ? (
+              decoded.info.isImage ? (
+                <div className="flex min-h-32 flex-1 items-center justify-center rounded-lg border border-border bg-background-secondary p-4">
+                  <AppImage src={decodedUrl} alt="Decoded image preview from Base64 string" width={320} height={240} className="max-h-[40vh] rounded object-contain" unoptimized />
+                </div>
+              ) : documentKind ? (
+                <div className="flex flex-col gap-3">
+                  <DocumentPreview bytes={decoded.bytes} kind={documentKind} />
+                  <p className="text-xs text-muted-foreground">
+                    Need a custom file name or a different format?{' '}
+                    <Link href={getToolPath({ id: 'tool-base64-document' })} className="text-primary underline">Open Base64 to PDF / Word / Excel</Link>.
                   </p>
                 </div>
-
-                {previewUrl && mimeType.startsWith('image/') && (
-                  <div className="bg-card border border-border rounded-xl p-4">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-3">Preview</span>
-                    <div className="flex items-center justify-center bg-background-secondary rounded-lg p-4 min-h-32">
-                      <AppImage
-                        src={previewUrl}
-                        alt={`Preview of uploaded file ${fileName}`}
-                        width={320}
-                        height={240}
-                        className="max-h-48 object-contain rounded"
-                        unoptimized
-                      />
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="bg-card border border-border rounded-xl p-5">
-              <label className="block text-xs text-muted-foreground font-medium mb-2">Base64 String</label>
-              <textarea
-                value={base64}
-                onChange={(e) => setBase64(e.target.value)}
-                className="input-code w-full text-success text-xs"
-                rows={6}
-                placeholder="Paste a Base64 string or data URI — it converts automatically…"
-                spellCheck={false}
-              />
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <p className="text-xs text-muted-foreground" aria-live="polite">
-                  {!base64.trim()
-                    ? 'Converts automatically as you paste or type.'
-                    : decodePending
-                      ? 'Decoding…'
-                      : decoded?.ok
-                        ? `Detected: ${decoded.info.label} · ${(decoded.bytes.length / 1024).toFixed(1)} KB`
-                        : ''}
-                </p>
-                <button className="btn-ghost text-xs" onClick={() => setBase64('')} disabled={!base64}>
-                  <Trash2 size={12} />
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            {!decodePending && decoded && !decoded.ok && (
-              <div className="flex items-start gap-2 rounded-lg border border-error/40 bg-error/5 p-3 text-xs text-error">
-                <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                <span>{decoded.error}</span>
-              </div>
-            )}
-
-            {!decodePending && decoded?.ok && decodedUrl && (
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview</span>
-                  <button className="btn-ghost text-xs" onClick={downloadDecoded}>
-                    <Download size={12} />
-                    Download .{decoded.info.ext}
-                  </button>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+                  This is {decoded.info.known ? 'a ' : ''}
+                  <span className="font-medium text-foreground">{decoded.info.label.toLowerCase()}</span>, not an
+                  image, so there is no preview. You can still download it.
                 </div>
-                {decoded.info.isImage ? (
-                  <div className="flex items-center justify-center bg-background-secondary rounded-lg p-4 min-h-32">
-                    <AppImage
-                      src={decodedUrl}
-                      alt="Decoded image preview from Base64 string"
-                      width={320}
-                      height={240}
-                      className="max-h-48 object-contain rounded"
-                      unoptimized
-                    />
-                  </div>
-                ) : documentKind ? (
-                  <div className="flex flex-col gap-3">
-                    <DocumentPreview bytes={decoded.bytes} kind={documentKind} />
-                    <p className="text-xs text-muted-foreground">
-                      Need a custom file name or a different format?{' '}
-                      <Link href={getToolPath({ id: 'tool-base64-document' })} className="text-primary underline">
-                        Open Base64 to PDF / Word / Excel
-                      </Link>
-                      .
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
-                    This is {decoded.info.known ? 'a ' : ''}
-                    <span className="font-medium text-foreground">{decoded.info.label.toLowerCase()}</span>, not an
-                    image, so there is no preview. You can still download it.
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+              )
+            ) : (!decoded && <OutputPlaceholder icon={<ImageIcon size={26} />} title="Paste a Base64 string or data URI — it converts automatically…" />)}
+          </div>}
+          outputStatus={decoded && !decoded.ok ? 'error' : decoded?.ok ? 'success' : 'idle'}
+          onDownload={downloadDecoded}
+          canDownload={Boolean(decoded?.ok && decodedUrl)}
+          onClear={() => setBase64('')}
+        />
+      )}
+      <input ref={fileRef} type="file" className="hidden" onChange={(e) => { handleFileChange(e); e.target.value = ''; }} accept="*/*" />
+    </ToolFrame>
   );
 }

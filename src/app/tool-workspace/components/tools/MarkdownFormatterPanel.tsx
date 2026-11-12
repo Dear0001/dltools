@@ -1,10 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Copy, Eye, FileCode2, WandSparkles } from 'lucide-react';
+import { WandSparkles } from 'lucide-react';
 import { marked } from 'marked';
 import { toast } from 'sonner';
 import type { Tool } from '@/data/tools';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeEditor from '../CodeEditor';
+import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 
 const SAMPLE = `# Markdown preview
@@ -98,36 +102,29 @@ export default function MarkdownFormatterPanel({ tool: _tool }: { tool: Tool }) 
     }
   };
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(formatted);
-      toast.success('Markdown copied');
-    } catch {
-      toast.error('Could not copy Markdown');
-    }
-  };
-
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-secondary/30 px-4 py-3">
-        <span className="flex items-center gap-2 text-sm font-medium text-foreground"><FileCode2 size={16} className="text-primary" />Markdown</span>
-        <div className="ml-auto flex gap-2">
-          <button type="button" className="btn-ghost inline-flex items-center gap-1.5 text-xs" onClick={() => setPreview((value) => !value)}><Eye size={14} />{preview ? 'Hide preview' : 'Show preview'}</button>
-          <button type="button" className="btn-ghost inline-flex items-center gap-1.5 text-xs" onClick={copy} disabled={!formatted}><Copy size={14} />Copy</button>
-          <button type="button" className="btn-primary inline-flex items-center gap-1.5 text-xs" onClick={format} disabled={busy}><WandSparkles size={14} />{busy ? 'Formatting…' : 'Format'}</button>
-        </div>
+    <ToolFrame toolbar={<>
+      <div className="segmented" role="group" aria-label="Output view">
+        <button type="button" aria-pressed={preview} onClick={() => setPreview(true)}>Preview</button>
+        <button type="button" aria-pressed={!preview} onClick={() => setPreview(false)}>Markdown</button>
       </div>
-      <div className={`grid min-h-0 flex-1 ${preview ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
-        <section className="flex min-h-0 flex-col border-b border-border md:border-b-0 md:border-r" aria-label="Markdown source">
-          <h2 className="border-b border-border px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source</h2>
-          <textarea value={input} onChange={(event) => { setInput(event.target.value); setFormatted(event.target.value); }} spellCheck={false} className="input-code min-h-0 flex-1 resize-none border-0 bg-transparent p-4 font-mono text-sm focus:ring-0" placeholder="Write Markdown…" />
-        </section>
-        {preview && <section className="min-h-0 overflow-auto" aria-label="Rendered Markdown preview">
-          <h2 className="sticky top-0 border-b border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preview</h2>
-          <article className="prose prose-sm max-w-none p-5 dark:prose-invert" dangerouslySetInnerHTML={{ __html: safeHtml }} />
-        </section>}
-      </div>
-      {formatted && formatted !== input && <div className="flex shrink-0 items-center gap-2 border-t border-border px-4 py-2 text-xs text-success"><Check size={14} />Formatted output is ready to copy or edit in the source pane.</div>}
-    </div>
+      <div className="ml-auto"><button type="button" className="btn-primary" onClick={format} disabled={busy}><WandSparkles size={14} />{busy ? 'Formatting…' : 'Format'}</button></div>
+    </>}>
+      <PanelLayout
+        inputLabel="Source"
+        outputLabel={preview ? 'Preview' : 'Formatted Markdown'}
+        outputBody={preview ? 'content' : 'code'}
+        inputPanel={<CodeEditor value={input} onChange={(value) => { setInput(value); setFormatted(value); }} minHeight="100%" placeholder="Write Markdown…" />}
+        outputPanel={preview
+          ? <article className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+          : <CodeOutput value={formatted} language="text" placeholder="Formatted Markdown appears here…" />}
+        outputText={formatted}
+        outputStatus={formatted ? 'success' : 'idle'}
+        downloadName="formatted.md"
+        onSample={() => { setInput(SAMPLE); setFormatted(SAMPLE); }}
+        onClear={() => { setInput(''); setFormatted(''); }}
+        onSwap={() => setInput(formatted)}
+      />
+    </ToolFrame>
   );
 }

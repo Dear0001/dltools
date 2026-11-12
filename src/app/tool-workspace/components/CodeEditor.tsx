@@ -21,8 +21,20 @@ export default function CodeEditor({
 }: CodeEditorProps) {
   const { locale } = useLocale();
   const ref = useRef<HTMLTextAreaElement>(null);
+  // After Escape, the next Tab moves focus out of the editor instead of indenting,
+  // so keyboard users are never trapped (WCAG 2.1.2).
+  const releaseTab = useRef(false);
 
   const handleTab = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      releaseTab.current = true;
+      return;
+    }
+    if (e.key === 'Tab' && (releaseTab.current || readOnly || e.shiftKey)) {
+      releaseTab.current = false;
+      return;
+    }
+    releaseTab.current = false;
     if (e.key === 'Tab') {
       e.preventDefault();
       const el = e.currentTarget;
@@ -44,6 +56,7 @@ export default function CodeEditor({
       readOnly={readOnly}
       className={`input-code w-full h-full flex-1 resize-none border-0 rounded-none bg-transparent focus:ring-0 focus:border-0 focus:shadow-none ${className}`}
       style={{ minHeight }}
+      aria-label={translateText(placeholder, locale)}
       spellCheck={false}
       autoCapitalize="off"
       autoComplete="off"

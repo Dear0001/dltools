@@ -1,6 +1,9 @@
 'use client';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeEditor from '../CodeEditor';
 import { Copy, CheckCircle2, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import CryptoJS from 'crypto-js';
@@ -9,9 +12,10 @@ import { useDebouncedValue } from '../useDebouncedValue';
 type Algorithm = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-512';
 
 const ALGORITHMS: Algorithm[] = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
+const SAMPLE = 'DevToolkit — browser developer tools 2026';
 
 export default function HashPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState('DevToolkit — browser developer tools 2026');
+  const [input, setInput] = useState(SAMPLE);
   const [results, setResults] = useState<Record<Algorithm, string>>({} as Record<Algorithm, string>);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [uppercase, setUppercase] = useState(false);
@@ -57,78 +61,51 @@ export default function HashPanel({ tool: _tool }: { tool: Tool }) {
   }, [input, debouncedInput, hmacKey, useHmac, uppercase, compute]);
 
   const copyHash = async (algo: Algorithm, hash: string) => {
-    await navigator.clipboard.writeText(hash);
+    try {
+      await navigator.clipboard.writeText(hash);
+    } catch {
+      toast.error('Could not copy. Allow clipboard access and try again.');
+      return;
+    }
     setCopiedKey(algo);
     toast.success(`${algo} hash copied`);
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const outputText = ALGORITHMS.filter((algo) => results[algo]).map((algo) => `${algo}: ${results[algo]}`).join('\n');
   return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-2xl mx-auto">
-        {/* Input */}
-        <div className="bg-card border border-border rounded-xl p-5 mb-4">
-          <label className="block text-xs text-muted-foreground font-medium mb-2">Input Text</label>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="input-code w-full"
-            rows={4}
-            placeholder="Enter text to hash…"
-          />
-        </div>
-
-        {/* Options */}
-        <div className="bg-card border border-border rounded-xl p-5 mb-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={uppercase} onChange={(e) => setUppercase(e.target.checked)} className="w-3.5 h-3.5 accent-primary" />
-              <span className="text-xs text-muted-foreground">Uppercase output</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={useHmac} onChange={(e) => setUseHmac(e.target.checked)} className="w-3.5 h-3.5 accent-primary" />
-              <span className="text-xs text-muted-foreground">HMAC mode</span>
-            </label>
-            {useHmac && (
-              <input
-                type="text"
-                value={hmacKey}
-                onChange={(e) => setHmacKey(e.target.value)}
-                placeholder="HMAC secret key…"
-                className="input-code flex-1 min-w-48 py-1.5 px-3 text-xs"
-              />
-            )}
-          </div>
-        </div>
-
-        <button className="btn-primary mb-5 w-full justify-center" onClick={() => compute()}>
-          <Hash size={14} />
-          Compute Hashes
-        </button>
-
-        {/* Results */}
-        <div className="flex flex-col gap-3">
+    <ToolFrame toolbar={<>
+      <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={uppercase} onChange={(e) => setUppercase(e.target.checked)} className="h-3.5 w-3.5 accent-primary" /><span className="text-xs text-muted-foreground">Uppercase output</span></label>
+      <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={useHmac} onChange={(e) => setUseHmac(e.target.checked)} className="h-3.5 w-3.5 accent-primary" /><span className="text-xs text-muted-foreground">HMAC mode</span></label>
+      {useHmac && <input type="text" value={hmacKey} onChange={(e) => setHmacKey(e.target.value)} placeholder="HMAC secret key…" aria-label="HMAC secret key" className="input-field min-w-48 flex-1 py-1.5 font-mono text-xs" />}
+      <div className="ml-auto"><button type="button" className="btn-primary" onClick={() => compute()}><Hash size={14} />Compute Hashes</button></div>
+    </>}>
+      <PanelLayout
+        inputLabel="Input Text"
+        outputLabel="Hashes"
+        outputBody="content"
+        inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Enter text to hash…" />}
+        outputPanel={<ul className="flex flex-col gap-3">
           {ALGORITHMS.map((algo) => (
-            <div key={`hash-${algo}`} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{algo}</span>
+            <li key={`hash-${algo}`} className="rounded-lg border border-border bg-background-secondary/50 p-3">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">{algo}</span>
                 {results[algo] && (
-                  <button
-                    className={`btn-icon ${copiedKey === algo ? 'text-primary' : ''}`}
-                    onClick={() => copyHash(algo, results[algo])}
-                    aria-label={`Copy ${algo} hash`}
-                  >
+                  <button type="button" className={`btn-icon h-7 min-h-0 w-7 min-w-0 ${copiedKey === algo ? 'text-primary' : ''}`} onClick={() => copyHash(algo, results[algo])} aria-label={`Copy ${algo} hash`}>
                     {copiedKey === algo ? <CheckCircle2 size={13} /> : <Copy size={13} />}
                   </button>
                 )}
               </div>
-              <div className="font-mono text-xs text-success break-all min-h-[20px]">
-                {results[algo] || <span className="text-muted-foreground">—</span>}
-              </div>
-            </div>
+              <div className="min-h-[20px] break-all font-mono text-xs text-foreground">{results[algo] || <span className="text-muted-foreground">—</span>}</div>
+            </li>
           ))}
-        </div>
-      </div>
-    </div>
+        </ul>}
+        outputText={outputText}
+        outputStatus={outputText ? 'success' : 'idle'}
+        downloadName="hashes.txt"
+        onSample={() => setInput(SAMPLE)}
+        onClear={() => setInput('')}
+      />
+    </ToolFrame>
   );
 }

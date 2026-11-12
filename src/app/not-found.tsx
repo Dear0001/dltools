@@ -1,54 +1,41 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
+import Link from 'next/link';
+import { ArrowLeft, Home, SearchX } from 'lucide-react';
+import ToolCard from '@/app/components/ToolCard';
+import { TOOLS } from '@/data/tools';
+import { useLocale } from '@/i18n/LocaleProvider';
+
+const POPULAR = TOOLS.filter((tool) => tool.popular).slice(0, 4);
 
 export default function NotFound() {
-    const router = useRouter();
+  const { t } = useLocale();
 
-    const handleGoHome = () => {
-        router?.push('/');
-    };
-
-    const handleGoBack = () => {
-        if (typeof window !== 'undefined') {
-            window.history?.back();
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-            <div className="text-center max-w-md">
-                <div className="flex justify-center mb-6">
-                    <div className="relative">
-                        <h1 className="text-9xl font-bold text-primary opacity-20">404</h1>
-                    </div>
-                </div>
-
-                <h2 className="text-2xl font-medium text-onBackground mb-2">Page Not Found</h2>
-                <p className="text-onBackground/70 mb-8">
-                    The page you&apos;re looking for doesn&apos;t exist. Let&apos;s get you back!
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button
-                        onClick={handleGoBack}
-                        className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200"
-                    >
-                        <Icon name="ArrowLeftIcon" size={16} />
-                        Go Back
-                    </button>
-
-                    <button
-                        onClick={handleGoHome}
-                        className="inline-flex items-center justify-center gap-2 border border-border bg-background text-foreground px-6 py-3 rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
-                    >
-                        <Icon name="HomeIcon" size={16} />
-                        Back to Home
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="page-container py-16 sm:py-24">
+      <div className="mx-auto max-w-lg text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground">
+          <SearchX size={26} aria-hidden="true" />
+        </span>
+        <p className="mt-6 text-sm font-semibold text-primary">404</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{t('notFoundTitle')}</h1>
+        <p className="mt-3 text-muted-foreground">{t('notFoundBody')}</p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <button type="button" onClick={() => window.history.back()} className="btn-ghost">
+            <ArrowLeft size={15} aria-hidden="true" /> {t('goBack')}
+          </button>
+          <Link href="/" className="btn-primary">
+            <Home size={15} aria-hidden="true" /> {t('backHome')}
+          </Link>
         </div>
-    );
+      </div>
+      <section className="mt-16" aria-labelledby="not-found-popular">
+        <h2 id="not-found-popular" className="section-title mb-4">{t('popularTools')}</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {POPULAR.map((tool) => <ToolCard key={tool.id} tool={tool} />)}
+        </div>
+      </section>
+    </div>
+  );
 }

@@ -1,77 +1,164 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import AppLogo from '@/components/ui/AppLogo';
-import { Menu, X, Zap, HandCoins, LogIn, LogOut, ChevronDown, CircleUserRound, Heart } from 'lucide-react';
-import ThemeSwitcher from '@/components/ui/ThemeSwitcher';
-import { useTheme } from '@/components/ThemeProvider';
-import { THEMES, THEME_META, normalizeTheme, type ThemeId } from '@/lib/theme';
+import {
+  ChevronDown,
+  CircleUserRound,
+  Heart,
+  HandCoins,
+  LayoutGrid,
+  LogIn,
+  LogOut,
+  Menu,
+  Search,
+  X,
+} from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { CATEGORIES, TOOLS, getToolPath } from '@/data/tools';
-import { getToolName, useLocale } from '@/i18n/LocaleProvider';
+import AppLogo from '@/components/ui/AppLogo';
+import ThemeSwitcher, { ThemeOptions } from '@/components/ui/ThemeSwitcher';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import CategoryIcon from '@/components/ui/CategoryIcon';
+import SearchDialog from '@/components/search/SearchDialog';
+import { useTheme } from '@/components/ThemeProvider';
+import { normalizeTheme, type ThemeId } from '@/lib/theme';
+import { CATEGORIES, CATEGORY_COUNTS, getToolPath, getToolsByCategory } from '@/data/tools';
+import {
+  getCategoryDescription,
+  getCategoryName,
+  getToolName,
+  useLocale,
+  type Locale,
+} from '@/i18n/LocaleProvider';
 
-type Theme = ThemeId;
-
-// Inline GitHub SVG since brand icons were removed in lucide-react v1
-function GithubIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-    </svg>
-  );
+/** Closes a popover on outside pointer-down or Escape, returning focus to its trigger. */
+function useDismiss(
+  open: boolean,
+  close: () => void,
+  container: React.RefObject<HTMLElement | null>,
+  trigger?: React.RefObject<HTMLElement | null>
+) {
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !container.current?.contains(event.target)) close();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        close();
+        trigger?.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, close, container, trigger]);
 }
 
-const i18n = {
-  en: {
-    toolHub: 'Tool Hub',
-    workspace: 'Workspace',
-    allClient: 'All client-side',
-    theme: 'Theme',
-    light: 'Light',
-    dark: 'Dark',
-    nord: 'Nord',
-    monokai: 'Monokai',
-    language: 'Language',
-    free: 'Free',
-    support: 'Support',
-    supportTitle: 'Thank you for helping',
-    supportMessage: 'If you would like to support this project with a small contribution, please scan the QR code below to thank the person who is receiving payment.',
-    supportCta: 'Any amount is appreciated',
-  },
-  kh: {
-    toolHub: 'មជ្ឈមណ្ឌលឧបករណ៍',
-    workspace: 'កន្លែងធ្វើការ',
-    allClient: 'ទាំងអស់នៅលើ Client',
-    theme: 'ប្រធានពណ៌',
-    light: 'ស្រាល',
-    dark: 'ងងឹត',
-    nord: 'ន័រដ៍',
-    monokai: 'ម៉ូណូកៃ',
-    language: 'ភាសា',
-    free: 'ឥតគិតថ្លៃ',
-    support: 'ជួយគាំទ្រ',
-    supportTitle: 'អរគុណចំពោះការជួយគាំទ្រ',
-    supportMessage: 'ប្រសិនបើអ្នកចង់ជួយគាំទ្រគម្រោងនេះដោយការបរិច្ចាគតិចតួច សូមស្កេន QR ខាងក្រោម។',
-    supportCta: 'ការបរិច្ចាគណាមួយក៏ទទួលបានអំណរគុណ',
-  },
-};
-
 export default function Topbar() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '/';
   const { data: session, status: authStatus } = useSession();
   const { locale, setLocale, t } = useLocale();
+  const { setTheme } = useTheme();
+  const kh = locale === 'kh';
+
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const [searchOpen, setSearchOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
-  const profileTriggerRef = useRef<HTMLButtonElement>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileCategory, setMobileCategory] = useState<string | null>(null);
   const [preferencesLoadedFor, setPreferencesLoadedFor] = useState<string | null>(null);
 
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const categoriesTrigger = useRef<HTMLButtonElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const profileTrigger = useRef<HTMLButtonElement>(null);
+  const supportClose = useRef<HTMLButtonElement>(null);
+
+  const closeCategories = useCallback(() => setCategoriesOpen(false), []);
+
+  // Desktop mouse users get the Categories menu on hover. A short close delay lets the
+  // pointer travel from the button into the menu without it flickering shut. Touch and
+  // keyboard users still open it by tapping/pressing the button.
+  const hoverTimer = useRef<number | undefined>(undefined);
+  const openedByHover = useRef(false);
+  const onCategoriesEnter = (event: React.PointerEvent) => {
+    if (event.pointerType !== 'mouse') return;
+    window.clearTimeout(hoverTimer.current);
+    if (!categoriesOpen) openedByHover.current = true;
+    setCategoriesOpen(true);
+  };
+  const onCategoriesLeave = (event: React.PointerEvent) => {
+    if (event.pointerType !== 'mouse') return;
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      openedByHover.current = false;
+      setCategoriesOpen(false);
+    }, 150);
+  };
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
+  const closeProfile = useCallback(() => setProfileOpen(false), []);
+  useDismiss(categoriesOpen, closeCategories, categoriesRef, categoriesTrigger);
+  useDismiss(profileOpen, closeProfile, profileRef, profileTrigger);
+
+  // Close every menu after navigating.
+  useEffect(() => {
+    setMobileOpen(false);
+    setCategoriesOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
+
+  // Ctrl/⌘ K opens search anywhere; "/" opens it outside the homepage (which has its own search box).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      } else if (event.key === '/' && !typing && pathname !== '/') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pathname]);
+
+  // Lock page scroll while the mobile drawer or support dialog is open.
+  useEffect(() => {
+    if (!mobileOpen && !supportOpen) return;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        setSupportOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [mobileOpen, supportOpen]);
+
+  useEffect(() => {
+    if (supportOpen) requestAnimationFrame(() => supportClose.current?.focus());
+  }, [supportOpen]);
+
+  // Load the signed-in user's saved theme and language.
   useEffect(() => {
     const userId = session?.user?.id;
     if (authStatus !== 'authenticated' || !userId) return;
@@ -79,523 +166,557 @@ export default function Topbar() {
     let active = true;
     fetch('/api/user/preferences')
       .then(async (response) => {
-        const result = (await response.json()) as { theme?: string; locale?: string; error?: string };
-        if (!response.ok) throw new Error(result.error ?? 'Could not load your saved preferences.');
+        const result = (await response.json()) as {
+          theme?: string;
+          locale?: string;
+          error?: string;
+        };
+        if (!response.ok) throw new Error(result.error ?? 'load-failed');
         return result;
       })
       .then((preferences) => {
         if (!active) return;
         const savedTheme = normalizeTheme(preferences.theme);
         if (savedTheme) setTheme(savedTheme);
-        if (preferences.locale === 'en' || preferences.locale === 'kh') setLocale(preferences.locale);
+        if (preferences.locale === 'en' || preferences.locale === 'kh')
+          setLocale(preferences.locale);
         setPreferencesLoadedFor(userId);
       })
-      .catch((error: unknown) => {
-        if (!active) return;
-        const message = error instanceof Error ? error.message : 'Could not load your saved preferences.';
-        toast.error(message);
+      .catch(() => {
+        if (active) toast.error(t('loadPrefsFailed'));
       });
 
     return () => {
       active = false;
     };
+    // `t` changes with the locale; reloading preferences on every language switch is not wanted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authStatus, session?.user?.id, setLocale, setTheme]);
 
-  const texts = i18n[locale];
-  const navLinks = [
-    { label: locale === 'kh' ? 'ទំព័រដើម' : 'Home', href: '/', key: 'nav-home', menu: null },
-    { label: locale === 'kh' ? 'ស្វែងរកឧបករណ៍' : 'Explore Tools', href: '/tools', key: 'nav-explore', menu: null },
-    { label: locale === 'kh' ? 'ប្រភេទ' : 'Categories', href: '/tools', key: 'nav-categories', menu: 'hub' },
-    { label: locale === 'kh' ? 'ចំណូលចិត្ត' : 'Favorites', href: '/favorites', key: 'nav-favorites', menu: null },
-  ];
-  const categoryNames: Record<string, string> = {
-    formatters: locale === 'kh' ? 'កម្មវិធីរៀបចំទ្រង់ទ្រាយ' : 'Formatters',
-    diff: locale === 'kh' ? 'ប្រៀបធៀប' : 'Diff & Compare',
-    qr: locale === 'kh' ? 'QR និង KHQR' : 'QR & KHQR',
-    image: locale === 'kh' ? 'រូបភាព និង Base64' : 'Image & Base64',
-    utilities: locale === 'kh' ? 'ឧបករណ៍ប្រើប្រាស់' : 'Utilities',
-    generators: locale === 'kh' ? 'កម្មវិធីបង្កើត' : 'Generators',
-    documents: locale === 'kh' ? 'ឯកសារ' : 'Documents',
-  };
-  const workspaceTools = TOOLS.filter((tool) => tool.popular || tool.id === 'tool-pdf-word-converter');
-  const userName = session?.user?.name?.trim() || session?.user?.email || (locale === 'kh' ? 'គណនីរបស់អ្នក' : 'Your account');
-  const userInitial = userName.charAt(0).toLocaleUpperCase();
-
-  useEffect(() => {
-    if (!profileMenuOpen) return;
-    const closeOnOutsideClick = (event: PointerEvent) => {
-      if (event.target instanceof Node && !profileMenuRef.current?.contains(event.target)) setProfileMenuOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setProfileMenuOpen(false);
-        profileTriggerRef.current?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', closeOnOutsideClick);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutsideClick);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [profileMenuOpen]);
-
-  const savePreference = async (preference: { theme?: Theme; locale?: 'en' | 'kh' }) => {
-    if (authStatus !== 'authenticated' || !session?.user?.id || preferencesLoadedFor !== session.user.id) return;
-
+  const savePreference = async (preference: { theme?: ThemeId; locale?: Locale }) => {
+    if (
+      authStatus !== 'authenticated' ||
+      !session?.user?.id ||
+      preferencesLoadedFor !== session.user.id
+    )
+      return;
     try {
       const response = await fetch('/api/user/preferences', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(preference),
       });
-      const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? 'Could not sync your preferences.');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not sync your preferences.';
-      toast.error(message);
+      if (!response.ok) throw new Error('sync-failed');
+    } catch {
+      toast.error(t('syncPrefsFailed'));
     }
   };
 
-  const handleThemeChange = (next: Theme) => {
-    setTheme(next);
-    void savePreference({ theme: next });
-  };
+  const onThemeChange = (next: ThemeId) => void savePreference({ theme: next });
+  const onLocaleChange = (next: Locale) => void savePreference({ locale: next });
 
-  const handleLocaleChange = (value: 'en' | 'kh') => {
-    setLocale(value);
-    void savePreference({ locale: value });
-  };
+  const userName = session?.user?.name?.trim() || session?.user?.email || t('account');
+  const userInitial = userName.charAt(0).toLocaleUpperCase();
+  const signedIn = authStatus === 'authenticated';
+
+  const isActive = (href: string) =>
+    href === '/tool-workspace'
+      ? pathname.startsWith('/tool-workspace') || pathname.startsWith('/favorites')
+      : pathname === href;
+  const categoriesActive = pathname.startsWith('/tools/');
+
+  const navLink = (active: boolean) =>
+    `inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+      active
+        ? 'bg-primary/10 text-primary'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+    }`;
+
+  const avatar = (sizeClass: string, textClass: string) =>
+    signedIn && session?.user?.image ? (
+      <Image
+        src={session.user.image}
+        alt=""
+        width={40}
+        height={40}
+        unoptimized
+        className={`${sizeClass} rounded-full object-cover`}
+      />
+    ) : signedIn ? (
+      <span
+        className={`flex ${sizeClass} items-center justify-center rounded-full bg-primary/15 font-semibold text-primary ${textClass}`}
+      >
+        {userInitial}
+      </span>
+    ) : (
+      <span
+        className={`flex ${sizeClass} items-center justify-center rounded-full bg-muted text-muted-foreground`}
+      >
+        <CircleUserRound size={20} strokeWidth={1.7} aria-hidden="true" />
+      </span>
+    );
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
-        <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16">
-          <div className="flex h-14 items-center justify-between gap-3">
-            {/* Logo */}
-            <Link href="/" className="group flex min-w-0 items-center gap-2.5">
-              <div className="rounded-full border border-border/70 bg-card p-0.5">
-                <AppLogo size={28} className="rounded-full overflow-hidden" />
-              </div>
-              <span className="whitespace-nowrap text-sm font-semibold tracking-tight text-foreground transition-colors duration-150 group-hover:text-primary sm:text-base">
-                ឧបករណ៍​កម្ពុជា
-              </span>
-              <span className="hidden items-center gap-1 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider text-primary lg:inline-flex">
-                <Zap size={9} />
-                {texts.free}
-              </span>
+      <a
+        href="#main-content"
+        className="sr-only z-[100] rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
+      >
+        {t('skipToContent')}
+      </a>
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="page-container flex h-16 items-center gap-3">
+          {/* Brand */}
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`DLTools — ${t('navHome')}`}
+          >
+            <AppLogo size={32} className="overflow-hidden rounded-lg border border-border" />
+            <span className="text-base font-semibold tracking-tight text-foreground">DLTools</span>
+          </Link>
+
+          {/* Desktop navigation */}
+          <nav aria-label={t('mainNavigation')} className="ml-4 hidden items-center gap-1 md:flex">
+            <Link
+              href="/tools"
+              className={navLink(isActive('/tools'))}
+              aria-current={isActive('/tools') ? 'page' : undefined}
+            >
+              {t('navAllTools')}
             </Link>
-
-            {/* Desktop nav */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks?.map((link) => {
-                        const isActive = link.menu === 'hub' ? false : pathname === link.href || (link.href !== '/' && !!pathname?.startsWith(link.href));
-                if (!link.menu) {
-                  return (
-                    <Link
-                      key={link.key}
-                      href={link.href}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                        isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                }
-                return (
-                          <div
-                            key={link.key}
-                            className="group relative"
-                            onMouseEnter={() => setOpenMenu(link.menu)}
-                            onMouseLeave={() => setOpenMenu(null)}
-                            onFocus={() => setOpenMenu(link.menu)}
-                          >
-                            <div
-                              data-active={isActive}
-                              data-open={openMenu === link.menu}
-                              className={`nav-liquid-control flex items-center rounded-lg text-sm font-medium transition-colors ${
-                                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                              }`}
-                            >
-                              <Link href={link.href} className="px-3 py-1.5">{link.label}</Link>
-                              <button
-                                type="button"
-                                className="mr-1 rounded p-1 hover:bg-muted"
-                                aria-label={`${link.label} ${locale === 'kh' ? 'ឧបករណ៍' : 'tools'}`}
-                                aria-expanded={openMenu === link.menu}
-                                aria-haspopup="true"
-                                onClick={() => setOpenMenu((current) => current === link.menu ? null : link.menu)}
-                              >
-                                <ChevronDown size={13} aria-hidden="true" />
-                              </button>
-                            </div>
-                            <div className={`invisible absolute left-1/2 top-full z-[60] w-[min(92vw,46rem)] -translate-x-1/2 pt-2 opacity-0 transition duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${
-                              openMenu === link.menu ? 'visible opacity-100' : ''
-                            }`}>
-                              <div className="nav-liquid-glass nav-tools-dropdown max-h-[min(70vh,34rem)] overflow-y-auto rounded-xl p-4">
-                                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                                  {t('allTools')}
-                                </p>
-                                {link.menu === 'hub' ? (
-                                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                    {CATEGORIES.map((category) => (
-                                      <section key={category.id}>
-                                        <h3 className="mb-1.5 text-xs font-semibold text-muted-foreground">
-                                          {categoryNames[category.id] ?? category.label}
-                                        </h3>
-                                        <ul className="space-y-0.5">
-                                          {TOOLS.filter((tool) => tool.category === category.id).map((tool) => (
-                                            <li key={tool.id}>
-                                              <Link
-                                                href={getToolPath(tool)}
-                                                onClick={() => setOpenMenu(null)}
-                                                className="block rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted hover:text-primary"
-                                              >
-                                                {getToolName(tool.id, tool.name, locale)}
-                                              </Link>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </section>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <ul className="grid gap-1 sm:grid-cols-2">
-                                    {workspaceTools.map((tool) => (
-                                      <li key={tool.id}>
-                                        <Link
-                                          href={getToolPath(tool)}
-                                          onClick={() => setOpenMenu(null)}
-                                          className="block rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted hover:text-primary"
-                                        >
-                                          {getToolName(tool.id, tool.name, locale)}
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-            </nav>
-
-            {/* Right actions */}
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div
+              ref={categoriesRef}
+              className="relative"
+              onPointerEnter={onCategoriesEnter}
+              onPointerLeave={onCategoriesLeave}
+            >
               <button
+                ref={categoriesTrigger}
                 type="button"
-                className="nav-liquid-control nav-support-control btn-ghost hidden rounded-lg px-3 py-1.5 text-sm font-medium lg:inline-flex"
-                onClick={() => setSupportOpen(true)}
-                aria-label={texts.support}
+                className={navLink(categoriesOpen || categoriesActive)}
+                aria-expanded={categoriesOpen}
+                aria-controls="nav-categories-menu"
+                onClick={() => {
+                  // A click right after hover-opening keeps the menu open instead of toggling it shut.
+                  if (openedByHover.current) {
+                    openedByHover.current = false;
+                    return;
+                  }
+                  setCategoriesOpen((open) => !open);
+                }}
               >
-                <HandCoins size={14} />
-                {texts.support}
+                {t('navCategories')}
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${categoriesOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                />
               </button>
-              <div className="relative" ref={profileMenuRef}>
+              {categoriesOpen && (
+                // pt-2 (not mt-2) keeps the gap under the button inside the hover area.
+                <div
+                  id="nav-categories-menu"
+                  className="absolute left-0 top-full z-[60] w-[min(92vw,44rem)] pt-2"
+                >
+                  <div className="rounded-2xl border border-border bg-card p-3 shadow-popover fade-in">
+                    <ul className="grid gap-1 sm:grid-cols-2">
+                      {CATEGORIES.map((category) => (
+                        <li key={category.id}>
+                          <Link
+                            href={`/tools?cat=${category.id}`}
+                            onClick={closeCategories}
+                            className="group flex items-start gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                          >
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/10 text-primary">
+                              <CategoryIcon name={category.icon} size={17} />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="flex items-center gap-2 text-sm font-semibold text-foreground group-hover:text-primary">
+                                {getCategoryName(category.id, category.label, locale)}
+                                <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                                  {CATEGORY_COUNTS[category.id]}
+                                </span>
+                              </span>
+                              <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                                {getCategoryDescription(category.id, category.description, locale)}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-2 flex items-center justify-between border-t border-border px-2.5 pt-3">
+                      <span className="text-xs text-muted-foreground">{t('brandTagline')}</span>
+                      <Link
+                        href="/tools"
+                        onClick={closeCategories}
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        {t('viewAllTools')} →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <Link
+              href="/tool-workspace"
+              className={navLink(isActive('/tool-workspace'))}
+              aria-current={isActive('/tool-workspace') ? 'page' : undefined}
+            >
+              {t('navWorkspace')}
+            </Link>
+          </nav>
+
+          {/* Actions */}
+          <div className="ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="hidden h-9 w-56 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex xl:w-64"
+              aria-label={t('searchDialogTitle')}
+            >
+              <Search size={15} aria-hidden="true" />
+              <span className="flex-1 truncate text-left">{t('searchTools')}</span>
+              <kbd className="kbd">⌘K</kbd>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="btn-icon lg:hidden"
+              aria-label={t('searchDialogTitle')}
+            >
+              <Search size={18} aria-hidden="true" />
+            </button>
+
+            <LanguageSwitcher onChange={onLocaleChange} className="hidden sm:inline-flex" />
+            <ThemeSwitcher onChange={onThemeChange} className="hidden sm:inline-flex" />
+
+            <div ref={profileRef} className="relative hidden md:block">
+              <button
+                ref={profileTrigger}
+                type="button"
+                className="flex h-9 items-center gap-1 rounded-full border border-border bg-card p-0.5 pr-2 transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => setProfileOpen((open) => !open)}
+                aria-label={t('accountMenu')}
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+              >
+                {avatar('h-7 w-7', 'text-xs')}
+                <ChevronDown
+                  size={14}
+                  className={`text-muted-foreground transition-transform ${profileOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                />
+              </button>
+              {profileOpen && (
+                <div
+                  className="absolute right-0 top-full z-[70] mt-2 w-72 rounded-2xl border border-border bg-card p-2 shadow-popover fade-in"
+                  role="menu"
+                  aria-label={t('accountMenu')}
+                >
+                  <div className="flex items-center gap-3 px-2.5 py-2.5">
+                    {avatar('h-10 w-10', 'text-sm')}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {signedIn ? userName : t('guestProfile')}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {signedIn
+                          ? (session?.user?.email ?? t('signedInGoogle'))
+                          : authStatus === 'loading'
+                            ? t('checkingSignIn')
+                            : t('signInToSync')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="my-1 border-t border-border" />
+                  <Link
+                    href="/tool-workspace"
+                    role="menuitem"
+                    onClick={closeProfile}
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    <LayoutGrid size={15} className="text-muted-foreground" aria-hidden="true" />{' '}
+                    {t('navWorkspace')}
+                  </Link>
+                  <Link
+                    href="/favorites"
+                    role="menuitem"
+                    onClick={closeProfile}
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    <Heart size={15} className="text-muted-foreground" aria-hidden="true" />{' '}
+                    {t('favorites')}
+                  </Link>
                   <button
                     type="button"
-                    ref={profileTriggerRef}
-                    className="nav-liquid-control flex h-9 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    onClick={() => setProfileMenuOpen((open) => !open)}
-                    aria-label={locale === 'kh' ? 'បើកម៉ឺនុយគណនី' : 'Open profile menu'}
-                    aria-expanded={profileMenuOpen}
-                    aria-haspopup="menu"
-                    onKeyDown={(event) => {
-                      if (event.key === 'ArrowDown' && !profileMenuOpen) {
-                        event.preventDefault();
-                        setProfileMenuOpen(true);
-                        requestAnimationFrame(() => profileMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
-                      }
+                    role="menuitem"
+                    onClick={() => {
+                      closeProfile();
+                      setSupportOpen(true);
                     }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-foreground hover:bg-muted"
                   >
-                    {authStatus === 'authenticated' && session.user?.image ? (
-                      <Image src={session.user.image} alt="" width={28} height={28} unoptimized className="h-7 w-7 rounded-full object-cover" />
-                    ) : authStatus === 'authenticated' ? (
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">{userInitial}</span>
-                    ) : (
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground"><CircleUserRound size={23} strokeWidth={1.7} /></span>
-                    )}
-                    <span className="hidden max-w-32 truncate md:inline">{authStatus === 'authenticated' ? userName : (locale === 'kh' ? 'គណនី' : 'Profile')}</span>
-                    <ChevronDown size={14} className={`text-muted-foreground transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+                    <HandCoins size={15} className="text-muted-foreground" aria-hidden="true" />{' '}
+                    {t('supportProject')}
                   </button>
-                  {profileMenuOpen && (
-                    <div className="nav-liquid-glass absolute right-0 top-full z-[70] mt-2 w-72 overflow-hidden rounded-xl p-2" role="menu" aria-label={locale === 'kh' ? 'ម៉ឺនុយគណនី' : 'Account menu'}>
-                      {authStatus === 'authenticated' ? (
-                        <>
-                          <div className="flex items-center gap-3 border-b border-border px-3 py-3">
-                            {session.user?.image ? (
-                              <Image src={session.user.image} alt="" width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover" />
-                            ) : (
-                              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">{userInitial}</span>
-                            )}
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
-                              {session.user?.email && session.user.name && <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>}
-                              <p className="mt-0.5 text-[11px] text-primary">{locale === 'kh' ? 'បានចូលគណនី' : 'Signed in with Google'}</p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-error/10 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                            onClick={() => {
-                              setProfileMenuOpen(false);
-                              void signOut({ callbackUrl: '/' });
-                            }}
-                          >
-                            <LogOut size={15} />
-                            {t('signOut')}
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-3 border-b border-border px-3 py-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"><CircleUserRound size={30} strokeWidth={1.5} /></span>
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">{locale === 'kh' ? 'អ្នកប្រើប្រាស់ភ្ញៀវ' : 'Guest profile'}</p>
-                              <p className="mt-0.5 text-xs text-muted-foreground">{authStatus === 'loading' ? (locale === 'kh' ? 'កំពុងផ្ទៀងផ្ទាត់…' : 'Checking sign-in…') : (locale === 'kh' ? 'ចូលគណនីដើម្បីធ្វើសមកាលកម្មទិន្នន័យ' : 'Sign in to sync your saved data')}</p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                            onClick={() => {
-                              setProfileMenuOpen(false);
-                              void signIn('google');
-                            }}
-                            disabled={authStatus === 'loading'}
-                          >
-                            <LogIn size={15} />
-                            {t('signInGoogle')}
-                          </button>
-                        </>
-                      )}
-                    </div>
+                  <div className="my-1 border-t border-border" />
+                  <p className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">
+                    {t('theme')}
+                  </p>
+                  <ThemeOptions onChange={onThemeChange} />
+                  <div className="my-1 border-t border-border" />
+                  {signedIn ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-foreground hover:bg-error/10 hover:text-error"
+                      onClick={() => {
+                        closeProfile();
+                        void signOut({ callbackUrl: '/' });
+                      }}
+                    >
+                      <LogOut size={15} aria-hidden="true" /> {t('signOut')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={authStatus === 'loading'}
+                      className="btn-primary mt-1 w-full"
+                      onClick={() => {
+                        closeProfile();
+                        void signIn('google');
+                      }}
+                    >
+                      <LogIn size={15} aria-hidden="true" /> {t('signInGoogle')}
+                    </button>
                   )}
-              </div>
-              <div className="hidden md:block"><ThemeSwitcher onChange={handleThemeChange} /></div>
-              <select
-                value={locale}
-                onChange={(event) => handleLocaleChange(event.target.value as 'en' | 'kh')}
-                className="nav-liquid-control hidden rounded-lg px-3 py-1.5 text-sm text-foreground outline-none md:inline-flex"
-                aria-label={texts.language}
-              >
-                <option value="en">EN</option>
-                <option value="kh">KH</option>
-              </select>
-              <a
-                href="https://github.com/Dear0001"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nav-liquid-control btn-icon hidden rounded-lg lg:flex"
-                aria-label="View on GitHub"
-              >
-                <GithubIcon size={16} />
-              </a>
-              <span className="nav-liquid-control hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground xl:flex">
-                <span className="status-dot-success" />
-                {texts.allClient}
-              </span>
-              <button
-                type="button"
-                className="nav-liquid-control btn-icon rounded-lg md:hidden"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label={t('toggleMenu')}
-                aria-expanded={mobileOpen}
-                aria-controls="mobile-navigation"
-              >
-                {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-              </button>
+                </div>
+              )}
             </div>
+
+            <button
+              type="button"
+              className="btn-icon md:hidden"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-label={mobileOpen ? t('close') : t('menu')}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
+            >
+              {mobileOpen ? (
+                <X size={20} aria-hidden="true" />
+              ) : (
+                <Menu size={20} aria-hidden="true" />
+              )}
+            </button>
           </div>
         </div>
       </header>
+
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 top-16 z-40 md:hidden">
+          <div
+            className="absolute inset-0 bg-overlay"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <nav
+            id="mobile-navigation"
+            aria-label={t('mainNavigation')}
+            className="absolute inset-x-0 top-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden border-b border-border bg-card px-4 pb-6 pt-3 fade-in"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                setSearchOpen(true);
+              }}
+              className="mb-3 flex h-11 w-full items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm text-muted-foreground"
+            >
+              <Search size={16} aria-hidden="true" /> {t('searchTools')}
+            </button>
+            <ul className="grid grid-cols-1 gap-1">
+              {[
+                { href: '/', label: t('navHome') },
+                { href: '/tools', label: t('navAllTools') },
+                { href: '/tool-workspace', label: t('navWorkspace') },
+                { href: '/favorites', label: t('favorites') },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={pathname === link.href ? 'page' : undefined}
+                    className={`block rounded-lg px-3 py-2.5 text-sm font-medium ${pathname === link.href ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mb-1 mt-4 px-3 text-xs font-semibold text-muted-foreground">
+              {t('navCategories')}
+            </p>
+            <ul className="grid grid-cols-1 gap-0.5">
+              {CATEGORIES.map((category) => {
+                const open = mobileCategory === category.id;
+                return (
+                  <li key={category.id}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted"
+                      aria-expanded={open}
+                      onClick={() => setMobileCategory(open ? null : category.id)}
+                    >
+                      <CategoryIcon name={category.icon} size={16} className="text-primary" />
+                      <span className="flex-1">
+                        {getCategoryName(category.id, category.label, locale)}
+                      </span>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {CATEGORY_COUNTS[category.id]}
+                      </span>
+                      <ChevronDown
+                        size={15}
+                        className={`text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    {open && (
+                      <ul className="mb-2 ml-6 grid grid-cols-1 gap-0.5 border-l border-border pl-3">
+                        {getToolsByCategory(category.id).map((tool) => (
+                          <li key={tool.id}>
+                            <Link
+                              href={getToolPath(tool)}
+                              className="block rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                            >
+                              {getToolName(tool.id, tool.name, locale)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 border-t border-border pt-4">
+              <div className="flex items-center justify-between gap-3 px-1">
+                <span className="text-sm font-medium text-foreground">{t('language')}</span>
+                <LanguageSwitcher onChange={onLocaleChange} />
+              </div>
+              <div>
+                <p className="mb-1 px-1 text-sm font-medium text-foreground">{t('theme')}</p>
+                <ThemeOptions onChange={onThemeChange} />
+              </div>
+              <div className="rounded-xl border border-border bg-background p-3">
+                <div className="flex items-center gap-3">
+                  {avatar('h-10 w-10', 'text-sm')}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {signedIn ? userName : t('guestProfile')}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {signedIn ? (session?.user?.email ?? t('signedInGoogle')) : t('signInToSync')}
+                    </p>
+                  </div>
+                </div>
+                {signedIn ? (
+                  <button
+                    type="button"
+                    className="btn-ghost mt-3 w-full"
+                    onClick={() => void signOut({ callbackUrl: '/' })}
+                  >
+                    <LogOut size={15} aria-hidden="true" /> {t('signOut')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-primary mt-3 w-full"
+                    disabled={authStatus === 'loading'}
+                    onClick={() => void signIn('google')}
+                  >
+                    <LogIn size={15} aria-hidden="true" /> {t('signInGoogle')}
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                className="btn-ghost w-full"
+                onClick={() => {
+                  setMobileOpen(false);
+                  setSupportOpen(true);
+                }}
+              >
+                <HandCoins size={15} aria-hidden="true" /> {t('supportProject')}
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
+
+      {/* Support dialog */}
       {supportOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay p-4 fade-in">
-          <div role="dialog" aria-modal="true" aria-labelledby="support-modal-title" className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card shadow-card-hover slide-up">
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-overlay p-4 fade-in"
+          onMouseDown={() => setSupportOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="support-modal-title"
+            className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card shadow-popover slide-up"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-error/10 text-error" aria-hidden="true">
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-error/10 text-error"
+                  aria-hidden="true"
+                >
                   <Heart size={18} />
                 </span>
-                <h3 id="support-modal-title" className="text-base font-semibold tracking-normal text-foreground">{texts.support}</h3>
+                <h2 id="support-modal-title" className="text-base font-semibold text-foreground">
+                  {t('supportProject')}
+                </h2>
               </div>
-              <button type="button" className="btn-icon rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setSupportOpen(false)} aria-label={locale === 'kh' ? 'បិទ' : 'Close support modal'}>
-                <X size={18} />
+              <button
+                ref={supportClose}
+                type="button"
+                className="btn-icon"
+                onClick={() => setSupportOpen(false)}
+                aria-label={t('close')}
+              >
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
             <div className="px-5 py-6 sm:px-8">
-              <div className="text-center">
-                <p className="text-lg font-semibold text-foreground">{texts.supportTitle}</p>
-                <p className={`mx-auto mt-2 max-w-sm text-sm text-muted-foreground ${locale === 'kh' ? 'leading-8' : 'leading-6'}`}>
-                  {texts.supportMessage}
-                </p>
-              </div>
-              <div className="mx-auto mt-6 w-full max-w-[300px] rounded-2xl border border-border bg-white p-2 shadow-lg">
+              <p className="text-center text-lg font-semibold text-foreground">
+                {t('supportTitle')}
+              </p>
+              <p
+                className={`mx-auto mt-2 max-w-sm text-center text-sm text-muted-foreground ${kh ? 'leading-7' : 'leading-6'}`}
+              >
+                {t('supportMessage')}
+              </p>
+              <div className="mx-auto mt-6 w-full max-w-[280px] rounded-2xl border border-border bg-white p-2">
                 <Image
                   src="/assets/images/qr-code.jpg"
-                  alt="Support QR code"
+                  alt={t('supportQrAlt')}
                   width={300}
                   height={300}
                   className="h-auto w-full rounded-xl object-contain"
                 />
               </div>
-              <p className={`mt-5 text-center text-sm font-medium text-foreground ${locale === 'kh' ? 'leading-8' : 'leading-6'}`}>
-                {texts.supportCta}
+              <p className="mt-5 text-center text-sm font-medium text-foreground">
+                {t('supportCta')}
               </p>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-overlay" onClick={() => setMobileOpen(false)} />
-          <div id="mobile-navigation" className="absolute top-14 left-0 right-0 flex flex-col gap-3 border-b border-border bg-card p-4 fade-in">
-            {navLinks?.map((link) => {
-              const isActive = pathname === link?.href;
-              if (!link.menu) {
-                return (
-                  <Link
-                    key={link.key}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
-                      isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              }
-              return (
-                <section key={link.key}>
-                  <div className="flex items-center gap-1">
-                    <Link
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex-1 rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-150 ${
-                        isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                    <button
-                      type="button"
-                      className="btn-icon h-10 w-10"
-                      aria-label={`${link.label} ${locale === 'kh' ? 'ឧបករណ៍' : 'tools'}`}
-                      aria-expanded={openMenu === link.menu}
-                      onClick={() => setOpenMenu((current) => current === link.menu ? null : link.menu)}
-                    >
-                      <ChevronDown size={15} className={`transition-transform ${openMenu === link.menu ? 'rotate-180' : ''}`} />
-                    </button>
-                  </div>
-                  {openMenu === link.menu && (
-                    <ul className="mt-1 grid grid-cols-2 gap-1 px-2 pb-2">
-                      {TOOLS.slice(0, 8).map((tool) => (
-                        <li key={tool.id}>
-                          <Link
-                            href={getToolPath(tool)}
-                            onClick={() => {
-                              setMobileOpen(false);
-                              setOpenMenu(null);
-                            }}
-                            className="block rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-primary"
-                          >
-                            {getToolName(tool.id, tool.name, locale)}
-                          </Link>
-                        </li>
-                      ))}
-                      {link.menu === 'hub' && (
-                        <li className="col-span-2">
-                          <Link href="/" onClick={() => setMobileOpen(false)} className="block rounded-md px-3 py-2 text-xs font-medium text-primary">
-                            {t('allTools')}
-                          </Link>
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </section>
-              );
-            })}
-            <div className="flex flex-col gap-3 pt-2 border-t border-border">
-              {authStatus === 'authenticated' ? (
-                <div className="rounded-xl border border-border bg-background p-3">
-                  <div className="flex items-center gap-3">
-                    {session.user?.image ? (
-                      <Image src={session.user.image} alt="" width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover" />
-                    ) : (
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">{userInitial}</span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
-                      {session.user?.email && session.user.name && <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>}
-                      <p className="mt-0.5 text-[11px] text-primary">{locale === 'kh' ? 'បានចូលគណនី' : 'Signed in'}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-ghost mt-3 w-full justify-center rounded-md px-4 py-2 text-sm font-medium"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      void signOut({ callbackUrl: '/' });
-                    }}
-                  >
-                    <LogOut size={14} />
-                    {t('signOut')}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="btn-ghost w-full px-4 py-2 rounded-md text-left text-sm font-medium"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    void signIn('google');
-                  }}
-                  disabled={authStatus === 'loading'}
-                >
-                  <LogIn size={14} />
-                  {t('signInGoogle')}
-                </button>
-              )}
-              <button
-                type="button"
-                className="nav-liquid-control nav-support-control btn-ghost w-full px-4 py-2 rounded-md text-left text-sm font-medium"
-                onClick={() => {
-                  setSupportOpen(true);
-                  setMobileOpen(false);
-                }}
-              >
-                <HandCoins size={14} />
-                {texts.support}
-              </button>
-              <label className="nav-liquid-control flex items-center justify-between gap-3 rounded-md px-4 py-2 text-sm text-foreground">
-                <span>{texts.theme}</span>
-                <select
-                  value={theme}
-                  onChange={(event) => handleThemeChange(event.target.value as Theme)}
-                  className="bg-transparent text-sm text-foreground outline-none"
-                  aria-label={texts.theme}
-                >
-                  {THEMES.map((option) => <option key={option} value={option}>{locale === 'kh' ? THEME_META[option].labelKh : THEME_META[option].label}</option>)}
-                </select>
-              </label>
-              <label className="nav-liquid-control flex items-center justify-between gap-3 px-4 py-2 rounded-md text-sm text-foreground">
-                <span>{texts.language}</span>
-                <select
-                  value={locale}
-                  onChange={(event) => handleLocaleChange(event.target.value as 'en' | 'kh')}
-                  className="bg-transparent text-sm text-foreground outline-none"
-                >
-                  <option value="en">EN</option>
-                  <option value="kh">KH</option>
-                </select>
-              </label>
             </div>
           </div>
         </div>

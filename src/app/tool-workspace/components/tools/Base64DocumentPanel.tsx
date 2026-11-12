@@ -1,7 +1,10 @@
 'use client';
 import React, { useMemo, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { AlertTriangle, ClipboardPaste, Download, FileText, Trash2 } from 'lucide-react';
+import ToolFrame, { DetailList, OutputPlaceholder, ToolbarField } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeEditor from '../CodeEditor';
+import { AlertTriangle, ClipboardPaste, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDebouncedValue } from '../useDebouncedValue';
 import DocumentPreview from './DocumentPreview';
@@ -69,131 +72,50 @@ export default function Base64DocumentPanel(_props: { tool: Tool }) {
   const canDownload = resolution?.status === 'ready';
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Config bar */}
-      <div className="flex-shrink-0 flex flex-wrap items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30">
-        <div className="flex items-center gap-2">
-          <label htmlFor="b64doc-format" className="text-xs text-muted-foreground font-medium">Save as</label>
-          <select
-            id="b64doc-format"
-            className="select-input"
-            value={target}
-            onChange={(event) => setTarget(event.target.value as TargetOption)}
-          >
-            <option value="auto">Auto detect</option>
-            <option value="pdf">PDF (.pdf)</option>
-            <option value="word">Word (.docx)</option>
-            <option value="excel">Excel (.xlsx)</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="b64doc-name" className="text-xs text-muted-foreground font-medium">File name</label>
-          <input
-            id="b64doc-name"
-            className="select-input w-40"
-            value={fileName}
-            onChange={(event) => setFileName(event.target.value)}
-            placeholder="document"
-            spellCheck={false}
-          />
-          {resolution?.status === 'ready' && (
-            <span className="text-xs text-muted-foreground font-mono">.{resolution.ext}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 ml-auto">
-          <button className="btn-ghost text-xs" onClick={pasteFromClipboard}>
-            <ClipboardPaste size={12} />
-            Paste
-          </button>
-          <button className="btn-ghost text-xs" onClick={clear} disabled={!input}>
-            <Trash2 size={12} />
-            Clear
-          </button>
-          <button className="btn-primary text-xs" onClick={download} disabled={!canDownload}>
-            <Download size={12} />
-            Download
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-hidden p-4 grid gap-4 lg:grid-cols-2">
-        {/* Input */}
-        <div className="flex min-h-0 flex-col gap-2">
-          <label htmlFor="b64doc-input" className="text-xs text-muted-foreground font-medium">
-            Base64 string or data URI
-          </label>
-          <textarea
-            id="b64doc-input"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            className="input-code w-full flex-1 min-h-[12rem] text-success text-xs"
-            placeholder={'Paste Base64 here…\nJVBERi0xLjQK… or data:application/pdf;base64,JVBERi0x…'}
-            spellCheck={false}
-          />
-        </div>
-
-        {/* Result */}
-        <div className="flex min-h-0 flex-col gap-3 overflow-auto scrollbar-thin" aria-live="polite">
-          {!input.trim() && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
-              <FileText size={28} className="text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">Convert Base64 to PDF, Word or Excel</p>
-              <p className="text-xs text-muted-foreground">
-                Paste a Base64 string and the file type is detected automatically. Everything runs in your browser.
-              </p>
-            </div>
-          )}
-
+    <ToolFrame toolbar={<>
+      <ToolbarField label="Save as">
+        <select id="b64doc-format" className="select-input" value={target} onChange={(event) => setTarget(event.target.value as TargetOption)}>
+          <option value="auto">Auto detect</option>
+          <option value="pdf">PDF (.pdf)</option>
+          <option value="word">Word (.docx)</option>
+          <option value="excel">Excel (.xlsx)</option>
+        </select>
+      </ToolbarField>
+      <ToolbarField label="File name">
+        <input id="b64doc-name" className="input-field w-40 py-1.5" value={fileName} onChange={(event) => setFileName(event.target.value)} placeholder="document" spellCheck={false} />
+      </ToolbarField>
+      {resolution?.status === 'ready' && <span className="font-mono text-xs text-muted-foreground">.{resolution.ext}</span>}
+      <div className="ml-auto"><button type="button" className="btn-primary" onClick={download} disabled={!canDownload}><Download size={14} />Download</button></div>
+    </>}>
+      <PanelLayout
+        inputLabel="Base64 string or data URI"
+        outputLabel="Document"
+        outputBody="content"
+        copyable={false}
+        inputActions={<button type="button" className="btn-icon gap-1 px-2 text-xs font-medium" onClick={pasteFromClipboard} title="Paste from clipboard" aria-label="Paste from clipboard"><ClipboardPaste size={13} /><span className="hidden sm:inline">Paste</span></button>}
+        inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder={'Paste Base64 here…\nJVBERi0xLjQK… or data:application/pdf;base64,JVBERi0x…'} />}
+        outputPanel={<div className="flex flex-1 flex-col gap-3" aria-live="polite">
+          {!input.trim() && <OutputPlaceholder icon={<FileText size={28} />} title="Convert Base64 to PDF, Word or Excel" description="Paste a Base64 string and the file type is detected automatically. Everything runs in your browser." />}
           {waiting && <p className="text-xs text-muted-foreground">Decoding…</p>}
-
-          {!waiting && parsed && !parsed.ok && (
-            <div className="flex items-start gap-2 rounded-lg border border-error/40 bg-error/5 p-3 text-xs text-error">
-              <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-              <span>{parsed.error}</span>
-            </div>
-          )}
-
+          {!waiting && parsed && !parsed.ok && <p className="notice notice-error" role="alert"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /><span>{parsed.error}</span></p>}
           {!waiting && bytes && kind && resolution && (
             <>
-              <div className="rounded-xl border border-border bg-card p-3 text-xs space-y-1">
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Detected</span>
-                  <span className="font-medium text-foreground">{KIND_LABEL[kind]}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Size</span>
-                  <span className="font-medium text-foreground">{formatBytes(bytes.length)}</span>
-                </div>
-                {resolution.status === 'ready' && (
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted-foreground">Will save as</span>
-                    <span className="font-medium text-foreground">
-                      {OUTPUT_TYPES[resolution.target].label} (.{resolution.ext})
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {resolution.status !== 'ready' && (
-                <div className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/5 p-3 text-xs text-warning">
-                  <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                  <span>{resolution.message}</span>
-                </div>
-              )}
-              {resolution.status === 'ready' && resolution.warning && (
-                <div className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/5 p-3 text-xs text-warning">
-                  <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                  <span>{resolution.warning}</span>
-                </div>
-              )}
-
-              {(kind === 'pdf' || kind === 'docx' || kind === 'xlsx') && (
-                <DocumentPreview bytes={bytes} kind={kind} />
-              )}
+              <DetailList mono={false} rows={[
+                ['Detected', KIND_LABEL[kind]],
+                ['Size', formatBytes(bytes.length)],
+                ...(resolution.status === 'ready' ? [['Will save as', `${OUTPUT_TYPES[resolution.target].label} (.${resolution.ext})`] as [string, string]] : []),
+              ]} />
+              {resolution.status !== 'ready' && <p className="notice border-warning/40 bg-warning/5 text-warning"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /><span>{resolution.message}</span></p>}
+              {resolution.status === 'ready' && resolution.warning && <p className="notice border-warning/40 bg-warning/5 text-warning"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /><span>{resolution.warning}</span></p>}
+              {(kind === 'pdf' || kind === 'docx' || kind === 'xlsx') && <DocumentPreview bytes={bytes} kind={kind} />}
             </>
           )}
-        </div>
-      </div>
-    </div>
+        </div>}
+        onDownload={download}
+        canDownload={canDownload}
+        outputStatus={parsed && !parsed.ok ? 'error' : canDownload ? 'success' : 'idle'}
+        onClear={clear}
+      />
+    </ToolFrame>
   );
 }

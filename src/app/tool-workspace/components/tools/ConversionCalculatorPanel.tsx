@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame, { DetailList } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
 
 type UnitKind = 'length' | 'weight' | 'temperature' | 'data';
 const UNIT_TABLE: Record<UnitKind, Record<string, number>> = {
@@ -56,18 +58,38 @@ export default function ConversionCalculatorPanel({ tool: _tool }: { tool: Tool 
     : NaN;
 
   const changeKind = (next: UnitKind) => { setKind(next); const units = Object.keys(UNIT_TABLE[next]); setFromUnit(units[0]); setToUnit(units[1] ?? units[0]); };
-  return <div className="h-full overflow-auto p-5">
-    <div className="flex gap-2 mb-5"><button className={mode === 'timezone' ? 'btn-primary text-xs' : 'btn-ghost text-xs'} onClick={() => setMode('timezone')}>Timezones</button><button className={mode === 'units' ? 'btn-primary text-xs' : 'btn-ghost text-xs'} onClick={() => setMode('units')}>Units</button></div>
-    {mode === 'timezone' ? <div className="max-w-3xl space-y-4">
-      <label className="block text-xs text-muted-foreground">Date and time<input type="datetime-local" className="input-code mt-1 w-full p-2" value={dateValue} onChange={(event) => setDateValue(event.target.value)} /></label>
-      <div className="grid md:grid-cols-2 gap-3">{[[fromZone, setFromZone, 'From timezone'], [toZone, setToZone, 'To timezone']].map(([zone, setter, label]) => <label key={String(label)} className="text-xs text-muted-foreground">{String(label)}<input className="input-code mt-1 w-full p-2" list="timezone-options" value={String(zone)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} placeholder="IANA zone, e.g. Asia/Phnom_Penh" /></label>)}</div>
-      <datalist id="timezone-options">{ZONES.map((zone) => <option key={zone} value={zone} />)}</datalist>
-      {zoneResult.error ? <p className="text-sm text-error">{zoneResult.error}</p> : <div className="grid md:grid-cols-2 gap-3"><p className="p-3 rounded-lg bg-secondary/30 text-sm"><span className="block text-xs text-muted-foreground mb-1">{fromZone}</span>{zoneResult.source}</p><p className="p-3 rounded-lg bg-secondary/30 text-sm"><span className="block text-xs text-muted-foreground mb-1">{toZone}</span>{zoneResult.target}</p></div>}
-      <p className="text-xs text-muted-foreground">Enter a valid IANA timezone name. The entered wall-clock time is interpreted in the “From timezone”.</p>
-    </div> : <div className="max-w-3xl space-y-4">
-      <label className="block text-xs text-muted-foreground">Category<select className="select-input mt-1 w-full" value={kind} onChange={(event) => changeKind(event.target.value as UnitKind)}><option value="length">Length</option><option value="weight">Weight</option><option value="temperature">Temperature</option><option value="data">Digital storage</option></select></label>
-      <div className="grid md:grid-cols-[1fr_auto_1fr] gap-3 items-end"><label className="text-xs text-muted-foreground">Value<input className="input-code mt-1 w-full p-2" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} /></label><span className="text-center pb-2">→</span><div className="text-xs text-muted-foreground">Result<div className="input-code mt-1 w-full p-2 text-foreground">{Number.isFinite(unitResult) ? Number(unitResult.toPrecision(12)).toString() : 'Enter a valid number'}</div></div></div>
-      <div className="grid md:grid-cols-2 gap-3">{[[fromUnit, setFromUnit, 'From unit'], [toUnit, setToUnit, 'To unit']].map(([unit, setter, label]) => <label key={String(label)} className="text-xs text-muted-foreground">{String(label)}<select className="select-input mt-1 w-full" value={String(unit)} onChange={(event) => (setter as (value: string) => void)(event.target.value)}>{Object.keys(UNIT_TABLE[kind]).map((option) => <option key={option}>{option}</option>)}</select></label>)}</div>
-    </div>}
-  </div>;
+  const unitText = Number.isFinite(unitResult) ? Number(unitResult.toPrecision(12)).toString() : '';
+  const outputText = mode === 'timezone'
+    ? (zoneResult.error ? '' : `${fromZone}: ${zoneResult.source}\n${toZone}: ${zoneResult.target}`)
+    : (unitText ? `${amount} ${fromUnit} = ${unitText} ${toUnit}` : '');
+  return (
+    <ToolFrame
+      toolbar={<div className="segmented" role="group" aria-label="Mode">
+        <button type="button" aria-pressed={mode === 'timezone'} onClick={() => setMode('timezone')}>Timezones</button>
+        <button type="button" aria-pressed={mode === 'units'} onClick={() => setMode('units')}>Units</button>
+      </div>}
+      notice={mode === 'timezone' ? 'Enter a valid IANA timezone name. The entered wall-clock time is interpreted in the “From timezone”.' : undefined}
+    >
+      <PanelLayout
+        inputBody="content"
+        outputBody="content"
+        inputPanel={mode === 'timezone' ? <div className="space-y-4">
+          <label className="block"><span className="field-label">Date and time</span><input type="datetime-local" className="input-field" value={dateValue} onChange={(event) => setDateValue(event.target.value)} /></label>
+          {[[fromZone, setFromZone, 'From timezone'], [toZone, setToZone, 'To timezone']].map(([zone, setter, label]) => <label key={String(label)} className="block"><span className="field-label">{String(label)}</span><input className="input-field" list="timezone-options" value={String(zone)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} placeholder="IANA zone, e.g. Asia/Phnom_Penh" /></label>)}
+          <datalist id="timezone-options">{ZONES.map((zone) => <option key={zone} value={zone} />)}</datalist>
+        </div> : <div className="space-y-4">
+          <label className="block"><span className="field-label">Category</span><select className="select-input w-full" value={kind} onChange={(event) => changeKind(event.target.value as UnitKind)}><option value="length">Length</option><option value="weight">Weight</option><option value="temperature">Temperature</option><option value="data">Digital storage</option></select></label>
+          <label className="block"><span className="field-label">Value</span><input className="input-field font-mono" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
+          <div className="grid grid-cols-2 gap-3">{[[fromUnit, setFromUnit, 'From unit'], [toUnit, setToUnit, 'To unit']].map(([unit, setter, label]) => <label key={String(label)} className="block"><span className="field-label">{String(label)}</span><select className="select-input w-full" value={String(unit)} onChange={(event) => (setter as (value: string) => void)(event.target.value)}>{Object.keys(UNIT_TABLE[kind]).map((option) => <option key={option}>{option}</option>)}</select></label>)}</div>
+        </div>}
+        outputPanel={mode === 'timezone'
+          ? (zoneResult.error ? <p className="notice notice-error" role="alert">{zoneResult.error}</p> : <DetailList mono={false} rows={[[fromZone, zoneResult.source], [toZone, zoneResult.target]]} />)
+          : (unitText ? <div className="rounded-xl border border-border bg-background-secondary/60 p-5"><p className="text-xs text-muted-foreground">{amount} {fromUnit} =</p><p className="mt-1 break-all font-mono text-2xl font-semibold text-foreground">{unitText}</p><p className="mt-1 text-sm text-muted-foreground">{toUnit}</p></div> : <p className="notice notice-error" role="alert">Enter a valid number</p>)}
+        outputText={outputText}
+        outputStatus={outputText ? 'success' : 'error'}
+        downloadName="conversion.txt"
+        onSample={() => { if (mode === 'timezone') { setFromZone('Asia/Phnom_Penh'); setToZone('America/New_York'); } else { changeKind('length'); setAmount('1'); } }}
+      />
+    </ToolFrame>
+  );
 }

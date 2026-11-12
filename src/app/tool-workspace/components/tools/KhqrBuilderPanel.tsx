@@ -1,7 +1,10 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool } from '@/data/tools';
-import { Download, Copy, ImageIcon, Wrench, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Download, ImageIcon, Wrench, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import { KHQR_SAMPLE } from './khqrSample';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 import { useDebouncedValue } from '../useDebouncedValue';
@@ -258,11 +261,6 @@ export default function KhqrBuilderPanel({ tool: _tool }: { tool: Tool }) {
     setHeaderImageName('');
   };
 
-  const copyString = async () => {
-    await navigator.clipboard.writeText(khqrString);
-    toast.success('KHQR string copied');
-  };
-
   const analysis = khqrString ? analyzeKhqr(khqrString) : null;
   const fileBase = (analysis?.fields.merchantName || 'khqr').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'khqr';
 
@@ -298,215 +296,154 @@ export default function KhqrBuilderPanel({ tool: _tool }: { tool: Tool }) {
     toast.success('CRC recalculated');
   };
 
+  const changeString = (value: string) => {
+    renderRequestRef.current += 1;
+    setGenerated(false);
+    setCustomString(value);
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (canvas && context) context.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  const sectionTitle = 'mb-3 text-xs font-semibold text-muted-foreground';
+
   return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Form */}
-          <div className="lg:col-span-2">
-            <div className="flex flex-col gap-4">
-              <div className="bg-card border border-border rounded-xl p-5">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Encode string</h4>
-                <label className="text-xs text-muted-foreground">Raw string</label>
-                <textarea
-                  value={customString}
-                  onChange={(e) => {
-                    renderRequestRef.current += 1;
-                    setGenerated(false);
-                    setCustomString(e.target.value);
-                    const canvas = canvasRef.current;
-                    const context = canvas?.getContext('2d');
-                    if (canvas && context) context.clearRect(0, 0, canvas.width, canvas.height);
-                  }}
-                  placeholder="Enter the string to encode as QR code"
-                  className="input-code w-full min-h-[120px] text-xs"
-                />
-                <div className="mt-3 flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground">Foreground</label>
-                    <input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="w-9 h-9 p-0 border rounded" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground">Background</label>
-                    <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="w-9 h-9 p-0 border rounded" />
-                  </div>
-                  <div className="text-2xs text-muted-foreground">Background is also used behind the center logo</div>
-                </div>
-                <div className="mt-5 border-t border-border pt-4">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Card header</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3">
-                    <label className="text-xs text-muted-foreground">
-                      Header text
-                      <input
-                        value={headerText}
-                        onChange={(e) => setHeaderText(e.target.value)}
-                        maxLength={24}
-                        disabled={Boolean(headerImageDataUrl)}
-                        placeholder="KHQR"
-                        className="input-field mt-1 w-full disabled:opacity-50"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      Header color
-                      <input type="color" value={headerColor} onChange={(e) => setHeaderColor(e.target.value)} className="h-10 w-14 rounded border border-border bg-transparent p-1" />
-                    </label>
-                    <label className="text-xs text-muted-foreground">
-                      Header shape
-                      <span className="input-field mt-1 flex w-full items-center text-foreground">Folded corner</span>
-                    </label>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border p-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      {headerImageDataUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={headerImageDataUrl} alt="Custom header artwork" className="h-10 w-20 rounded bg-muted object-contain p-1" />
-                      ) : (
-                        <div className="flex h-10 w-20 items-center justify-center rounded bg-muted text-xs font-semibold text-foreground">{headerText || 'KHQR'}</div>
-                      )}
-                      <div className="min-w-0 text-xs">
-                        <div className="truncate text-foreground">{headerImageName || 'Use custom header image'}</div>
-                        <div className="text-2xs text-muted-foreground">PNG, JPG, or WebP · up to 5 MB · stays on this device</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input id="khqr-header-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleHeaderImage(e.target.files?.[0] ?? null)} className="hidden" />
-                      <label htmlFor="khqr-header-upload" className="btn-ghost cursor-pointer text-xs">Upload image</label>
-                      {headerImageDataUrl && <button type="button" className="btn-ghost text-xs" onClick={removeHeaderImage}>Use text</button>}
-                    </div>
-                  </div>
-                  <p className="mt-2 text-2xs text-muted-foreground">An uploaded image replaces the header text. Color and shape still apply to the band behind it.</p>
-                </div>
-                <div className="mt-3">
-                  <label className="text-xs text-muted-foreground mb-2 block">Logo (center) — drag & drop or upload</label>
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    className="border-dashed border-2 border-border rounded-md p-3 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-card rounded-md overflow-hidden flex items-center justify-center">
-                        {logoDataUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={logoDataUrl} alt={logoName || 'logo'} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="text-2xs text-muted-foreground">No logo</div>
-                        )}
-                      </div>
-                      <div className="text-xs">
-                        <div>{logoName || 'No file selected'}</div>
-                        <div className="text-2xs text-muted-foreground">Supports PNG/JPG/SVG</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-                        className="hidden"
-                      />
-                      <label htmlFor="logo-upload" className="btn-ghost text-xs cursor-pointer">Upload</label>
-                      {logoDataUrl && (
-                        <button type="button" className="btn-ghost text-xs" onClick={removeLogo}>Remove</button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="text-xs text-muted-foreground mb-2 block">Logo size: {Math.round(logoSize * 100)}%</label>
-                  <input
-                    type="range"
-                    min={5}
-                    max={50}
-                    value={Math.round(logoSize * 100)}
-                    onChange={(e) => setLogoSize(Number(e.target.value) / 100)}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <p className="text-xs text-muted-foreground" aria-live="polite">
-                {generated ? 'QR code updates automatically as you type.' : 'Enter content to generate a QR preview automatically.'}
-              </p>
+    <ToolFrame notice={generated ? 'QR code updates automatically as you type.' : 'Enter content to generate a QR preview automatically.'}>
+      <PanelLayout
+        inputLabel="Encode string"
+        outputLabel="QR Code Preview"
+        inputBody="content"
+        outputBody="content"
+        inputPanel={<div className="space-y-5">
+          <section>
+            <label className="field-label" htmlFor="khqr-raw">Raw string</label>
+            <textarea id="khqr-raw" value={customString} onChange={(e) => changeString(e.target.value)} placeholder="Enter the string to encode as QR code" className="input-code min-h-[120px] resize-y text-xs" />
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2"><span className="text-xs text-muted-foreground">Foreground</span><input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="h-9 w-9 rounded border border-border p-0" /></label>
+              <label className="flex items-center gap-2"><span className="text-xs text-muted-foreground">Background</span><input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-9 w-9 rounded border border-border p-0" /></label>
+              <span className="text-2xs text-muted-foreground">Background is also used behind the center logo</span>
             </div>
-          </div>
-
-          {/* QR Preview */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-card border border-border rounded-xl p-5 flex flex-col items-center">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 self-start">QR Code Preview</h4>
-              <div className="w-full rounded-xl bg-muted/60 p-3 flex items-center justify-center">
-                <canvas ref={canvasRef} className="h-auto w-full max-w-[300px] rounded-xl shadow-lg" />
+          </section>
+          <section className="border-t border-border pt-4">
+            <h3 className={sectionTitle}>Card header</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+              <label className="text-xs text-muted-foreground">
+                Header text
+                <input value={headerText} onChange={(e) => setHeaderText(e.target.value)} maxLength={24} disabled={Boolean(headerImageDataUrl)} placeholder="KHQR" className="input-field mt-1 disabled:opacity-50" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                Header color
+                <input type="color" value={headerColor} onChange={(e) => setHeaderColor(e.target.value)} className="h-10 w-14 rounded border border-border bg-transparent p-1" />
+              </label>
+              <div className="text-xs text-muted-foreground">
+                Header shape
+                <span className="input-field mt-1 flex items-center text-foreground">Folded corner</span>
               </div>
-              {generated && (
-                <div className="flex flex-col gap-2 mt-4 w-full">
-                  <button className="btn-primary w-full justify-center text-xs" onClick={downloadQr}>
-                    <Download size={12} />
-                    Download PNG · {400 * EXPORT_SCALE}×{560 * EXPORT_SCALE}
-                  </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button className="btn-ghost justify-center text-xs" onClick={copyImage}>
-                      <ImageIcon size={12} />
-                      Copy image
-                    </button>
-                    <button className="btn-ghost justify-center text-xs" onClick={copyString}>
-                      <Copy size={12} />
-                      Copy string
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
-
-            {khqrString && analysis && (
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payload check</h4>
-                  {analysis.verdict === 'khqr' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary"><CheckCircle2 size={12} /> Valid KHQR</span>
-                  ) : analysis.verdict === 'emv' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-warning"><AlertTriangle size={12} /> EMV, not KHQR</span>
-                  ) : analysis.verdict === 'invalid' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-error"><XCircle size={12} /> Invalid KHQR</span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Plain QR content</span>
-                  )}
-                </div>
-                {analysis.verdict !== 'not-emv' && (
-                  <>
-                    {(analysis.fields.merchantName || analysis.fields.amount) && (
-                      <p className="mb-2 text-xs text-foreground">
-                        {analysis.fields.merchantName}
-                        {analysis.fields.amount && (
-                          <span className="ml-1 font-semibold tabular-nums">· {analysis.fields.amount} {analysis.fields.currency}</span>
-                        )}
-                      </p>
-                    )}
-                    {analysis.checks.filter((c) => c.level !== 'pass').slice(0, 4).map((c) => (
-                      <p key={c.id} className={`text-xs ${c.level === 'fail' ? 'text-error' : 'text-warning'}`}>
-                        • {c.title}: {c.detail}
-                      </p>
-                    ))}
-                    {analysis.crcValid !== true && analysis.tags.length > 0 && !analysis.trailing && (
-                      <button type="button" className="btn-ghost mt-2 text-xs" onClick={fixCrc}>
-                        <Wrench size={12} /> Recalculate CRC
-                      </button>
-                    )}
-                  </>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border p-3">
+              <div className="flex min-w-0 items-center gap-3">
+                {headerImageDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={headerImageDataUrl} alt="Custom header artwork" className="h-10 w-20 rounded bg-muted object-contain p-1" />
+                ) : (
+                  <div className="flex h-10 w-20 items-center justify-center rounded bg-muted text-xs font-semibold text-foreground">{headerText || 'KHQR'}</div>
                 )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  Length: <span className="text-foreground tabular-nums">{khqrString.length}</span> chars
-                  {analysis.fields.crc && (
-                    <>
-                      {' '}· CRC: <span className={`font-mono ${analysis.crcValid ? 'text-primary' : 'text-error'}`}>{analysis.fields.crc}</span>
-                    </>
-                  )}
-                </p>
+                <div className="min-w-0 text-xs">
+                  <div className="truncate text-foreground">{headerImageName || 'Use custom header image'}</div>
+                  <div className="text-2xs text-muted-foreground">PNG, JPG, or WebP · up to 5 MB · stays on this device</div>
+                </div>
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <input id="khqr-header-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { handleHeaderImage(e.target.files?.[0] ?? null); e.target.value = ''; }} className="hidden" />
+                <label htmlFor="khqr-header-upload" className="btn-ghost cursor-pointer text-xs">Upload image</label>
+                {headerImageDataUrl && <button type="button" className="btn-ghost text-xs" onClick={removeHeaderImage}>Use text</button>}
+              </div>
+            </div>
+            <p className="mt-2 text-2xs text-muted-foreground">An uploaded image replaces the header text. Color and shape still apply to the band behind it.</p>
+          </section>
+          <section className="border-t border-border pt-4">
+            <h3 className={sectionTitle}>Logo (center) — drag & drop or upload</h3>
+            <div onDrop={handleDrop} onDragOver={handleDragOver} className="flex items-center justify-between gap-3 rounded-lg border-2 border-dashed border-border p-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-md bg-background-secondary">
+                  {logoDataUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logoDataUrl} alt={logoName || 'logo'} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="text-2xs text-muted-foreground">No logo</div>
+                  )}
+                </div>
+                <div className="text-xs">
+                  <div className="text-foreground">{logoName || 'No file selected'}</div>
+                  <div className="text-2xs text-muted-foreground">Supports PNG/JPG/SVG</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input id="logo-upload" type="file" accept="image/*" onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ''; }} className="hidden" />
+                <label htmlFor="logo-upload" className="btn-ghost cursor-pointer text-xs">Upload</label>
+                {logoDataUrl && <button type="button" className="btn-ghost text-xs" onClick={removeLogo}>Remove</button>}
+              </div>
+            </div>
+            <label className="mt-3 block">
+              <span className="field-label">Logo size: {Math.round(logoSize * 100)}%</span>
+              <input type="range" min={5} max={50} value={Math.round(logoSize * 100)} onChange={(e) => setLogoSize(Number(e.target.value) / 100)} className="w-full accent-primary" />
+            </label>
+          </section>
+        </div>}
+        outputActions={generated ? <button type="button" className="btn-icon gap-1 px-2 text-xs font-medium" onClick={copyImage} title="Copy image" aria-label="Copy image"><ImageIcon size={13} /><span className="hidden sm:inline">Image</span></button> : null}
+        outputPanel={<div className="flex flex-col gap-4">
+          <div className="flex items-center justify-center rounded-xl bg-muted/60 p-3">
+            <canvas ref={canvasRef} className="h-auto w-full max-w-[300px] rounded-xl shadow-lg" />
           </div>
-        </div>
-      </div>
-    </div>
+          {generated && (
+            <button type="button" className="btn-primary w-full" onClick={downloadQr}>
+              <Download size={14} />
+              Download PNG · {400 * EXPORT_SCALE}×{560 * EXPORT_SCALE}
+            </button>
+          )}
+          {khqrString && analysis && (
+            <section className="rounded-lg border border-border bg-background-secondary/50 p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold text-muted-foreground">Payload check</h3>
+                {analysis.verdict === 'khqr' ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-success"><CheckCircle2 size={12} /> Valid KHQR</span>
+                ) : analysis.verdict === 'emv' ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-warning"><AlertTriangle size={12} /> EMV, not KHQR</span>
+                ) : analysis.verdict === 'invalid' ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-error"><XCircle size={12} /> Invalid KHQR</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Plain QR content</span>
+                )}
+              </div>
+              {analysis.verdict !== 'not-emv' && (
+                <>
+                  {(analysis.fields.merchantName || analysis.fields.amount) && (
+                    <p className="mb-2 text-xs text-foreground">
+                      {analysis.fields.merchantName}
+                      {analysis.fields.amount && <span className="ml-1 font-semibold tabular-nums">· {analysis.fields.amount} {analysis.fields.currency}</span>}
+                    </p>
+                  )}
+                  {analysis.checks.filter((c) => c.level !== 'pass').slice(0, 4).map((c) => (
+                    <p key={c.id} className={`text-xs ${c.level === 'fail' ? 'text-error' : 'text-warning'}`}>• {c.title}: {c.detail}</p>
+                  ))}
+                  {analysis.crcValid !== true && analysis.tags.length > 0 && !analysis.trailing && (
+                    <button type="button" className="btn-ghost mt-2 text-xs" onClick={fixCrc}><Wrench size={12} /> Recalculate CRC</button>
+                  )}
+                </>
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">
+                Length: <span className="tabular-nums text-foreground">{khqrString.length}</span> chars
+                {analysis.fields.crc && <>{' '}· CRC: <span className={`font-mono ${analysis.crcValid ? 'text-success' : 'text-error'}`}>{analysis.fields.crc}</span></>}
+              </p>
+            </section>
+          )}
+        </div>}
+        outputText={generated ? khqrString : ''}
+        outputStatus={generated ? 'success' : 'idle'}
+        onDownload={downloadQr}
+        canDownload={generated}
+        onSample={() => changeString(KHQR_SAMPLE)}
+        onClear={() => changeString('')}
+      />
+    </ToolFrame>
   );
 }

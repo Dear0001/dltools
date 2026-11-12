@@ -1,7 +1,8 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { ChevronRight, Heart, Home } from 'lucide-react';
+import { ChevronRight, Heart, Home, Link2, ShieldCheck } from 'lucide-react';
+import ToolIcon from '@/components/ui/ToolIcon';
 import { useFavorites } from '@/lib/favorites';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -10,7 +11,7 @@ import { CATEGORIES } from '@/data/tools';
 import { trackToolOpen } from '@/components/GoogleAnalytics';
 import SavedToolDataDialog from './SavedToolDataDialog';
 import DocumentConverterPanel from './tools/DocumentConverterPanel';
-import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
+import { getCategoryName, getToolDescription, getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
 
 // Tool-specific panels
 import JsonFormatterPanel from './tools/JsonFormatterPanel';
@@ -125,7 +126,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
         JSON.stringify([tool.id, ...previous.filter((id) => id !== tool.id)].slice(0, 8)),
       );
     } catch {
-      toast.error('Could not save recent tools on this device.');
+      toast.error(translateText('Could not save recent tools on this device.', locale));
     }
 
     if (authStatus !== 'authenticated' || !session?.user?.id) return;
@@ -139,8 +140,10 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
         throw new Error(result.error ?? 'Could not sync this recent tool.');
       }
     }).catch((error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Could not sync this recent tool.');
+      toast.error(translateText(error instanceof Error ? error.message : 'Could not sync this recent tool.', locale));
     });
+    // `locale` only localizes the error toast; re-saving on a language switch is not wanted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authStatus, session?.user?.id, tool.id]);
 
   useEffect(() => {
@@ -156,54 +159,74 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
         ? t('imageConverterSubtitle')
         : getToolDescription(tool.id, tool.description, locale);
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success(t('linkCopied'));
+    } catch {
+      toast.error(t('copyFailed'));
+    }
+  };
+  const favoriteLabel = favorite ? t('removeFromFavorites') : t('addToFavorites');
+
   return (
-    <div className="flex flex-col lg:h-[calc(100dvh-56px)]">
+    <div className="flex flex-col lg:h-[calc(100dvh-4rem)]">
       {/* Workspace header: breadcrumb, title, description, actions */}
-      <div className="flex-shrink-0 border-b border-border bg-background-secondary px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16">
-        <nav aria-label="Breadcrumb" className="mb-2 text-xs text-muted-foreground">
-          <ol className="flex flex-wrap items-center gap-1">
-            <li>
-              <Link href="/" className="inline-flex items-center gap-1 hover:text-primary" aria-label={t('backToHub')}>
-                <Home size={12} aria-hidden="true" /> {locale === 'kh' ? 'ទំព័រដើម' : 'Home'}
-              </Link>
-            </li>
-            <li aria-hidden="true"><ChevronRight size={12} /></li>
-            <li>
-              <Link href={`/tools?cat=${tool.category}`} className="hover:text-primary">
-                {category ? getCategoryName(category.id, category.label, locale) : tool.category}
-              </Link>
-            </li>
-            <li aria-hidden="true"><ChevronRight size={12} /></li>
-            <li aria-current="page" className="font-medium text-foreground">{toolName}</li>
-          </ol>
-        </nav>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{toolName}</h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => toggle(tool.id)}
-              aria-pressed={favorite}
-              className="btn-ghost"
-              title={favorite ? (locale === 'kh' ? 'ដកចេញពីចំណូលចិត្ត' : 'Remove from favorites') : (locale === 'kh' ? 'បន្ថែមទៅចំណូលចិត្ត' : 'Add to favorites')}
-            >
-              <Heart size={15} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
-              <span className="hidden sm:inline">{favorite ? (locale === 'kh' ? 'ចំណូលចិត្ត' : 'Favorited') : (locale === 'kh' ? 'ចូលចិត្ត' : 'Favorite')}</span>
-            </button>
-            <SavedToolDataDialog tool={tool} />
+      <div className="flex-shrink-0 border-b border-border bg-background-secondary">
+        <div className="px-4 py-4 sm:px-6 lg:px-8">
+          <nav aria-label={translateText('Breadcrumb', locale)} className="mb-3 text-xs text-muted-foreground">
+            <ol className="flex flex-wrap items-center gap-1">
+              <li>
+                <Link href="/" className="inline-flex items-center gap-1 rounded hover:text-primary">
+                  <Home size={13} aria-hidden="true" /> {t('home')}
+                </Link>
+              </li>
+              <li aria-hidden="true"><ChevronRight size={12} /></li>
+              <li><Link href="/tools" className="rounded hover:text-primary">{t('navAllTools')}</Link></li>
+              <li aria-hidden="true"><ChevronRight size={12} /></li>
+              <li>
+                <Link href={`/tools?cat=${tool.category}`} className="rounded hover:text-primary">
+                  {category ? getCategoryName(category.id, category.label, locale) : tool.category}
+                </Link>
+              </li>
+              <li aria-hidden="true"><ChevronRight size={12} /></li>
+              <li aria-current="page" className="font-medium text-foreground">{toolName}</li>
+            </ol>
+          </nav>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex min-w-0 items-start gap-3.5">
+              <ToolIcon tool={tool} size="lg" className="hidden sm:inline-flex" />
+              <div className="min-w-0">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{toolName}</h1>
+                <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground xl:inline-flex">
+                <ShieldCheck size={13} className="text-success" aria-hidden="true" /> {t('runsLocally')}
+              </span>
+              <button type="button" onClick={copyLink} className="btn-ghost" title={t('copyLink')}>
+                <Link2 size={15} aria-hidden="true" />
+                <span className="hidden sm:inline">{t('copyLink')}</span>
+                <span className="sr-only sm:hidden">{t('copyLink')}</span>
+              </button>
+              <button type="button" onClick={() => toggle(tool.id)} aria-pressed={favorite} className="btn-ghost" title={favoriteLabel}>
+                <Heart size={15} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
+                <span className="hidden sm:inline">{favorite ? t('favorited') : t('favorite')}</span>
+                <span className="sr-only sm:hidden">{favoriteLabel}</span>
+              </button>
+              <SavedToolDataDialog tool={tool} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Workspace body */}
-      <div className="min-h-[70vh] flex-1 p-3 sm:p-4 lg:min-h-0 lg:overflow-hidden lg:px-8 xl:px-10 2xl:px-16">
+      <div className="min-h-[70vh] flex-1 p-3 sm:p-4 lg:min-h-0 lg:overflow-hidden lg:px-8">
         {mounted ? (
           <PanelComponent tool={tool} />
         ) : (
-          <div className="flex h-full min-h-[40vh] items-center justify-center" role="status" aria-label="Loading tool">
+          <div className="flex h-full min-h-[40vh] items-center justify-center" role="status" aria-label={t('loadingTool')}>
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         )}

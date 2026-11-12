@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { Tool } from '@/data/tools';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeOutput from '../CodeOutput';
 import CodeEditor from '../CodeEditor';
 import { useDebouncedValue } from '../useDebouncedValue';
 
@@ -135,15 +138,28 @@ export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
     run(debouncedJson, debouncedExpression);
   }, [json, expression, debouncedJson, debouncedExpression, run]);
 
-  return <div className="h-full flex flex-col">
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30">
-      <label className="text-xs text-muted-foreground shrink-0" title="Examples: $.users[*].name · $.users[?(@.active == true)] · $..id">JSONPath</label>
-      <input className="input-code py-1 px-2 text-xs flex-1" value={expression} onChange={(event) => setExpression(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') run(); }} />
-      <button className="btn-primary text-xs" onClick={() => run()}>Evaluate</button>
-    </div>
-    <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-3 p-4">
-      <div className="min-h-0 border border-border rounded-lg bg-input"><CodeEditor value={json} onChange={setJson} minHeight="100%" placeholder="JSON document…" /></div>
-      <div className="min-h-0 overflow-auto border border-border rounded-lg bg-background p-3 font-mono text-xs whitespace-pre-wrap">{result || error || 'Matched paths and values will appear here.'}</div>
-    </div>
-  </div>;
+  return (
+    <ToolFrame toolbar={<>
+      <label className="flex min-w-0 flex-1 items-center gap-2" title="Examples: $.users[*].name · $.users[?(@.active == true)] · $..id">
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">JSONPath</span>
+        <input className="input-field min-w-0 flex-1 py-1.5 font-mono text-sm" value={expression} onChange={(event) => setExpression(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') run(); }} placeholder="$.users[*].name" />
+      </label>
+      <button type="button" className="btn-primary" onClick={() => run()}>Evaluate</button>
+    </>}
+      notice="Examples: $.users[*].name · $.users[?(@.active == true)] · $..id"
+    >
+      <PanelLayout
+        inputLabel="JSON document"
+        outputLabel="Matches"
+        inputPanel={<CodeEditor value={json} onChange={setJson} minHeight="100%" placeholder="JSON document…" />}
+        outputPanel={<CodeOutput value={result} language="json" placeholder="Matched paths and values will appear here." />}
+        outputText={result}
+        outputStatus={error ? 'error' : result ? 'success' : 'idle'}
+        errorMessage={error}
+        downloadName="jsonpath-matches.json"
+        onSample={() => { setJson(SAMPLE); setExpression('$.users[*].name'); }}
+        onClear={() => { setJson(''); setResult(''); setError(''); }}
+      />
+    </ToolFrame>
+  );
 }

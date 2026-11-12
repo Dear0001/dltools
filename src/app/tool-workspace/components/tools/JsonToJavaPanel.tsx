@@ -153,6 +153,7 @@ export default function JsonToJavaPanel({ tool: _tool }: { tool: Tool }) {
           outputText={output}
           outputStatus={error ? 'error' : output ? 'success' : 'idle'}
           errorMessage={error}
+          onSample={() => setInput(SAMPLE)}
           onClear={() => { setInput(''); setOutput(''); setError(''); }}
         />
       </div>

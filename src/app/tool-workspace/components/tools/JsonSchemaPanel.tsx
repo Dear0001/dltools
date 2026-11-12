@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Ajv from 'ajv';
 import type { Tool } from '@/data/tools';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import { useDebouncedValue } from '../useDebouncedValue';
 
@@ -64,15 +66,24 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
     validate(debouncedData, debouncedSchema);
   }, [data, schema, debouncedData, debouncedSchema, validate]);
 
-  return <div className="h-full flex flex-col">
-    <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-secondary/30">
-      <span className="text-xs text-muted-foreground">JSON Schema draft-07</span>
-      <button className="btn-primary text-xs" onClick={() => validate()}>Validate JSON</button>
-    </div>
-    <div className="flex-1 min-h-0 grid grid-rows-2 gap-3 p-4">
-      <section className="flex flex-col min-h-0"><label className="text-xs text-muted-foreground mb-1">JSON data</label><div className="flex-1 min-h-0 border border-border rounded-lg bg-input"><CodeEditor value={data} onChange={setData} minHeight="100%" placeholder="JSON data…" /></div></section>
-      <section className="flex flex-col min-h-0"><label className="text-xs text-muted-foreground mb-1">JSON Schema</label><div className="flex-1 min-h-0 border border-border rounded-lg bg-input"><CodeEditor value={schema} onChange={setSchema} minHeight="100%" placeholder="JSON Schema…" /></div></section>
-    </div>
-    <div className={`m-4 mt-0 p-3 rounded-lg border text-sm whitespace-pre-wrap ${error ? 'border-error/30 bg-error/5 text-error' : 'border-border bg-secondary/20 text-foreground'}`} aria-live="polite">{result || error || 'Validation results will appear here.'}{result && error && <div className="text-error mt-1">{error}</div>}</div>
-  </div>;
+  const status = error ? 'error' : result ? 'success' : 'idle';
+  return (
+    <ToolFrame toolbar={<><span className="text-xs text-muted-foreground">JSON Schema draft-07</span><div className="ml-auto"><button type="button" className="btn-primary" onClick={() => validate()}>Validate JSON</button></div></>}>
+      <PanelLayout
+        inputLabel="JSON data & schema"
+        outputLabel="Validation result"
+        inputPanel={<div className="flex min-h-[24rem] flex-1 flex-col lg:min-h-0">
+          <div className="flex min-h-0 flex-1 flex-col"><span className="border-b border-border bg-background-secondary/50 px-3.5 py-1.5 text-xs font-medium text-muted-foreground">JSON data</span><CodeEditor value={data} onChange={setData} minHeight="100%" placeholder="JSON data…" /></div>
+          <div className="flex min-h-0 flex-1 flex-col border-t border-border"><span className="border-b border-border bg-background-secondary/50 px-3.5 py-1.5 text-xs font-medium text-muted-foreground">JSON Schema</span><CodeEditor value={schema} onChange={setSchema} minHeight="100%" placeholder="JSON Schema…" /></div>
+        </div>}
+        outputBody="content"
+        outputPanel={<div aria-live="polite" className={`notice whitespace-pre-wrap ${error ? 'notice-error' : result ? 'notice-success' : ''}`}>{result || error || 'Validation results will appear here.'}{result && error && <div className="mt-1 font-medium">{error}</div>}</div>}
+        outputText={result}
+        outputStatus={status}
+        downloadName="validation.txt"
+        onSample={() => { setData(SAMPLE_DATA); setSchema(SAMPLE_SCHEMA); }}
+        onClear={() => { setData(''); setSchema(''); }}
+      />
+    </ToolFrame>
+  );
 }

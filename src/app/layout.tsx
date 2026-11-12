@@ -76,7 +76,7 @@ export default function RootLayout({
             <GoogleAnalytics />
             <Analytics />
             <Topbar />
-            <main className="relative min-h-screen bg-background text-foreground">
+            <main id="main-content" tabIndex={-1} className="relative min-h-[calc(100dvh-4rem)] bg-background text-foreground focus:outline-none">
               {children}
             </main>
             <SiteFooter />

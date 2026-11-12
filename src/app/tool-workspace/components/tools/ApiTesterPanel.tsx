@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import type { Tool } from '@/data/tools';
+import { Send } from 'lucide-react';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeOutput from '../CodeOutput';
 
 const SAMPLE_HEADERS = '{\n  "Accept": "application/json"\n}';
 export default function ApiTesterPanel({ tool: _tool }: { tool: Tool }) {
@@ -34,10 +38,32 @@ export default function ApiTesterPanel({ tool: _tool }: { tool: Tool }) {
     } finally { window.clearTimeout(timeout); setBusy(false); }
   };
 
-  return <div className="h-full overflow-auto p-4 space-y-3">
-    <div className="flex gap-2"><select className="select-input" value={method} onChange={(event) => setMethod(event.target.value)}>{['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'].map((item) => <option key={item}>{item}</option>)}</select><input className="input-code flex-1 px-3" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://api.example.com/resource" /><button className="btn-primary text-xs" disabled={busy || !url.trim()} onClick={send}>{busy ? 'Sending…' : 'Send'}</button></div>
-    <div className="grid md:grid-cols-2 gap-3"><label className="text-xs text-muted-foreground">Headers (JSON)<textarea className="input-code w-full h-28 p-2 mt-1 resize-y" value={headers} onChange={(event) => setHeaders(event.target.value)} spellCheck={false} /></label><label className="text-xs text-muted-foreground">Request body<textarea className="input-code w-full h-28 p-2 mt-1 resize-y" value={body} onChange={(event) => setBody(event.target.value)} spellCheck={false} placeholder="Used for POST, PUT, and PATCH" /></label></div>
-    <section className="border border-border rounded-lg overflow-hidden"><div className="px-3 py-2 bg-secondary/30 text-xs font-semibold">{status || 'Response'}</div><pre className="p-3 text-xs whitespace-pre-wrap break-words max-h-[45vh] overflow-auto">{result || 'Response body and readable headers will appear here.'}</pre></section>
-    <p className="text-xs text-muted-foreground">Requests run from your browser. Cross-origin requests require the API to allow CORS. Never send secrets to an endpoint you do not trust.</p>
-  </div>;
+  const failed = status === 'Request failed';
+  return (
+    <ToolFrame
+      toolbar={<>
+        <select className="select-input" aria-label="HTTP method" value={method} onChange={(event) => setMethod(event.target.value)}>{['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'].map((item) => <option key={item}>{item}</option>)}</select>
+        <input className="input-field min-w-0 flex-1 font-mono text-sm" aria-label="Request URL" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://api.example.com/resource" />
+        <button type="button" className="btn-primary" disabled={busy || !url.trim()} onClick={send}><Send size={14} />{busy ? 'Sending…' : 'Send'}</button>
+      </>}
+      notice="Requests run from your browser. Cross-origin requests require the API to allow CORS. Never send secrets to an endpoint you do not trust."
+    >
+      <PanelLayout
+        inputLabel="Request"
+        outputLabel="Response"
+        inputBody="content"
+        inputPanel={<div className="flex flex-1 flex-col gap-4">
+          <label className="flex min-h-[8rem] flex-1 flex-col"><span className="field-label">Headers (JSON)</span><textarea className="input-code flex-1 resize-none" value={headers} onChange={(event) => setHeaders(event.target.value)} spellCheck={false} /></label>
+          <label className="flex min-h-[8rem] flex-1 flex-col"><span className="field-label">Request body</span><textarea className="input-code flex-1 resize-none" value={body} onChange={(event) => setBody(event.target.value)} spellCheck={false} placeholder="Used for POST, PUT, and PATCH" /></label>
+        </div>}
+        outputPanel={<CodeOutput value={result} language="text" placeholder="Response body and readable headers will appear here." />}
+        outputActions={status ? <span className={`mr-1 rounded-full px-2 py-0.5 font-mono text-xs ${failed ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>{status}</span> : null}
+        outputText={result}
+        outputStatus={busy ? 'idle' : failed ? 'error' : result ? 'success' : 'idle'}
+        downloadName="response.txt"
+        onSample={() => { setMethod('GET'); setUrl('https://jsonplaceholder.typicode.com/todos/1'); setHeaders(SAMPLE_HEADERS); setBody(''); }}
+        onClear={() => { setUrl(''); setHeaders('{}'); setBody(''); setResult(''); setStatus(''); }}
+      />
+    </ToolFrame>
+  );
 }

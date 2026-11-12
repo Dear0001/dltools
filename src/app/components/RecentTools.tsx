@@ -1,15 +1,19 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { History, X } from 'lucide-react';
-import { TOOLS, getToolPath } from '@/data/tools';
-import { CATEGORY_COLORS } from '@/data/tools';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { getToolName, useLocale } from '@/i18n/LocaleProvider';
+import ToolCard from './ToolCard';
+import ToolIcon from '@/components/ui/ToolIcon';
+import { TOOLS, getToolPath, type Tool } from '@/data/tools';
+import { getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
 
-export default function RecentTools() {
-  const { locale, t } = useLocale();
+const STORAGE_KEY = 'devtoolkit-recent';
+
+/** Recently opened tools: read from this device, then merged with the account when signed in. */
+export function useRecentTools() {
+  const { locale } = useLocale();
   const { data: session, status: authStatus } = useSession();
   const [recents, setRecents] = useState<string[] | null>(null);
   const [synced, setSynced] = useState(false);
@@ -17,15 +21,13 @@ export default function RecentTools() {
   useEffect(() => {
     let localRecents: string[] = [];
     try {
-      const stored = localStorage.getItem('devtoolkit-recent');
+      const stored = localStorage.getItem(STORAGE_KEY);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       if (Array.isArray(parsed)) {
-        localRecents = parsed.filter(
-          (id): id is string => typeof id === 'string' && TOOLS.some((tool) => tool.id === id),
-        ).slice(0, 8);
+        localRecents = parsed.filter((id): id is string => typeof id === 'string' && TOOLS.some((tool) => tool.id === id)).slice(0, 8);
       }
     } catch {
-      toast.error('Could not read recent tools from this device.');
+      toast.error(translateText('Could not read recent tools from this device.', locale));
     }
     setRecents(localRecents);
 
@@ -48,18 +50,16 @@ export default function RecentTools() {
             throw new Error(result.error ?? 'Could not sync recent tools.');
           }
         }
-
         const response = await fetch('/api/user/recents');
         const result = (await response.json()) as { toolIds?: string[]; error?: string };
         if (!response.ok) throw new Error(result.error ?? 'Could not load recent tools.');
         if (active) {
-          setRecents(result.toolIds ?? []);
+          setRecents((result.toolIds ?? []).filter((id) => TOOLS.some((tool) => tool.id === id)));
           setSynced(true);
         }
       } catch (error) {
         if (!active) return;
-        const message = error instanceof Error ? error.message : 'Could not sync recent tools.';
-        toast.error(message);
+        toast.error(translateText(error instanceof Error ? error.message : 'Could not sync recent tools.', locale));
         setSynced(false);
       }
     };
@@ -68,6 +68,8 @@ export default function RecentTools() {
     return () => {
       active = false;
     };
+    // Re-reading on a language switch is unnecessary; `locale` only localizes error toasts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authStatus, session?.user?.id]);
 
   const remove = async (id: string) => {
@@ -80,54 +82,69 @@ export default function RecentTools() {
           throw new Error(result.error ?? 'Could not remove this recent tool.');
         }
       }
-      localStorage.setItem('devtoolkit-recent', JSON.stringify(next));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       setRecents(next);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not remove this recent tool.';
-      toast.error(message);
+      toast.error(translateText(error instanceof Error ? error.message : 'Could not remove this recent tool.', locale));
     }
   };
 
   const tools = (recents ?? [])
     .map((id) => TOOLS.find((tool) => tool.id === id))
-    .filter((tool): tool is (typeof TOOLS)[number] => Boolean(tool));
+    .filter((tool): tool is Tool => Boolean(tool));
+
+  return { ready: recents !== null, tools, remove };
+}
+
+/**
+ * `compact` renders a row of small removable tiles (homepage); `cards` renders
+ * full tool cards (workspace).
+ */
+export default function RecentTools({ variant = 'compact', headingLevel = 2 }: { variant?: 'compact' | 'cards'; headingLevel?: 2 | 3 }) {
+  const { locale, t } = useLocale();
+  const { ready, tools, remove } = useRecentTools();
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
-        <History size={14} className="text-muted-foreground" />
-        <h2 className="text-sm font-semibold text-foreground">{t('recentTools')}</h2>
+      <div className="mb-4 flex items-center gap-2">
+        <History size={18} className="text-muted-foreground" aria-hidden="true" />
+        <Heading className="section-title">{t('recentTools')}</Heading>
       </div>
-      {recents === null ? (
-        <div className="h-8 w-48 animate-pulse rounded-md bg-muted/50" aria-label={t('recentTools')} />
-      ) : tools.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {tools.map((tool) => {
-            const colors = CATEGORY_COLORS[tool.category];
-            return (
-              <div key={`recent-${tool.id}`} className="group flex items-center rounded-md border border-border bg-card">
-                <Link
-                  href={getToolPath(tool)}
-                  className="rounded-l-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  {getToolName(tool.id, tool.name, locale)}
-                </Link>
-                <span className={`mx-1 h-1.5 w-1.5 rounded-full ${colors.bg}`} aria-hidden="true" />
-                <button
-                  onClick={() => remove(tool.id)}
-                  className="btn-icon h-8 w-8 rounded-l-none"
-                  aria-label={`${locale === 'kh' ? 'ដក' : 'Remove'} ${getToolName(tool.id, tool.name, locale)} ${locale === 'kh' ? 'ចេញពីឧបករណ៍ថ្មីៗ' : 'from recent tools'}`}
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            );
-          })}
+      {!ready ? (
+        <div className="h-14 animate-pulse rounded-xl bg-muted" aria-hidden="true" />
+      ) : tools.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border bg-card px-4 py-5 text-sm text-muted-foreground">{t('recentEmpty')}</p>
+      ) : variant === 'cards' ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {tools.map((tool) => <ToolCard key={tool.id} tool={tool} />)}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          {t('recentEmpty')}
-        </p>
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {tools.map((tool) => {
+            const name = getToolName(tool.id, tool.name, locale);
+            return (
+              <li key={`recent-${tool.id}`} className="group relative">
+                <Link
+                  href={getToolPath(tool)}
+                  className="surface-hover flex items-center gap-3 rounded-xl border border-border bg-card py-2.5 pl-2.5 pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ToolIcon tool={tool} size="sm" />
+                  <span className="truncate text-sm font-medium text-foreground group-hover:text-primary">{name}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void remove(tool.id)}
+                  className="btn-icon absolute right-1.5 top-1/2 h-7 min-h-0 w-7 min-w-0 -translate-y-1/2 opacity-70 hover:opacity-100"
+                  aria-label={`${t('removeRecent')}: ${name}`}
+                  title={t('removeRecent')}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

@@ -158,6 +158,7 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
       inputPanel={<CodeEditor value={input} onChange={setInput} minHeight="100%" placeholder="Paste JSON, YAML, CSV, or XML…" />}
       outputPanel={<CodeOutput value={output} language={outputFormat === 'yaml' ? 'yaml' : outputFormat === 'json' ? 'json' : 'text'} placeholder="Converted data appears here…" />}
       outputText={output} outputStatus={error ? 'error' : output ? 'success' : 'idle'} errorMessage={error}
+      onSample={() => setInput(SAMPLE)}
       onClear={() => { setInput(''); setOutput(''); setError(''); }}
     /></div>
   </div>;

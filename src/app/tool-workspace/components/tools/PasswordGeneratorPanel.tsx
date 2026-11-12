@@ -1,7 +1,9 @@
 'use client';
 import React, { useMemo, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { Copy, RefreshCw, CheckCircle2, Trash2 } from 'lucide-react';
+import ToolFrame, { OutputPlaceholder } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import { Copy, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PasswordOptions {
@@ -64,112 +66,68 @@ export default function PasswordGeneratorPanel({ tool: _tool }: { tool: Tool }) 
   };
 
   const copyOne = async (password: string) => {
-    await navigator.clipboard.writeText(password);
+    try {
+      await navigator.clipboard.writeText(password);
+    } catch {
+      toast.error('Could not copy. Allow clipboard access and try again.');
+      return;
+    }
     setCopiedValue(password);
     toast.success('Password copied');
     setTimeout(() => setCopiedValue(null), 2000);
   };
 
-  const copyAll = async () => {
-    await navigator.clipboard.writeText(passwords.join('\n'));
-    toast.success(`${passwords.length} passwords copied`);
-  };
-
   return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-card border border-border rounded-xl p-5 mb-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Configuration</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-xs text-muted-foreground font-medium mb-1.5">Count</label>
+    <ToolFrame toolbar={<div className="ml-auto"><button type="button" className="btn-primary" onClick={generate} disabled={!canGenerate}><RefreshCw size={14} />Generate</button></div>}>
+      <PanelLayout
+        inputLabel="Configuration"
+        outputLabel="Passwords"
+        inputBody="content"
+        outputBody="content"
+        inputPanel={<div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block"><span className="field-label">Count</span>
               <select className="select-input w-full" value={count} onChange={(e) => setCount(Number(e.target.value))}>
-                {[1, 5, 10, 20, 50].map((n) => (
-                  <option key={`count-${n}`} value={n}>{n} password{n > 1 ? 's' : ''}</option>
-                ))}
+                {[1, 5, 10, 20, 50].map((n) => <option key={`count-${n}`} value={n}>{n} password{n > 1 ? 's' : ''}</option>)}
               </select>
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground font-medium mb-1.5">Length</label>
-              <input
-                type="number"
-                min={8}
-                max={64}
-                value={length}
-                onChange={(e) => setLength(Number(e.target.value))}
-                className="select-input w-full"
-              />
-            </div>
+            </label>
+            <label className="block"><span className="field-label">Length</span>
+              <input type="number" min={8} max={64} value={length} onChange={(e) => setLength(Number(e.target.value))} className="input-field" />
+            </label>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <fieldset className="grid grid-cols-2 gap-3">
+            <legend className="field-label">Characters</legend>
             {[
               { key: 'lowercase', label: 'Lowercase' },
               { key: 'uppercase', label: 'Uppercase' },
               { key: 'numbers', label: 'Numbers' },
               { key: 'symbols', label: 'Symbols' },
             ].map((item) => (
-              <label key={item.key} className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={Boolean(options[item.key as keyof PasswordOptions])}
-                  onChange={(e) =>
-                    setOptions((prev) => ({ ...prev, [item.key]: e.target.checked }))
-                  }
-                  className="w-3.5 h-3.5 accent-primary"
-                />
+              <label key={item.key} className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input type="checkbox" checked={Boolean(options[item.key as keyof PasswordOptions])} onChange={(e) => setOptions((prev) => ({ ...prev, [item.key]: e.target.checked }))} className="h-3.5 w-3.5 accent-primary" />
                 <span>{item.label}</span>
               </label>
             ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 mb-4">
-          <button className="btn-primary" onClick={generate} disabled={!canGenerate}>
-            <RefreshCw size={13} />
-            Generate
-          </button>
-          {passwords.length > 0 && (
-            <>
-              <button className="btn-ghost" onClick={copyAll}>
-                <Copy size={13} />
-                Copy All
-              </button>
-              <button className="btn-ghost" onClick={() => setPasswords([])}>
-                <Trash2 size={13} />
-                Clear
-              </button>
-            </>
-          )}
-        </div>
-
-        {passwords.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
-              <RefreshCw size={20} />
-            </div>
-            <p className="text-sm font-medium text-foreground mb-1">No passwords generated yet</p>
-            <p className="text-xs">Choose your character set and click Generate to create secure passwords.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
+          </fieldset>
+          {!canGenerate && <p className="notice notice-error" role="alert">Choose at least one character set.</p>}
+        </div>}
+        outputPanel={passwords.length === 0
+          ? <OutputPlaceholder icon={<RefreshCw size={24} />} title="No passwords generated yet" description="Choose your character set and click Generate to create secure passwords." />
+          : <ul className="flex flex-col gap-1.5">
             {passwords.map((password, i) => (
-              <div
-                key={`password-${i}`}
-                className="group flex items-center justify-between gap-3 bg-card border border-border rounded-lg px-4 py-2.5 hover:border-primary/30 transition-all duration-150"
-              >
-                <span className="font-mono text-sm text-foreground tabular-nums break-all">{password}</span>
-                <button
-                  className={`btn-icon flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ${copiedValue === password ? 'text-primary' : ''}`}
-                  onClick={() => copyOne(password)}
-                  aria-label={`Copy password ${password}`}
-                >
+              <li key={`password-${i}`} className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-background-secondary/50 px-3 py-2 transition-colors hover:border-primary/30">
+                <span className="break-all font-mono text-sm tabular-nums text-foreground">{password}</span>
+                <button type="button" className={`btn-icon flex-shrink-0 opacity-60 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 ${copiedValue === password ? 'text-primary' : ''}`} onClick={() => copyOne(password)} aria-label="Copy password">
                   {copiedValue === password ? <CheckCircle2 size={14} /> : <Copy size={14} />}
                 </button>
-              </div>
+              </li>
             ))}
-          </div>
-        )}
-      </div>
-    </div>
+          </ul>}
+        outputText={passwords.join('\n')}
+        outputStatus={passwords.length ? 'success' : 'idle'}
+        downloadName="passwords.txt"
+        onClear={() => setPasswords([])}
+      />
+    </ToolFrame>
   );
 }

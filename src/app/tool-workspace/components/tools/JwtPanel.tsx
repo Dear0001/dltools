@@ -1,6 +1,9 @@
 'use client';
 import React, { useCallback, useState, useEffect } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame, { OutputPlaceholder } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeEditor from '../CodeEditor';
 import { AlertTriangle, CheckCircle2, Key } from 'lucide-react';
 import { useDebouncedValue } from '../useDebouncedValue';
 
@@ -78,89 +81,56 @@ export default function JwtPanel({ tool: _tool }: { tool: Tool }) {
     return JSON.stringify(v);
   };
 
-  return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-3xl mx-auto">
-        {/* Input */}
-        <div className="bg-card border border-border rounded-xl p-5 mb-4">
-          <label className="block text-xs text-muted-foreground font-medium mb-2">JWT Token</label>
-          <textarea
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="input-code w-full"
-            rows={4}
-            placeholder="Paste JWT token here… eyJhbGciOi..."
-            spellCheck={false}
-          />
-          {error && (
-            <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-error/10 border border-error/20">
-              <AlertTriangle size={13} className="text-error mt-0.5 flex-shrink-0" />
-              <span className="text-xs text-error font-mono">{error}</span>
-            </div>
-          )}
-        </div>
-
-        <button className="btn-primary mb-5" onClick={() => decode()}>
-          <Key size={13} />
-          Decode JWT
-        </button>
-
-        {/* Expiry status */}
-        {payload && expiresIn !== null && (
-          <div className={`flex items-center gap-2 p-3 rounded-lg border mb-4 ${isExpired ? 'bg-error/10 border-error/20' : 'bg-primary/10 border-primary/20'}`}>
-            {isExpired ? <AlertTriangle size={14} className="text-error" /> : <CheckCircle2 size={14} className="text-primary" />}
-            <span className={`text-xs font-medium ${isExpired ? 'text-error' : 'text-primary'}`}>
-              {isExpired ? `Token expired ${Math.abs(expiresIn)}s ago` : `Token valid — expires in ${expiresIn}s`}
-            </span>
-          </div>
-        )}
-
-        {/* Decoded sections */}
-        {header && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <span className="text-xs font-semibold text-primary uppercase tracking-wider">Header</span>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(header).map(([k, v]) => (
-                  <div key={`header-${k}`} className="flex gap-3">
-                    <span className="font-mono text-xs text-primary flex-shrink-0 w-16 truncate">{k}</span>
-                    <span className="font-mono text-xs text-foreground">{String(v)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <span className="text-xs font-semibold text-primaryuppercase tracking-wider">Payload</span>
-              </div>
-              <div className="space-y-2">
-                {payload && Object.entries(payload).map(([k, v]) => (
-                  <div key={`payload-${k}`} className="flex gap-3">
-                    <span className="font-mono text-xs text-primary flex-shrink-0 w-20 truncate">{k}</span>
-                    <span className="font-mono text-xs text-foreground break-all">{formatValue(v)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {signature && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-warning" />
-              <span className="text-xs font-semibold text-warning uppercase tracking-wider">Signature</span>
-              <span className="text-xs text-muted-foreground ml-auto">Not verified — provide secret to verify</span>
-            </div>
-            <p className="font-mono text-xs text-warning break-all">{signature}</p>
-          </div>
-        )}
+  const outputText = header ? JSON.stringify({ header, payload, signature }, null, 2) : '';
+  const section = (title: string, tone: 'primary' | 'warning', children: React.ReactNode, aside?: React.ReactNode) => (
+    <section className="rounded-lg border border-border bg-background-secondary/50 p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${tone === 'primary' ? 'bg-primary' : 'bg-warning'}`} />
+        <h3 className={`text-xs font-semibold ${tone === 'primary' ? 'text-primary' : 'text-warning'}`}>{title}</h3>
+        {aside && <span className="ml-auto text-xs text-muted-foreground">{aside}</span>}
       </div>
-    </div>
+      {children}
+    </section>
+  );
+  const rows = (entries: Array<[string, unknown]>, format: (value: unknown) => string) => (
+    <dl className="space-y-2">
+      {entries.map(([k, v]) => (
+        <div key={k} className="flex gap-3">
+          <dt className="w-20 flex-shrink-0 truncate font-mono text-xs text-primary">{k}</dt>
+          <dd className="break-all font-mono text-xs text-foreground">{format(v)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+
+  return (
+    <ToolFrame toolbar={<div className="ml-auto"><button type="button" className="btn-primary" onClick={() => decode()}><Key size={14} />Decode JWT</button></div>}>
+      <PanelLayout
+        inputLabel="JWT Token"
+        outputLabel="Decoded token"
+        outputBody="content"
+        inputPanel={<CodeEditor value={token} onChange={setToken} minHeight="100%" placeholder="Paste JWT token here… eyJhbGciOi..." />}
+        outputPanel={!header ? (
+          error ? <p className="notice notice-error" role="alert"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />{error}</p>
+            : <OutputPlaceholder icon={<Key size={24} />} title="Paste a JWT to decode it." />
+        ) : <div className="flex flex-col gap-4">
+          {payload && expiresIn !== null && (
+            <p className={`notice ${isExpired ? 'notice-error' : 'notice-success'}`}>
+              {isExpired ? <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /> : <CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" />}
+              {isExpired ? `Token expired ${Math.abs(expiresIn)}s ago` : `Token valid — expires in ${expiresIn}s`}
+            </p>
+          )}
+          {section('Header', 'primary', rows(Object.entries(header), (v) => String(v)))}
+          {payload && section('Payload', 'primary', rows(Object.entries(payload), formatValue))}
+          {signature && section('Signature', 'warning', <p className="break-all font-mono text-xs text-warning">{signature}</p>, 'Not verified — provide secret to verify')}
+        </div>}
+        outputText={outputText}
+        outputStatus={error ? 'error' : header ? 'success' : 'idle'}
+        errorMessage={error}
+        downloadName="jwt.json"
+        onSample={() => setToken(SAMPLE_JWT)}
+        onClear={() => setToken('')}
+      />
+    </ToolFrame>
   );
 }

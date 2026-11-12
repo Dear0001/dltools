@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { ArrowDownToLine, ArrowLeftRight, Check, FileText, Files, LoaderCircle, Upload, X } from 'lucide-react';
 import type { Tool } from '@/data/tools';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
 import { useLocale } from '@/i18n/LocaleProvider';
 import type { Paragraph as DocxParagraph } from 'docx';
 import type { jsPDF as JsPdfDocument } from 'jspdf';
@@ -381,129 +383,93 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
       : 'image/jpeg,image/png,image/webp,image/bmp,image/gif';
   const title = isImageMode ? t('imageConversion') : t('fileConversion');
 
+  const downloadResult = () => {
+    if (!result) return;
+    const link = document.createElement('a');
+    link.href = result.url;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+  const modeNote = mode === 'image-to-docx' ? t('localOcrNote') : mode === 'pdf-to-docx' ? t('localPdfNote') : mode === 'docx-to-pdf' ? t('localWordNote') : t('layoutNote');
+
   return (
-    <div className="h-full overflow-auto bg-background">
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-        <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8">
-          <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-error/10 blur-3xl" />
-          <div className="relative flex items-start gap-4">
-            <div className="rounded-xl border border-error/20 bg-error/10 p-3 text-error">
-              <Files size={24} aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-error">
-                {locale === 'kh' ? 'ឯកសារ · អង់គ្លេស + ខ្មែរ' : 'DOCUMENTS · ENGLISH + KHMER'}
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                {title}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{isImageMode ? t('imageConverterSubtitle') : t('converterSubtitle')}</p>
-            </div>
-          </div>
-          <p className="relative mt-5 rounded-lg border border-border/70 bg-background/60 px-3 py-2.5 text-xs leading-5 text-muted-foreground">
-            {isImageMode ? t('localImagePrivacy') : t('localDocumentPrivacy')}
-          </p>
-        </header>
-
-        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6" aria-label={title}>
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-background p-1.5">
-            {([
-              ['pdf-to-docx', t('pdfToWord')],
-              ['docx-to-pdf', t('wordToPdf')],
-              ['image-to-pdf', t('imageToPdf')],
-              ['image-to-docx', t('imageToWord')],
-            ] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => changeMode(value)}
-                aria-pressed={mode === value}
-                className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  mode === value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
-              >
-                <ArrowLeftRight size={15} aria-hidden="true" />
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {!result && (
-            <div
-              onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
-              onDragOver={(event) => event.preventDefault()}
-              onDragLeave={(event) => {
-                if (event.currentTarget === event.target) setDragging(false);
-              }}
-              onDrop={onDrop}
-              className={`mt-5 flex min-h-52 flex-col items-center justify-center rounded-xl border border-dashed px-5 py-8 text-center transition-colors ${
-                dragging ? 'border-primary bg-primary/5' : 'border-border bg-background/40'
-              }`}
-            >
-              <input ref={inputRef} type="file" accept={accepted} multiple={isImageMode} className="sr-only" onChange={onInputChange} />
-              {files.length > 0 ? (
-                <div className="w-full max-w-lg space-y-2 text-left">
-                  {files.map((selectedFile, index) => (
-                    <div key={`${selectedFile.name}-${selectedFile.lastModified}-${index}`} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
-                      <FileText size={20} className="shrink-0 text-primary" aria-hidden="true" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground">{files.length > 1 ? `${t('selectedFile')} ${index + 1}` : t('selectedFile')}</p>
-                        <p className="truncate text-sm font-medium text-foreground" title={selectedFile.name}>{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                      </div>
-                      <button type="button" className="btn-icon" onClick={() => removeFile(index)} aria-label={locale === 'kh' ? `ដក ${selectedFile.name}` : `Remove ${selectedFile.name}`}>
-                        <X size={15} />
-                      </button>
-                    </div>
-                  ))}
-                  {isImageMode && files.length < 20 && (
-                    <button type="button" className="btn-ghost px-3 py-1.5 text-sm" onClick={() => inputRef.current?.click()}>
-                      {t('addImages')}
-                    </button>
-                  )}
-                  {isImageMode && <p className="text-xs text-muted-foreground">{files.length} {t('imagesSelected')} · {(files.reduce((sum, selected) => sum + selected.size, 0) / (1024 * 1024)).toFixed(2)} MB</p>}
-                </div>
-              ) : (
-                <>
-                  <div className="mb-3 rounded-full border border-border bg-card p-3 text-primary">
-                    <Upload size={20} aria-hidden="true" />
+    <ToolFrame
+      toolbar={<>
+        <div className="segmented flex-wrap" role="group" aria-label={title}>
+          {([
+            ['pdf-to-docx', t('pdfToWord')],
+            ['docx-to-pdf', t('wordToPdf')],
+            ['image-to-pdf', t('imageToPdf')],
+            ['image-to-docx', t('imageToWord')],
+          ] as const).map(([value, label]) => (
+            <button key={value} type="button" onClick={() => changeMode(value)} aria-pressed={mode === value}>{label}</button>
+          ))}
+        </div>
+        <div className="ml-auto">
+          <button type="button" onClick={convert} disabled={!file || busy || Boolean(result)} className="btn-primary">
+            {busy ? <LoaderCircle size={15} className="animate-spin" /> : <ArrowLeftRight size={15} />}
+            {busy ? t('converting') : `${t('convert')} · ${targetLabel}`}
+          </button>
+        </div>
+      </>}
+      notice={`${isImageMode ? t('localImagePrivacy') : t('localDocumentPrivacy')} ${modeNote}`}
+    >
+      <PanelLayout
+        inputLabel={isImageMode ? t('dropImages') : t('selectedFile')}
+        outputLabel={t('resultFile')}
+        inputBody="content"
+        outputBody="content"
+        copyable={false}
+        inputPanel={<div
+          onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={(event) => { if (event.currentTarget === event.target) setDragging(false); }}
+          onDrop={onDrop}
+          className={`flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed px-5 py-8 text-center transition-colors ${dragging ? 'border-primary bg-primary/5' : 'border-border bg-background-secondary/40'}`}
+        >
+          <input ref={inputRef} type="file" accept={accepted} multiple={isImageMode} className="sr-only" onChange={onInputChange} />
+          {files.length > 0 ? (
+            <div className="w-full max-w-lg space-y-2 text-left">
+              {files.map((selectedFile, index) => (
+                <div key={`${selectedFile.name}-${selectedFile.lastModified}-${index}`} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+                  <FileText size={20} className="shrink-0 text-primary" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">{files.length > 1 ? `${t('selectedFile')} ${index + 1}` : t('selectedFile')}</p>
+                    <p className="truncate text-sm font-medium text-foreground" title={selectedFile.name}>{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{isImageMode ? t('dropImages') : t('dropFile')}</p>
-                  <p className="my-1 text-xs text-muted-foreground">{t('or')}</p>
-                  <button type="button" className="btn-ghost px-3 py-1.5 text-sm" onClick={() => inputRef.current?.click()}>
-                    {t('chooseFile')}
+                  <button type="button" className="btn-icon" onClick={() => removeFile(index)} aria-label={locale === 'kh' ? `ដក ${selectedFile.name}` : `Remove ${selectedFile.name}`}>
+                    <X size={15} />
                   </button>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    {isImageMode ? t('acceptedImage') : mode === 'pdf-to-docx' ? t('acceptedPdf') : t('acceptedDocx')}
-                  </p>
-                </>
+                </div>
+              ))}
+              {isImageMode && files.length < 20 && (
+                <button type="button" className="btn-ghost px-3 py-1.5 text-sm" onClick={() => inputRef.current?.click()}>{t('addImages')}</button>
               )}
+              {isImageMode && <p className="text-xs text-muted-foreground">{files.length} {t('imagesSelected')} · {(files.reduce((sum, selected) => sum + selected.size, 0) / (1024 * 1024)).toFixed(2)} MB</p>}
             </div>
+          ) : (
+            <>
+              <div className="mb-3 rounded-full border border-border bg-card p-3 text-primary"><Upload size={20} aria-hidden="true" /></div>
+              <p className="text-sm font-medium text-foreground">{isImageMode ? t('dropImages') : t('dropFile')}</p>
+              <p className="my-1 text-xs text-muted-foreground">{t('or')}</p>
+              <button type="button" className="btn-ghost px-3 py-1.5 text-sm" onClick={() => inputRef.current?.click()}>{t('chooseFile')}</button>
+              <p className="mt-3 text-xs text-muted-foreground">{isImageMode ? t('acceptedImage') : mode === 'pdf-to-docx' ? t('acceptedPdf') : t('acceptedDocx')}</p>
+            </>
           )}
-
-          {error && (
-            <p role="alert" className="mt-4 rounded-lg border border-error/20 bg-error/5 px-3 py-2.5 text-sm text-error">
-              {error}
-            </p>
-          )}
-
+        </div>}
+        outputPanel={<div className="flex flex-1 flex-col gap-4">
+          {error && <p role="alert" className="notice notice-error">{error}</p>}
           {busy && (
-            <div className="mt-4 space-y-2" aria-live="polite">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <LoaderCircle size={15} className="animate-spin text-primary" aria-hidden="true" />
-                <span>{t('converting')}</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${Math.max(progress, 5)}%` }}
-                />
-              </div>
+            <div className="space-y-2" aria-live="polite">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle size={15} className="animate-spin text-primary" aria-hidden="true" /><span>{t('converting')}</span></div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all duration-300" style={{ width: `${Math.max(progress, 5)}%` }} /></div>
             </div>
           )}
-
           {result ? (
-            <div className="mt-5 space-y-5">
+            <>
               <div className="flex flex-col justify-between gap-3 rounded-xl border border-success/20 bg-success/5 p-4 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 items-center gap-3">
                   <Check size={18} className="shrink-0 text-success" aria-hidden="true" />
@@ -512,25 +478,18 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
                     <p className="truncate text-xs text-muted-foreground">{t('resultFile')}: {result.filename}</p>
                   </div>
                 </div>
-                <a
-                  href={result.url}
-                  className="btn-primary inline-flex min-h-10 shrink-0 items-center justify-center gap-2 px-4 py-2 text-sm"
-                >
-                  <ArrowDownToLine size={16} aria-hidden="true" />
-                  {t('download')}
-                </a>
+                <a href={result.url} download={result.filename} className="btn-primary shrink-0"><ArrowDownToLine size={16} aria-hidden="true" />{t('download')}</a>
               </div>
-
               {result.type === 'application/pdf' ? (
                 <div className="overflow-hidden rounded-xl border border-border">
                   <p className="border-b border-border bg-background px-4 py-2 text-xs font-medium text-muted-foreground">{t('resultPreview')}</p>
-                  <iframe title={t('resultPreview')} src={result.previewUrl} className="h-[min(65vh,48rem)] w-full bg-white" />
+                  <iframe title={t('resultPreview')} src={result.previewUrl} className="h-[min(60vh,44rem)] w-full bg-white" />
                 </div>
               ) : sourcePreviewUrls.length > 0 ? (
                 <div className="overflow-hidden rounded-xl border border-border">
                   <p className="border-b border-border bg-background px-4 py-2 text-xs font-medium text-muted-foreground">{isImageMode ? mode === 'image-to-docx' ? t('wordSourceImages') : t('imagePreview') : t('sourcePreview')}</p>
                   {isImageMode ? (
-                    <div className="grid max-h-[min(65vh,48rem)] grid-cols-2 gap-3 overflow-auto bg-background/40 p-3 sm:grid-cols-3">
+                    <div className="grid max-h-[min(60vh,44rem)] grid-cols-2 gap-3 overflow-auto bg-background/40 p-3 sm:grid-cols-3">
                       {sourcePreviewUrls.map((preview, index) => (
                         <figure key={`${preview.name}-${index}`} className="min-w-0 rounded-lg border border-border bg-card p-2">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -540,35 +499,25 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
                       ))}
                     </div>
                   ) : (
-                    <iframe title={t('sourcePreview')} src={sourcePreviewUrls[0].url} className="h-[min(65vh,48rem)] w-full bg-white" />
+                    <iframe title={t('sourcePreview')} src={sourcePreviewUrls[0].url} className="h-[min(60vh,44rem)] w-full bg-white" />
                   )}
                 </div>
               ) : null}
-
-              <p className="text-xs leading-5 text-muted-foreground">
-                {mode === 'image-to-docx' ? t('localOcrNote') : mode === 'pdf-to-docx' ? t('localPdfNote') : mode === 'docx-to-pdf' ? t('localWordNote') : t('layoutNote')}
-              </p>
-              <button type="button" className="btn-ghost px-4 py-2 text-sm" onClick={reset}>
-                {t('convertAnother')}
-              </button>
+              <button type="button" className="btn-ghost self-start" onClick={reset}>{t('convertAnother')}</button>
+            </>
+          ) : !busy && !error && (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-10 text-center">
+              <Files size={28} className="text-muted-foreground" aria-hidden="true" />
+              <p className="text-sm font-medium text-foreground">{file ? `${t('convert')} · ${targetLabel}` : (isImageMode ? t('dropImages') : t('dropFile'))}</p>
+              <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">{modeNote}</p>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={convert}
-              disabled={!file || busy}
-              className="btn-primary mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            >
-              {busy ? <LoaderCircle size={16} className="animate-spin" /> : <ArrowLeftRight size={16} />}
-              {busy ? t('converting') : `${t('convert')} · ${targetLabel}`}
-            </button>
           )}
-        </section>
-
-        <p className="px-1 text-xs leading-5 text-muted-foreground">
-          {isImageMode ? t('localOcrNote') : mode === 'pdf-to-docx' ? t('localPdfNote') : t('localWordNote')}
-        </p>
-      </div>
-    </div>
+        </div>}
+        outputStatus={error ? 'error' : result ? 'success' : 'idle'}
+        onDownload={downloadResult}
+        canDownload={Boolean(result)}
+        onClear={reset}
+      />
+    </ToolFrame>
   );
 }

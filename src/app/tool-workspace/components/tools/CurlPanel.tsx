@@ -1,9 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { toast } from 'sonner';
+import ToolFrame from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
+import CodeOutput from '../CodeOutput';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -27,27 +29,36 @@ interface FormValues {
   verbose: boolean;
 }
 
+const DEFAULT_VALUES: FormValues = {
+  method: 'GET',
+  url: 'https://api.devtoolkit.io/v1/tools',
+  headers: [
+    { key: 'Content-Type', value: 'application/json', enabled: true },
+    { key: 'Accept', value: 'application/json', enabled: true },
+  ],
+  body: '',
+  authType: 'bearer',
+  authValue: 'your-token-here',
+  authUser: '',
+  authPassword: '',
+  apiKeyHeader: 'X-API-Key',
+  followRedirects: true,
+  verbose: false,
+};
+
+const EMPTY_VALUES: FormValues = {
+  ...DEFAULT_VALUES,
+  url: '',
+  headers: [],
+  body: '',
+  authType: 'none',
+  authValue: '',
+};
+
 export default function CurlPanel({ tool: _tool }: { tool: Tool }) {
   const [output, setCurl] = useState('');
 
-  const { register, control, watch } = useForm<FormValues>({
-    defaultValues: {
-      method: 'GET',
-      url: 'https://api.devtoolkit.io/v1/tools',
-      headers: [
-        { key: 'Content-Type', value: 'application/json', enabled: true },
-        { key: 'Accept', value: 'application/json', enabled: true },
-      ],
-      body: '',
-      authType: 'bearer',
-      authValue: 'your-token-here',
-      authUser: '',
-      authPassword: '',
-      apiKeyHeader: 'X-API-Key',
-      followRedirects: true,
-      verbose: false,
-    },
-  });
+  const { register, control, watch, reset } = useForm<FormValues>({ defaultValues: DEFAULT_VALUES });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'headers' });
   const authType = watch('authType');
@@ -92,132 +103,77 @@ export default function CurlPanel({ tool: _tool }: { tool: Tool }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedFormKey]);
 
-  const copy = async () => {
-    if (!output) return;
-    await navigator.clipboard.writeText(output);
-    toast.success('cURL command copied');
-  };
-
+  const heading = 'mb-2 text-xs font-semibold text-muted-foreground';
   return (
-    <div className="h-full overflow-auto scrollbar-thin p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex flex-col gap-4">
-          {/* Method + URL */}
-          <div className="bg-card border border-border rounded-xl p-5">
-            <div className="flex gap-2">
-              <select className="select-input w-28 flex-shrink-0" {...register('method')}>
-                {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as HttpMethod[]).map((m) => (
-                  <option key={`method-${m}`} value={m}>{m}</option>
-                ))}
-              </select>
-              <input
-                type="text"
-                {...register('url')}
-                className="input-code flex-1 py-2"
-                placeholder="https://api.example.com/endpoint"
-              />
-            </div>
-          </div>
-
-          {/* Auth */}
-          <div className="bg-card border border-border rounded-xl p-5">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Authentication</h4>
-            <div className="flex items-center gap-3 mb-3">
-              <select className="select-input" {...register('authType')}>
-                <option value="none">No Auth</option>
-                <option value="bearer">Bearer Token</option>
-                <option value="basic">Basic Auth</option>
-                <option value="apikey">API Key</option>
-              </select>
-            </div>
-            {authType === 'bearer' && (
-              <input type="text" {...register('authValue')} className="input-code w-full py-2" placeholder="Bearer token value" />
-            )}
+    <ToolFrame toolbar={<>
+      <select className="select-input w-28 flex-shrink-0" aria-label="HTTP method" {...register('method')}>
+        {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as HttpMethod[]).map((m) => <option key={`method-${m}`} value={m}>{m}</option>)}
+      </select>
+      <input type="text" aria-label="Request URL" {...register('url')} className="input-field min-w-0 flex-1 font-mono text-sm" placeholder="https://api.example.com/endpoint" />
+    </>}
+      notice="The cURL command updates automatically as you edit the request."
+    >
+      <PanelLayout
+        inputLabel="Request"
+        outputLabel="cURL Command"
+        inputBody="content"
+        inputPanel={<div className="space-y-5">
+          <section>
+            <h3 className={heading}>Authentication</h3>
+            <select className="select-input mb-2 w-full" aria-label="Authentication" {...register('authType')}>
+              <option value="none">No Auth</option>
+              <option value="bearer">Bearer Token</option>
+              <option value="basic">Basic Auth</option>
+              <option value="apikey">API Key</option>
+            </select>
+            {authType === 'bearer' && <input type="text" {...register('authValue')} className="input-field font-mono text-sm" placeholder="Bearer token value" aria-label="Bearer token value" />}
             {authType === 'basic' && (
               <div className="grid grid-cols-2 gap-2">
-                <input type="text" {...register('authUser')} className="input-code py-2" placeholder="Username" />
-                <input type="password" {...register('authPassword')} className="input-code py-2" placeholder="Password" />
+                <input type="text" {...register('authUser')} className="input-field" placeholder="Username" aria-label="Username" />
+                <input type="password" {...register('authPassword')} className="input-field" placeholder="Password" aria-label="Password" />
               </div>
             )}
             {authType === 'apikey' && (
               <div className="grid grid-cols-2 gap-2">
-                <input type="text" {...register('apiKeyHeader')} className="input-code py-2" placeholder="Header name" />
-                <input type="text" {...register('authValue')} className="input-code py-2" placeholder="API key value" />
+                <input type="text" {...register('apiKeyHeader')} className="input-field font-mono text-sm" placeholder="Header name" aria-label="Header name" />
+                <input type="text" {...register('authValue')} className="input-field font-mono text-sm" placeholder="API key value" aria-label="API key value" />
               </div>
             )}
-          </div>
-
-          {/* Headers */}
-          <div className="bg-card border border-border rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Headers</h4>
-              <button
-                type="button"
-                className="btn-ghost text-xs"
-                onClick={() => append({ key: '', value: '', enabled: true })}
-              >
-                <Plus size={12} />
-                Add Header
-              </button>
+          </section>
+          <section>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-muted-foreground">Headers</h3>
+              <button type="button" className="btn-ghost min-h-0 px-2 py-1 text-xs" onClick={() => append({ key: '', value: '', enabled: true })}><Plus size={12} />Add Header</button>
             </div>
             <div className="flex flex-col gap-2">
               {fields.map((field, i) => (
                 <div key={field.id} className="flex items-center gap-2">
-                  <input type="checkbox" {...register(`headers.${i}.enabled`)} className="w-3.5 h-3.5 accent-primary flex-shrink-0" />
-                  <input type="text" {...register(`headers.${i}.key`)} className="input-code flex-1 py-1.5 text-xs" placeholder="Header name" />
-                  <input type="text" {...register(`headers.${i}.value`)} className="input-code flex-1 py-1.5 text-xs" placeholder="Value" />
-                  <button type="button" className="btn-icon flex-shrink-0" onClick={() => remove(i)}>
-                    <Trash2 size={12} />
-                  </button>
+                  <input type="checkbox" {...register(`headers.${i}.enabled`)} className="h-3.5 w-3.5 flex-shrink-0 accent-primary" aria-label="Enable header" />
+                  <input type="text" {...register(`headers.${i}.key`)} className="input-field min-w-0 flex-1 py-1.5 font-mono text-xs" placeholder="Header name" aria-label="Header name" />
+                  <input type="text" {...register(`headers.${i}.value`)} className="input-field min-w-0 flex-1 py-1.5 font-mono text-xs" placeholder="Value" aria-label="Value" />
+                  <button type="button" className="btn-icon flex-shrink-0" onClick={() => remove(i)} aria-label="Remove"><Trash2 size={12} /></button>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Body */}
+          </section>
           {['POST', 'PUT', 'PATCH'].includes(method) && (
-            <div className="bg-card border border-border rounded-xl p-5">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Request Body</h4>
-              <textarea
-                {...register('body')}
-                className="input-code w-full"
-                rows={5}
-                placeholder='{"key": "value"}'
-                spellCheck={false}
-              />
-            </div>
+            <section>
+              <h3 className={heading}>Request Body</h3>
+              <textarea {...register('body')} className="input-code min-h-28 resize-y" placeholder='{"key": "value"}' spellCheck={false} aria-label="Request Body" />
+            </section>
           )}
-
-          {/* Options */}
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register('followRedirects')} className="w-3.5 h-3.5 accent-primary" />
-                <span className="text-xs text-muted-foreground">Follow redirects (-L)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register('verbose')} className="w-3.5 h-3.5 accent-primary" />
-                <span className="text-xs text-muted-foreground">Verbose output (-v)</span>
-              </label>
-            </div>
-          </div>
-
-          <p className="text-xs text-muted-foreground" aria-live="polite">The cURL command updates automatically as you edit the request.</p>
-        </div>
-
-        {/* Output */}
-        {output && (
-          <div className="mt-4 bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">cURL Command</span>
-              <button className="btn-icon" onClick={copy}>
-                <Copy size={13} />
-              </button>
-            </div>
-            <pre className="output-code text-xs rounded-lg p-3 text-success whitespace-pre-wrap">{output}</pre>
-          </div>
-        )}
-      </div>
-    </div>
+          <section className="flex flex-wrap items-center gap-4">
+            <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" {...register('followRedirects')} className="h-3.5 w-3.5 accent-primary" /><span className="text-xs text-muted-foreground">Follow redirects (-L)</span></label>
+            <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" {...register('verbose')} className="h-3.5 w-3.5 accent-primary" /><span className="text-xs text-muted-foreground">Verbose output (-v)</span></label>
+          </section>
+        </div>}
+        outputPanel={<CodeOutput value={output} language="text" placeholder="cURL command appears here…" />}
+        outputText={output}
+        outputStatus={output ? 'success' : 'idle'}
+        downloadName="request.sh"
+        onSample={() => reset(DEFAULT_VALUES)}
+        onClear={() => reset(EMPTY_VALUES)}
+      />
+    </ToolFrame>
   );
 }

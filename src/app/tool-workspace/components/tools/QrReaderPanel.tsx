@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Tool } from '@/data/tools';
-import { Upload, ScanLine, ClipboardPaste, Copy, CheckCircle2, ExternalLink, X } from 'lucide-react';
+import { Upload, ScanLine, ClipboardPaste, ExternalLink } from 'lucide-react';
+import ToolFrame, { OutputPlaceholder } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
 import { toast } from 'sonner';
 import jsQR from 'jsqr';
 import AppImage from '@/components/ui/AppImage';
@@ -67,7 +69,6 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
   const [previewUrl, setPreviewUrl] = useState('');
   const [scanning, setScanning] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -225,18 +226,6 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
     [stopCamera],
   );
 
-  const copyResult = async () => {
-    if (!result) return;
-    try {
-      await navigator.clipboard.writeText(result);
-      setCopied(true);
-      toast.success('Result copied');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Clipboard access denied');
-    }
-  };
-
   const clear = () => {
     setResult('');
     setSource('');
@@ -248,160 +237,98 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
   };
 
   const kind = useMemo(() => (result ? detectKind(result) : null), [result]);
-  const tile = 'flex flex-col items-center gap-2 p-5 bg-card border rounded-xl transition-all duration-150 cursor-pointer';
+  const tile = 'flex cursor-pointer flex-col items-center gap-2 rounded-xl border bg-card p-4 transition-colors';
 
   return (
-    <div
-      className="h-full overflow-auto scrollbar-thin p-4 sm:p-6"
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={(e) => {
-        if (e.currentTarget === e.target) setDragging(false);
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragging(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file) processImage(file);
-      }}
-    >
-      <div className="max-w-3xl mx-auto flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            type="button"
-            className={`${tile} ${dragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/30 hover:bg-primary/5'}`}
-            onClick={() => fileRef.current?.click()}
-          >
-            <Upload size={22} className="text-primary" />
-            <span className="text-xs font-medium text-foreground">{dragging ? 'Drop image here' : 'Upload Image'}</span>
-            <span className="text-xs text-muted-foreground text-center">Click or drag & drop</span>
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            className="hidden"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) processImage(file);
-              e.target.value = '';
-            }}
-          />
-
-          <button type="button" className={`${tile} border-border hover:border-primary/30 hover:bg-primary/5`} onClick={handlePaste}>
-            <ClipboardPaste size={22} className="text-primary" />
-            <span className="text-xs font-medium text-foreground">Paste</span>
-            <span className="text-xs text-muted-foreground text-center">Image or text · Ctrl/⌘+V</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${tile} ${scanning ? 'border-error/30 bg-error/5' : 'border-border hover:border-primary/30 hover:bg-primary/5'}`}
-            onClick={scanning ? stopCamera : startCamera}
-          >
-            <ScanLine size={22} className={scanning ? 'text-error' : 'text-warning'} />
-            <span className="text-xs font-medium text-foreground">{scanning ? 'Stop Camera' : 'Live Camera'}</span>
-            <span className="text-xs text-muted-foreground text-center">{scanning ? 'Scanning…' : 'Webcam / phone camera'}</span>
-          </button>
-        </div>
-
-        {scanning && (
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="relative">
-              <video ref={videoRef} className="w-full" autoPlay playsInline muted />
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <div className="aspect-square w-1/2 max-w-[260px] rounded-2xl border-2 border-primary/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
-              </div>
-            </div>
-            <canvas ref={canvasRef} className="hidden" />
-            <div className="p-3 flex items-center gap-2 justify-center">
-              <span className="status-dot-success animate-pulse-soft" />
-              <span className="text-xs text-primary">Point the camera at a QR code…</span>
-            </div>
+    <ToolFrame>
+      <PanelLayout
+        inputLabel="Source"
+        outputLabel="Decoded Result"
+        inputBody="content"
+        outputBody="content"
+        outputActions={kind ? <span className="mr-1 rounded-full bg-primary/15 px-2 py-0.5 text-2xs font-medium text-primary">{kind}</span> : null}
+        inputPanel={<div
+          className="flex flex-1 flex-col gap-4"
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); const file = e.dataTransfer.files?.[0]; if (file) processImage(file); }}
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <button type="button" className={`${tile} ${dragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/30 hover:bg-primary/5'}`} onClick={() => fileRef.current?.click()}>
+              <Upload size={22} className="text-primary" />
+              <span className="text-xs font-medium text-foreground">{dragging ? 'Drop image here' : 'Upload Image'}</span>
+              <span className="text-center text-xs text-muted-foreground">Click or drag & drop</span>
+            </button>
+            <button type="button" className={`${tile} border-border hover:border-primary/30 hover:bg-primary/5`} onClick={handlePaste}>
+              <ClipboardPaste size={22} className="text-primary" />
+              <span className="text-xs font-medium text-foreground">Paste</span>
+              <span className="text-center text-xs text-muted-foreground">Image or text · Ctrl/⌘+V</span>
+            </button>
+            <button type="button" className={`${tile} ${scanning ? 'border-error/30 bg-error/5' : 'border-border hover:border-primary/30 hover:bg-primary/5'}`} onClick={scanning ? stopCamera : startCamera}>
+              <ScanLine size={22} className={scanning ? 'text-error' : 'text-primary'} />
+              <span className="text-xs font-medium text-foreground">{scanning ? 'Stop Camera' : 'Live Camera'}</span>
+              <span className="text-center text-xs text-muted-foreground">{scanning ? 'Scanning…' : 'Webcam / phone camera'}</span>
+            </button>
           </div>
-        )}
 
-        {error && (
-          <div className="flex items-start gap-2 p-3.5 rounded-xl bg-error/10 border border-error/20" role="alert">
-            <span className="text-error mt-0.5 flex-shrink-0">⚠</span>
-            <span className="text-xs text-error">{error}</span>
-          </div>
-        )}
-
-        {(result || (previewUrl && !scanning)) && (
-          <div className="bg-card border border-primary/20 rounded-xl overflow-hidden">
-            <div className="panel-header rounded-t-xl">
-              <div className="flex items-center gap-2 min-w-0">
-                <CheckCircle2 size={14} className={result ? 'text-primary' : 'text-muted-foreground'} />
-                <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Decoded result</span>
-                {kind && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-2xs font-medium text-primary">{kind}</span>}
-              </div>
-              <div className="flex items-center gap-1">
-                <button type="button" className={`btn-icon ${copied ? 'text-primary' : ''}`} onClick={copyResult} disabled={!result} aria-label="Copy result">
-                  {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-                </button>
-                <button type="button" className="btn-icon" onClick={clear} aria-label="Clear">
-                  <X size={14} />
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 p-4">
-              {previewUrl && !scanning && (
-                <div className="sm:w-40 flex-shrink-0 bg-background-secondary rounded-lg flex items-center justify-center p-2">
-                  <AppImage
-                    key={previewUrl}
-                    src={previewUrl}
-                    alt="Uploaded image scanned for a QR code"
-                    width={160}
-                    height={160}
-                    className="max-h-40 object-contain rounded"
-                    unoptimized
-                  />
+          {scanning && (
+            <div className="overflow-hidden rounded-xl border border-border">
+              <div className="relative">
+                <video ref={videoRef} className="w-full" autoPlay playsInline muted />
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="aspect-square w-1/2 max-w-[260px] rounded-2xl border-2 border-primary/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
                 </div>
-              )}
-              {result && (
-                <div className="min-w-0 flex-1">
-                  {kind === 'URL' ? (
-                    <a href={result} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 font-mono text-sm text-primary break-all hover:underline">
-                      {result}
-                      <ExternalLink size={13} className="mt-1 flex-shrink-0" />
-                    </a>
-                  ) : kind === 'JSON' ? (
-                    <pre className="font-mono text-xs text-foreground whitespace-pre-wrap break-all max-h-64 overflow-auto">{JSON.stringify(JSON.parse(result), null, 2)}</pre>
-                  ) : (
-                    <pre className="font-mono text-sm text-foreground break-all whitespace-pre-wrap max-h-64 overflow-auto">{result}</pre>
-                  )}
-                  {kind === 'Wi-Fi' && (
-                    <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-                      {parseWifi(result).map(([k, v]) => (
-                        <React.Fragment key={k}>
-                          <dt className="text-muted-foreground">{k}</dt>
-                          <dd className="font-mono text-foreground break-all">{v}</dd>
-                        </React.Fragment>
-                      ))}
-                    </dl>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-2 tabular-nums">
-                    {result.length} characters{source ? ` · from ${source}` : ''}
-                  </p>
-                </div>
-              )}
+              </div>
+              <canvas ref={canvasRef} className="hidden" />
+              <p className="flex items-center justify-center gap-2 p-3 text-xs text-primary"><span className="status-dot-success animate-pulse-soft" />Point the camera at a QR code…</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {result && kind === 'KHQR / EMV' && <KhqrResult data={result} />}
-
-        {!result && !error && !scanning && !previewUrl && (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-            <ScanLine size={32} className="mb-3 opacity-40" />
-            <p className="text-sm font-medium text-foreground mb-1">No QR code scanned yet</p>
-            <p className="text-xs">Upload or drop an image, paste from clipboard, or use your camera</p>
-          </div>
-        )}
-      </div>
-    </div>
+          {previewUrl && !scanning && (
+            <div className="flex min-h-40 flex-1 items-center justify-center rounded-lg border border-border bg-background-secondary p-3">
+              <AppImage key={previewUrl} src={previewUrl} alt="Uploaded image scanned for a QR code" width={320} height={320} className="max-h-[40vh] w-auto rounded object-contain" unoptimized />
+            </div>
+          )}
+          <input ref={fileRef} type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) processImage(file); e.target.value = ''; }} />
+        </div>}
+        outputPanel={<div className="flex flex-1 flex-col gap-4">
+          {error && <p className="notice notice-error" role="alert">{error}</p>}
+          {result ? (
+            <>
+              <div className="rounded-lg border border-border bg-background-secondary/50 p-4">
+                {kind === 'URL' ? (
+                  <a href={result} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 break-all font-mono text-sm text-primary hover:underline">
+                    {result}
+                    <ExternalLink size={13} className="mt-1 flex-shrink-0" />
+                  </a>
+                ) : kind === 'JSON' ? (
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all font-mono text-xs text-foreground">{JSON.stringify(JSON.parse(result), null, 2)}</pre>
+                ) : (
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all font-mono text-sm text-foreground">{result}</pre>
+                )}
+                {kind === 'Wi-Fi' && (
+                  <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+                    {parseWifi(result).map(([k, v]) => (
+                      <React.Fragment key={k}>
+                        <dt className="text-muted-foreground">{k}</dt>
+                        <dd className="break-all font-mono text-foreground">{v}</dd>
+                      </React.Fragment>
+                    ))}
+                  </dl>
+                )}
+                <p className="mt-2 text-xs tabular-nums text-muted-foreground">{result.length} characters{source ? ` · from ${source}` : ''}</p>
+              </div>
+              {kind === 'KHQR / EMV' && <KhqrResult data={result} />}
+            </>
+          ) : !error && (
+            <OutputPlaceholder icon={<ScanLine size={30} />} title="No QR code scanned yet" description="Upload or drop an image, paste from clipboard, or use your camera" />
+          )}
+        </div>}
+        outputText={result}
+        outputStatus={error ? 'error' : result ? 'success' : 'idle'}
+        downloadName="qr-result.txt"
+        onClear={clear}
+      />
+    </ToolFrame>
   );
 }

@@ -86,6 +86,8 @@ export default function HtmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
           outputText={output}
           outputStatus={status}
           errorMessage={error}
+          onSample={() => setInput(SAMPLE)}
+          downloadName="formatted.html"
           onClear={() => { setInput(''); setOutput(''); setStatus('idle'); setError(''); }}
           onSwap={() => { if (output) setInput(output); }}
         />

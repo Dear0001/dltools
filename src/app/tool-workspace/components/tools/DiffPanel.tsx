@@ -1,6 +1,8 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { Tool } from '@/data/tools';
+import ToolFrame, { ToolbarField } from '../ToolFrame';
+import PanelLayout from '../PanelLayout';
 import * as Diff from 'diff';
 import { GitCompare, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 
@@ -69,104 +71,67 @@ export default function DiffPanel({ tool: _tool }: { tool: Tool }) {
     setter(Math.min(24, Math.max(10, current + delta)));
   };
 
+  const outputText = diffLines.length && (stats.added || stats.removed)
+    ? diffLines.map((line) => `${line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '} ${line.value}`).join('\n')
+    : '';
+  const editor = (label: string, value: string, onChange: (v: string) => void, zoom: number, setZoom: React.Dispatch<React.SetStateAction<number>>, placeholder: string, which: string) => (
+    <div className="flex min-h-[14rem] min-w-0 flex-1 flex-col lg:min-h-0">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background-secondary/50 px-3.5 py-1">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <div className="ml-auto flex items-center gap-0.5">
+          <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => adjustZoom(setZoom, zoom, -1)} title={`Zoom out ${which}`} aria-label={`Zoom out ${which}`}><ZoomOut size={12} /></button>
+          <span className="min-w-10 text-center font-mono text-[11px] text-muted-foreground">{zoom}px</span>
+          <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => adjustZoom(setZoom, zoom, 1)} title={`Zoom in ${which}`} aria-label={`Zoom in ${which}`}><ZoomIn size={12} /></button>
+          <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => setZoom(13)} title={`Reset ${which} zoom`} aria-label={`Reset ${which} zoom`}><RotateCcw size={12} /></button>
+        </div>
+      </div>
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} className="input-code flex-1 resize-none rounded-none border-0 bg-transparent focus:shadow-none" style={{ fontSize: `${zoom}px`, lineHeight: 1.6 }} spellCheck={false} placeholder={placeholder} aria-label={label} />
+    </div>
+  );
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Config */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground font-medium">View</label>
-          <select className="select-input" value={mode} onChange={(e) => setMode(e.target.value as 'split' | 'unified')}>
-            <option value="split">Split</option>
-            <option value="unified">Unified</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-3 ml-auto text-xs font-mono">
-          <span className="text-success">+{stats.added} added</span>
-          <span className="text-error">-{stats.removed} removed</span>
-          <span className="text-muted-foreground">{stats.unchanged} unchanged</span>
-        </div>
+    <ToolFrame toolbar={<>
+      <ToolbarField label="View">
+        <select className="select-input" value={mode} onChange={(e) => setMode(e.target.value as 'split' | 'unified')}>
+          <option value="split">Split</option>
+          <option value="unified">Unified</option>
+        </select>
+      </ToolbarField>
+      <div className="ml-auto flex items-center gap-3 font-mono text-xs">
+        <span className="text-success">+{stats.added} added</span>
+        <span className="text-error">-{stats.removed} removed</span>
+        <span className="text-muted-foreground">{stats.unchanged} unchanged</span>
       </div>
-
-      {/* Split input area */}
-      <div className="flex-shrink-0 grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border-b border-border min-h-[280px]">
-        <div className="flex flex-col bg-input min-h-0">
-          <div className="panel-header rounded-none border-0 border-b border-border flex-wrap gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Original (A)</span>
-            <div className="ml-auto flex items-center gap-1">
-              <button className="btn-icon" onClick={() => adjustZoom(setLeftZoom, leftZoom, -1)} title="Zoom out original">
-                <ZoomOut size={12} />
-              </button>
-              <span className="min-w-10 text-center text-[11px] font-mono text-muted-foreground">{leftZoom}px</span>
-              <button className="btn-icon" onClick={() => adjustZoom(setLeftZoom, leftZoom, 1)} title="Zoom in original">
-                <ZoomIn size={12} />
-              </button>
-              <button className="btn-icon" onClick={() => setLeftZoom(13)} title="Reset original zoom">
-                <RotateCcw size={12} />
-              </button>
-            </div>
-          </div>
-          <textarea
-            value={left}
-            onChange={(e) => setLeft(e.target.value)}
-            className="input-code flex-1 resize-none border-0 rounded-none bg-transparent focus:ring-0"
-            style={{ fontSize: `${leftZoom}px`, lineHeight: 1.6 }}
-            spellCheck={false}
-            placeholder="Paste original content here…"
-          />
-        </div>
-        <div className="flex flex-col bg-input min-h-0">
-          <div className="panel-header rounded-none border-0 border-b border-border flex-wrap gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Modified (B)</span>
-            <div className="ml-auto flex items-center gap-1">
-              <button className="btn-icon" onClick={() => adjustZoom(setRightZoom, rightZoom, -1)} title="Zoom out modified">
-                <ZoomOut size={12} />
-              </button>
-              <span className="min-w-10 text-center text-[11px] font-mono text-muted-foreground">{rightZoom}px</span>
-              <button className="btn-icon" onClick={() => adjustZoom(setRightZoom, rightZoom, 1)} title="Zoom in modified">
-                <ZoomIn size={12} />
-              </button>
-              <button className="btn-icon" onClick={() => setRightZoom(13)} title="Reset modified zoom">
-                <RotateCcw size={12} />
-              </button>
-            </div>
-          </div>
-          <textarea
-            value={right}
-            onChange={(e) => setRight(e.target.value)}
-            className="input-code flex-1 resize-none border-0 rounded-none bg-transparent focus:ring-0"
-            style={{ fontSize: `${rightZoom}px`, lineHeight: 1.6 }}
-            spellCheck={false}
-            placeholder="Paste modified content here…"
-          />
-        </div>
-      </div>
-
-      {/* Diff output */}
-      <div className="flex-1 overflow-auto scrollbar-thin bg-background p-0">
-        <div className="font-mono text-xs leading-relaxed">
+    </>}>
+      <PanelLayout
+        vertical
+        inputLabel="Compare"
+        outputLabel="Differences"
+        inputPanel={<div className="flex flex-1 flex-col divide-y divide-border lg:flex-row lg:divide-x lg:divide-y-0">
+          {editor('Original (A)', left, setLeft, leftZoom, setLeftZoom, 'Paste original content here…', 'original')}
+          {editor('Modified (B)', right, setRight, rightZoom, setRightZoom, 'Paste modified content here…', 'modified')}
+        </div>}
+        outputPanel={<div className="flex-1 overflow-auto font-mono text-xs leading-relaxed scrollbar-thin">
           {diffLines.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 gap-2 text-muted-foreground">
+            <div className="flex h-32 flex-col items-center justify-center gap-2 text-muted-foreground">
               <GitCompare size={24} />
               <span>Paste content in both panels to see the diff</span>
             </div>
           ) : diffLines.map((line, i) => (
-            <div
-              key={`diff-line-${i}-${line.type}`}
-              className={`flex items-start px-4 py-0.5 ${
-                line.type === 'added' ? 'diff-added' : line.type === 'removed' ? 'diff-removed' : ''
-              }`}
-            >
-              <span className="w-8 flex-shrink-0 text-muted-foreground select-none tabular-nums text-right mr-4">{line.lineNum}</span>
-              <span className={`flex-shrink-0 w-4 ${line.type === 'added' ? 'text-success' : line.type === 'removed' ? 'text-error' : 'text-muted-foreground'}`}>
-                {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
-              </span>
-              <span className={line.type === 'added' ? 'text-success' : line.type === 'removed' ? 'text-error' : 'text-foreground'}>
-                {line.value || ' '}
-              </span>
+            <div key={`diff-line-${i}-${line.type}`} className={`flex items-start px-4 py-0.5 ${line.type === 'added' ? 'diff-added' : line.type === 'removed' ? 'diff-removed' : ''}`}>
+              <span className="mr-4 w-8 flex-shrink-0 select-none text-right tabular-nums text-muted-foreground">{line.lineNum}</span>
+              <span className={`w-4 flex-shrink-0 ${line.type === 'added' ? 'text-success' : line.type === 'removed' ? 'text-error' : 'text-muted-foreground'}`}>{line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}</span>
+              <span className={`whitespace-pre-wrap break-all ${line.type === 'added' ? 'text-success' : line.type === 'removed' ? 'text-error' : 'text-foreground'}`}>{line.value || ' '}</span>
             </div>
           ))}
-        </div>
-      </div>
-    </div>
+        </div>}
+        outputText={outputText}
+        outputStatus={stats.added || stats.removed ? 'success' : 'idle'}
+        downloadName="changes.diff"
+        onSample={() => { setLeft(SAMPLE_LEFT); setRight(SAMPLE_RIGHT); }}
+        onClear={() => { setLeft(''); setRight(''); }}
+        onSwap={() => { setLeft(right); setRight(left); }}
+      />
+    </ToolFrame>
   );
 }

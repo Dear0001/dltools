@@ -1,6 +1,13 @@
 export type ToolCategory =
   | 'formatters'
-  | 'diff' |'qr' |'image' |'utilities' |'generators' | 'documents';
+  | 'data'
+  | 'diff'
+  | 'generators'
+  | 'security'
+  | 'utilities'
+  | 'qr'
+  | 'image'
+  | 'documents';
 
 export interface Tool {
   id: string;
@@ -13,14 +20,25 @@ export interface Tool {
   isNew?: boolean;
 }
 
-export const CATEGORIES: { id: ToolCategory; label: string; icon: string; color: string }[] = [
-  { id: 'formatters', label: 'Formatters', icon: 'FileCode2', color: 'text-primary' },
-  { id: 'diff', label: 'Diff & Compare', icon: 'GitCompare', color: 'text-primary' },
-  { id: 'qr', label: 'QR & KHQR', icon: 'QrCode', color: 'text-primary' },
-  { id: 'image', label: 'Image & Base64', icon: 'ImageIcon', color: 'text-primary' },
-  { id: 'utilities', label: 'Utilities', icon: 'Wrench', color: 'text-primary' },
-  { id: 'generators', label: 'Generators', icon: 'Sparkles', color: 'text-primary' },
-  { id: 'documents', label: 'PDF & Word', icon: 'Files', color: 'text-primary' },
+export interface ToolCategoryInfo {
+  id: ToolCategory;
+  label: string;
+  /** One short line shown on category cards and in the navigation menu. */
+  description: string;
+  icon: string;
+  color: string;
+}
+
+export const CATEGORIES: ToolCategoryInfo[] = [
+  { id: 'formatters', label: 'Formatters', description: 'Beautify, minify and validate code and markup.', icon: 'FileCode2', color: 'text-primary' },
+  { id: 'data', label: 'JSON & Data', description: 'Query, validate and convert structured data.', icon: 'Database', color: 'text-primary' },
+  { id: 'diff', label: 'Diff & Compare', description: 'Spot changes between two texts or files.', icon: 'GitCompare', color: 'text-primary' },
+  { id: 'generators', label: 'Generators', description: 'Generate types, models, IDs and commands.', icon: 'Sparkles', color: 'text-primary' },
+  { id: 'security', label: 'Encoding & Security', description: 'Encode, decode, hash and inspect tokens.', icon: 'ShieldCheck', color: 'text-primary' },
+  { id: 'utilities', label: 'Utilities', description: 'Everyday helpers for time, text, regex and networks.', icon: 'Wrench', color: 'text-primary' },
+  { id: 'qr', label: 'QR & KHQR', description: 'Build, scan and validate QR and KHQR codes.', icon: 'QrCode', color: 'text-primary' },
+  { id: 'image', label: 'Image & Base64', description: 'Compress images and convert them to Base64.', icon: 'ImageIcon', color: 'text-primary' },
+  { id: 'documents', label: 'PDF & Word', description: 'Convert PDF, Word, Excel and image files.', icon: 'Files', color: 'text-primary' },
 ];
 
 export const TOOLS: Tool[] = [
@@ -183,12 +201,12 @@ export const TOOLS: Tool[] = [
     icon: 'PenTool',
   },
 
-  // Utilities
+  // Utilities, encoding & security, JSON & data (category is set per tool)
   {
     id: 'tool-uuid',
     name: 'UUID Generator',
     description: 'Generate UUID v4 values in bulk using crypto.randomUUID(). One-click copy each.',
-    category: 'utilities',
+    category: 'generators',
     tags: ['uuid', 'generate', 'random', 'id'],
     icon: 'Fingerprint',
     popular: true,
@@ -197,7 +215,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-hash',
     name: 'Hash Generator',
     description: 'Compute MD5, SHA-1, SHA-256, and SHA-512 hashes for any text or file input.',
-    category: 'utilities',
+    category: 'security',
     tags: ['hash', 'sha256', 'md5', 'sha1', 'crypto'],
     icon: 'Hash',
   },
@@ -205,7 +223,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-password-generator',
     name: 'Password Generator',
     description: 'Generate secure passwords with configurable length and character sets. Copy instantly.',
-    category: 'utilities',
+    category: 'security',
     tags: ['password', 'generate', 'secure', 'random'],
     icon: 'LockKeyhole',
     isNew: true,
@@ -214,7 +232,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-jwt-decoder',
     name: 'JWT Decoder',
     description: 'Decode JWT tokens — inspect Header, Payload, and Signature. Checks expiry and claims.',
-    category: 'utilities',
+    category: 'security',
     tags: ['jwt', 'decode', 'token', 'auth', 'claims'],
     icon: 'Key',
     popular: true,
@@ -223,7 +241,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-url-codec',
     name: 'URL Encoder / Decoder',
     description: 'Encode or decode URL components using encodeURIComponent / decodeURIComponent.',
-    category: 'utilities',
+    category: 'security',
     tags: ['url', 'encode', 'decode', 'uri', 'query'],
     icon: 'Link2',
   },
@@ -247,7 +265,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-json-schema',
     name: 'JSON Schema Validator',
     description: 'Validate JSON data against JSON Schema draft-07 and inspect validation errors.',
-    category: 'utilities',
+    category: 'data',
     tags: ['json', 'schema', 'validate', 'draft-07', 'api'],
     icon: 'ShieldCheck',
     isNew: true,
@@ -256,7 +274,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-jsonpath',
     name: 'JSONPath Tester',
     description: 'Query nested JSON with property, index, wildcard, recursive, and simple comparison filter selectors.',
-    category: 'utilities',
+    category: 'data',
     tags: ['json', 'jsonpath', 'query', 'filter', 'api'],
     icon: 'SearchCode',
     isNew: true,
@@ -265,7 +283,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-data-converter',
     name: 'JSON / YAML / CSV / XML Converter',
     description: 'Convert data between JSON, YAML, CSV, and XML in your browser.',
-    category: 'utilities',
+    category: 'data',
     tags: ['json', 'yaml', 'csv', 'xml', 'convert', 'format'],
     icon: 'ArrowLeftRight',
     isNew: true,
@@ -301,7 +319,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-encoding-toolkit',
     name: 'HTML / Hex / Gzip Encoder',
     description: 'Encode or decode HTML entities, UTF-8 hex, and gzip data in the browser.',
-    category: 'utilities',
+    category: 'security',
     tags: ['html', 'entity', 'hex', 'gzip', 'encode', 'decode', 'compress'],
     icon: 'Binary',
     isNew: true,
@@ -328,7 +346,7 @@ export const TOOLS: Tool[] = [
     id: 'tool-certificate-inspector',
     name: 'X.509 Certificate Inspector',
     description: 'Inspect a PEM certificate’s subject, issuer, validity, signature algorithm, and subject alternative names.',
-    category: 'utilities',
+    category: 'security',
     tags: ['certificate', 'x509', 'pem', 'tls', 'ssl', 'inspect'],
     icon: 'BadgeCheck',
     isNew: true,
@@ -419,15 +437,30 @@ export const TOOLS: Tool[] = [
 
 // One restrained tone for every category; categories are told apart by icon and label, not by hue.
 const NEUTRAL_CATEGORY_COLOR = { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' };
-export const CATEGORY_COLORS: Record<ToolCategory, { bg: string; text: string; border: string }> = {
-  formatters: NEUTRAL_CATEGORY_COLOR,
-  diff: NEUTRAL_CATEGORY_COLOR,
-  qr: NEUTRAL_CATEGORY_COLOR,
-  image: NEUTRAL_CATEGORY_COLOR,
-  utilities: NEUTRAL_CATEGORY_COLOR,
-  generators: NEUTRAL_CATEGORY_COLOR,
-  documents: NEUTRAL_CATEGORY_COLOR,
-};
+export const CATEGORY_COLORS: Record<ToolCategory, { bg: string; text: string; border: string }> = Object.fromEntries(
+  CATEGORIES.map((category) => [category.id, NEUTRAL_CATEGORY_COLOR]),
+) as Record<ToolCategory, { bg: string; text: string; border: string }>;
+
+export function getToolsByCategory(category: ToolCategory): Tool[] {
+  return TOOLS.filter((tool) => tool.category === category);
+}
+
+/** Tool count per category, derived from TOOLS so it never drifts. */
+export const CATEGORY_COUNTS: Record<ToolCategory, number> = Object.fromEntries(
+  CATEGORIES.map((category) => [category.id, getToolsByCategory(category.id).length]),
+) as Record<ToolCategory, number>;
+
+/** Same-category tools first, then tools that share tags, excluding the tool itself. */
+export function getRelatedTools(tool: Tool, limit = 4): Tool[] {
+  const score = (other: Tool) =>
+    (other.category === tool.category ? 10 : 0) + other.tags.filter((tag) => tool.tags.includes(tag)).length;
+  return TOOLS.filter((other) => other.id !== tool.id)
+    .map((other) => ({ other, value: score(other) }))
+    .filter(({ value }) => value > 0)
+    .sort((a, b) => b.value - a.value || Number(Boolean(b.other.popular)) - Number(Boolean(a.other.popular)))
+    .slice(0, limit)
+    .map(({ other }) => other);
+}
 
 export function getToolSlug(tool: Pick<Tool, 'id'>): string {
   return tool.id.replace(/^tool-/, '');

@@ -67,9 +67,14 @@ export default function AutoTranslate() {
     };
 
     let queued = false;
+    let frame = 0;
+    // Set by cleanup. A flush already queued with requestAnimationFrame must not run after the
+    // locale has switched back to English, or it would re-translate freshly rendered English text.
+    let disposed = false;
     const pending = new Set<Node>();
     const flush = () => {
       queued = false;
+      if (disposed) return;
       const nodes = [...pending];
       pending.clear();
       nodes.forEach((n) => n.isConnected && walk(n));
@@ -79,7 +84,7 @@ export default function AutoTranslate() {
       pending.add(n);
       if (!queued) {
         queued = true;
-        window.requestAnimationFrame(flush);
+        frame = window.requestAnimationFrame(flush);
       }
     };
 
@@ -104,6 +109,7 @@ export default function AutoTranslate() {
     // time to finish; changing it earlier makes React report a hydration mismatch.
     let initialPass = 0;
     const runInitialPass = () => {
+      if (disposed) return;
       walk(document.body);
       observer.takeRecords();
     };
@@ -113,6 +119,9 @@ export default function AutoTranslate() {
       : window.setTimeout(runInitialPass, 800);
 
     return () => {
+      disposed = true;
+      window.cancelAnimationFrame(frame);
+      pending.clear();
       const cancelIdle = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
       if (cancelIdle) cancelIdle(initialPass);
       window.clearTimeout(initialPass);
