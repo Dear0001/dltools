@@ -169,7 +169,7 @@ function decodeQrImage(previewUrl: string): Promise<string> {
   });
 }
 
-export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
+export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');
@@ -180,7 +180,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
   const [outputFormat, setOutputFormat] = useState<OutputFormatOption>('auto');
   const [detectedFormat, setDetectedFormat] = useState<DetectedInputFormat>('empty');
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'text'>('json');
-  const [processingAction, setProcessingAction] = useState<ProcessingAction>('format');
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
   const [showImagePreviews, setShowImagePreviews] = useState(false);
   const [decodedQrItems, setDecodedQrItems] = useState<DecodedQrItem[]>([]);
@@ -326,7 +325,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
 
   const changeInputFormat = (value: InputFormatOption) => {
     setInputFormat(value);
-    setProcessingAction('format');
     setPreviews([]);
     setDecodedQrItems([]);
     setShowImagePreviews(false);
@@ -335,7 +333,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
 
   const changeOutputFormat = (value: OutputFormatOption) => {
     setOutputFormat(value);
-    setProcessingAction('format');
     setShowImagePreviews(false);
     processContent(input, 'format', inputFormat, value);
   };
@@ -398,7 +395,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
 
   const handleInputChange = (value: string) => {
     setInput(value);
-    setProcessingAction('format');
     setShowImagePreviews(false);
     setPreviews([]);
     setDecodedQrItems([]);
@@ -412,7 +408,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
     }
 
     const analysis = analyzeContent(input);
-    setProcessingAction('format');
     setDetectedFormat(analysis.error ? 'invalid-json' : analysis.format);
     setDecodedQrItems([]);
     if (analysis.error) {
@@ -523,7 +518,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
   };
 
   const minify = () => {
-    setProcessingAction('minify');
     setShowImagePreviews(false);
     setPreviews([]);
     setDecodedQrItems([]);
@@ -531,7 +525,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
   };
 
   const validate = () => {
-    setProcessingAction('validate');
     setPreviews([]);
     setShowImagePreviews(false);
     setDecodedQrItems([]);
@@ -702,11 +695,14 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
                           )}
                         </div>
                         {preview.previewUrl ? (
+                          <>
+                          {/* eslint-disable-next-line @next/next/no-img-element -- user-generated blob/data URL; next/image cannot optimise it */}
                           <img
                             src={preview.previewUrl}
                             alt={preview.path}
                             className="h-56 w-full rounded-md border border-border object-contain bg-muted/50 md:h-72"
                           />
+                          </>
                         ) : (
                           <div className="rounded-md border border-dashed border-border/60 p-2 text-[11px] text-muted-foreground">
                             {preview.value}
@@ -739,6 +735,7 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
                             key={item.path}
                             className="grid gap-3 rounded-xl border border-border bg-background/50 p-3 sm:grid-cols-[112px_minmax(0,1fr)]"
                           >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- user-generated blob/data URL; next/image cannot optimise it */}
                             <img
                               src={item.previewUrl}
                               alt={`Decoded QR image from ${item.path}`}
@@ -808,7 +805,6 @@ export default function JsonFormatterPanel({ tool }: { tool: Tool }) {
             setStatus('idle');
             setError('');
             setDetectedFormat('empty');
-            setProcessingAction('format');
             setOutputLanguage('text');
             setPreviews([]);
             setShowImagePreviews(false);

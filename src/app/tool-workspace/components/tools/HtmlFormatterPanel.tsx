@@ -11,7 +11,7 @@ const SAMPLE = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><titl
 
 type Status = 'idle' | 'success' | 'error';
 
-export default function HtmlFormatterPanel({ tool }: { tool: Tool }) {
+export default function HtmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');

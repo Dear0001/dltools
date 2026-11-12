@@ -27,7 +27,7 @@ interface FormValues {
   verbose: boolean;
 }
 
-export default function CurlPanel({ tool }: { tool: Tool }) {
+export default function CurlPanel({ tool: _tool }: { tool: Tool }) {
   const [output, setCurl] = useState('');
 
   const { register, control, watch } = useForm<FormValues>({

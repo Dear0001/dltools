@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Tool } from '@/data/tools';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
@@ -103,7 +103,7 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
   const conversionId = useRef(0);
   const debouncedInput = useDebouncedValue(input);
 
-  const convert = async (source = input, sourceFormat = inputFormat, targetFormat = outputFormat) => {
+  const convert = useCallback(async (source = input, sourceFormat = inputFormat, targetFormat = outputFormat) => {
     const id = ++conversionId.current;
     if (!source.trim()) {
       setOutput('');
@@ -135,7 +135,7 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
       setOutput('');
       setError(cause instanceof Error ? cause.message : 'Could not convert this data.');
     }
-  };
+  }, [input, inputFormat, outputFormat]);
 
   useEffect(() => {
     if (input !== debouncedInput) {
@@ -145,7 +145,7 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
     }
     void convert(debouncedInput, inputFormat, outputFormat);
     return () => { conversionId.current += 1; };
-  }, [input, debouncedInput, inputFormat, outputFormat]);
+  }, [input, debouncedInput, inputFormat, outputFormat, convert]);
 
   return <div className="h-full flex flex-col">
     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">

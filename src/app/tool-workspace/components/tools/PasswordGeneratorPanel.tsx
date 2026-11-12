@@ -41,7 +41,7 @@ function generatePassword(options: PasswordOptions) {
   return values.join('');
 }
 
-export default function PasswordGeneratorPanel({ tool }: { tool: Tool }) {
+export default function PasswordGeneratorPanel({ tool: _tool }: { tool: Tool }) {
   const [passwords, setPasswords] = useState<string[]>([]);
   const [count, setCount] = useState(5);
   const [length, setLength] = useState(16);

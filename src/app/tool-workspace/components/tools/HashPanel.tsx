@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
 import { Copy, CheckCircle2, Hash } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ type Algorithm = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-512';
 
 const ALGORITHMS: Algorithm[] = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
 
-export default function HashPanel({ tool }: { tool: Tool }) {
+export default function HashPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState('DevToolkit — browser developer tools 2026');
   const [results, setResults] = useState<Record<Algorithm, string>>({} as Record<Algorithm, string>);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -19,7 +19,7 @@ export default function HashPanel({ tool }: { tool: Tool }) {
   const [useHmac, setUseHmac] = useState(false);
   const debouncedInput = useDebouncedValue(input, 180);
 
-  const compute = (source = input, secret = hmacKey, hmac = useHmac, upper = uppercase) => {
+  const compute = useCallback((source = input, secret = hmacKey, hmac = useHmac, upper = uppercase) => {
     if (!source) { setResults({} as Record<Algorithm, string>); return; }
     // Backend integration point: crypto-js hashing
     const compute = (algo: Algorithm): string => {
@@ -49,12 +49,12 @@ export default function HashPanel({ tool }: { tool: Tool }) {
       newResults[algo] = compute(algo);
     }
     setResults(newResults);
-  };
+  }, [input, hmacKey, useHmac, uppercase]);
 
   useEffect(() => {
     if (input !== debouncedInput) { setResults({} as Record<Algorithm, string>); return; }
     compute(debouncedInput, hmacKey, useHmac, uppercase);
-  }, [input, debouncedInput, hmacKey, useHmac, uppercase]);
+  }, [input, debouncedInput, hmacKey, useHmac, uppercase, compute]);
 
   const copyHash = async (algo: Algorithm, hash: string) => {
     await navigator.clipboard.writeText(hash);

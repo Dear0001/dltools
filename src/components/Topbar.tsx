@@ -99,7 +99,7 @@ export default function Topbar() {
     return () => {
       active = false;
     };
-  }, [authStatus, session?.user?.id]);
+  }, [authStatus, session?.user?.id, setLocale, setTheme]);
 
   const texts = i18n[locale];
   const navLinks = [

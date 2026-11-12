@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Copy, Database, Play, Trash2 } from 'lucide-react';
+import { Copy, Database, Trash2 } from 'lucide-react';
 import { format as formatSql } from 'sql-formatter';
 import { toast } from 'sonner';
 import type { Tool } from '@/data/tools';

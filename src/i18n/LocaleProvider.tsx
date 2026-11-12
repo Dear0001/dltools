@@ -1,6 +1,6 @@
 'use client';
 
-import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { cloneElement, createContext, useCallback, isValidElement, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { KH_TOOLS, translateKhPattern } from './khTools';
 
@@ -225,14 +225,14 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setLocale = (nextLocale: Locale) => {
+  const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
     try {
       window.localStorage.setItem('devtoolkit-locale', nextLocale);
     } catch {
       // The selected locale still applies for the current page.
     }
-  };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale === 'kh' ? 'km' : 'en';
@@ -240,7 +240,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ locale, setLocale, t: (key: MessageKey) => messages[locale][key] }),
-    [locale],
+    [locale, setLocale],
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;

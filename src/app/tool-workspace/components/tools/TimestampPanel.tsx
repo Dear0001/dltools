@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { Tool } from '@/data/tools';
 import { RefreshCw, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ const TIMEZONES = [
   'Australia/Sydney',
 ];
 
-export default function TimestampPanel({ tool }: { tool: Tool }) {
+export default function TimestampPanel({ tool: _tool }: { tool: Tool }) {
   const [tsInput, setTsInput] = useState('');
   const [dateInput, setDateInput] = useState('');
   const [tz, setTz] = useState('UTC');
@@ -33,7 +33,7 @@ export default function TimestampPanel({ tool }: { tool: Tool }) {
     setTsInput(String(ts));
   }, []);
 
-  const convertFromTs = (source = tsInput) => {
+  const convertFromTs = useCallback((source = tsInput) => {
     if (!/^-?\d+$/.test(source.trim())) { setResults([]); return; }
     const ts = Number(source);
     const ms = source.trim().replace('-', '').length >= 13 ? ts : ts * 1000;
@@ -53,21 +53,21 @@ export default function TimestampPanel({ tool }: { tool: Tool }) {
       { label: 'Day of week', value: fmt('en-US', { weekday: 'long' }) },
       { label: 'Relative', value: getRelative(d) },
     ]);
-  };
+  }, [tsInput, tz]);
 
-  const convertFromDate = (source = dateInput) => {
+  const convertFromDate = useCallback((source = dateInput) => {
     if (!source) { setResults([]); return; }
     const d = new Date(source);
     if (isNaN(d.getTime())) { setResults([]); return; }
     const timestamp = String(Math.floor(d.getTime() / 1000));
     setTsInput(timestamp);
     convertFromTs(timestamp);
-  };
+  }, [dateInput, convertFromTs]);
 
   useEffect(() => {
     if (activeInput.current === 'date') convertFromDate();
     else convertFromTs();
-  }, [tsInput, dateInput, tz]);
+  }, [tsInput, dateInput, tz, convertFromDate, convertFromTs]);
 
   const getRelative = (d: Date): string => {
     const diff = Date.now() - d.getTime();

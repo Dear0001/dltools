@@ -61,14 +61,14 @@ export function parseApiResponseWithNestedJson(input: string): unknown {
     const parsed = JSON.parse(input);
     
     // Helper to process an object and its children
-    function processObject(obj: any): any {
+    function processObject(obj: unknown): unknown {
       if (!obj || typeof obj !== 'object') return obj;
       
       if (Array.isArray(obj)) {
         return obj.map(item => processObject(item));
       }
       
-      const result: any = {};
+      const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         if (typeof value === 'string') {
           const trimmed = value.trim();
@@ -191,10 +191,12 @@ function hasJsonFragmentMarkers(value: unknown): boolean {
   return typeof value === 'string' && ['{', '}', '[', ']'].includes(value.trim());
 }
 
+type JsonContainer = Record<string, unknown> | unknown[];
+
 export function parseLineBasedJson(lines: string[]): Record<string, unknown> {
   const root: Record<string, unknown> = {};
-  let current: any = root;
-  const stack: any[] = [root];
+  let current: JsonContainer = root;
+  const stack: JsonContainer[] = [root];
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -213,12 +215,12 @@ export function parseLineBasedJson(lines: string[]): Record<string, unknown> {
     if (!match) continue;
 
     const rawKey = match[1].trim();
-    let rawVal = match[2].trim().replace(/,\s*$/, '');
+    const rawVal = match[2].trim().replace(/,\s*$/, '');
     const key = unquoteJsonString(rawKey);
     const value = cleanJsonFragment(rawVal);
 
     if (typeof value === 'string' && (value === '{' || value === '[')) {
-      const nextContainer = value === '{' ? {} : [];
+      const nextContainer: JsonContainer = value === '{' ? {} : [];
       if (Array.isArray(current)) {
         current.push(nextContainer);
       } else {

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Tool } from '@/data/tools';
 import { AlertTriangle, CheckCircle2, Key } from 'lucide-react';
 import { useDebouncedValue } from '../useDebouncedValue';
@@ -15,7 +15,7 @@ interface JwtPayload {
   aud?: string | string[];
 }
 
-export default function JwtPanel({ tool }: { tool: Tool }) {
+export default function JwtPanel({ tool: _tool }: { tool: Tool }) {
   const [token, setToken] = useState(SAMPLE_JWT);
   const [header, setHeader] = useState<Record<string, unknown> | null>(null);
   const [payload, setPayload] = useState<JwtPayload | null>(null);
@@ -28,7 +28,7 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
     setNowTs(Math.floor(Date.now() / 1000));
   }, []);
 
-  const decode = (source = token) => {
+  const decode = useCallback((source = token) => {
     if (!source.trim()) {
       setHeader(null);
       setPayload(null);
@@ -54,7 +54,7 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
       setPayload(null);
       setSignature('');
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token !== debouncedToken) {
@@ -65,7 +65,7 @@ export default function JwtPanel({ tool }: { tool: Tool }) {
       return;
     }
     decode(debouncedToken);
-  }, [token, debouncedToken]);
+  }, [token, debouncedToken, decode]);
 
   const isExpired = payload?.exp ? payload.exp < nowTs : false;
   const expiresIn = payload?.exp ? payload.exp - nowTs : null;

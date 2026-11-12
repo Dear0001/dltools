@@ -31,7 +31,7 @@ function formatXml(xml: string, indent: number): string {
   return formatted.trim();
 }
 
-export default function XmlFormatterPanel({ tool }: { tool: Tool }) {
+export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');

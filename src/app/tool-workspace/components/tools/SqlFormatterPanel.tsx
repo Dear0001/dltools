@@ -12,7 +12,7 @@ const SAMPLE = `SELECT u.id,u.name,u.email,u.created_at,p.plan_name,p.price,COUN
 type Dialect = 'sql' | 'mysql' | 'postgresql' | 'sqlite' | 'bigquery' | 'tsql';
 type Status = 'idle' | 'success' | 'error';
 
-export default function SqlFormatterPanel({ tool }: { tool: Tool }) {
+export default function SqlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');

@@ -41,9 +41,20 @@ describe('buildSiteJsonLd', () => {
   });
 });
 
+interface AppNode {
+  url: string;
+  name: string;
+  image?: string;
+  applicationCategory?: string;
+}
+
+interface BreadcrumbNode {
+  itemListElement: { name: string; position: number; item: string }[];
+}
+
 describe('buildToolJsonLd', () => {
   const tool = TOOLS.find((t) => t.id === 'tool-base64-document')!;
-  const [app, breadcrumbs] = buildToolJsonLd(tool)['@graph'] as unknown as [Record<string, any>, Record<string, any>];
+  const [app, breadcrumbs] = buildToolJsonLd(tool)['@graph'] as unknown as [AppNode, BreadcrumbNode];
 
   it('builds an absolute WebApplication entry', () => {
     expect(app).toMatchObject({
@@ -58,14 +69,14 @@ describe('buildToolJsonLd', () => {
   });
 
   it('builds a three-level breadcrumb ending at the tool', () => {
-    expect(breadcrumbs.itemListElement.map((item: any) => item.name)).toEqual(['Home', 'Tools', tool.name]);
-    expect(breadcrumbs.itemListElement.map((item: any) => item.position)).toEqual([1, 2, 3]);
+    expect(breadcrumbs.itemListElement.map((item) => item.name)).toEqual(['Home', 'Tools', tool.name]);
+    expect(breadcrumbs.itemListElement.map((item) => item.position)).toEqual([1, 2, 3]);
     expect(breadcrumbs.itemListElement[2].item).toBe(app.url);
   });
 
   it('classifies developer tools and utilities differently', () => {
     const json = TOOLS.find((t) => t.id === 'tool-json-formatter')!;
-    expect((buildToolJsonLd(json)['@graph'][0] as any).applicationCategory).toBe('DeveloperApplication');
+    expect((buildToolJsonLd(json)['@graph'][0] as unknown as AppNode).applicationCategory).toBe('DeveloperApplication');
   });
 
   it('does not invent ratings or reviews', () => {
@@ -75,7 +86,7 @@ describe('buildToolJsonLd', () => {
 
   it('works for every registered tool', () => {
     for (const t of TOOLS) {
-      const [a, b] = buildToolJsonLd(t)['@graph'] as unknown as [Record<string, any>, Record<string, any>];
+      const [a, b] = buildToolJsonLd(t)['@graph'] as unknown as [AppNode, BreadcrumbNode];
       expect(a.url).toMatch(/^https?:\/\//);
       expect(a.name).toBeTruthy();
       expect(b.itemListElement).toHaveLength(3);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Tool } from '@/data/tools';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
@@ -34,7 +34,7 @@ export default function EncodingToolkitPanel({ tool: _tool }: { tool: Tool }) {
   const [error, setError] = useState('');
   const processId = useRef(0);
   const debouncedInput = useDebouncedValue(input);
-  const process = async (source = input, selectedMode = mode, selectedDirection = direction) => {
+  const process = useCallback(async (source = input, selectedMode = mode, selectedDirection = direction) => {
     const id = ++processId.current;
     if (!source) { setOutput(''); setError(''); return; }
     try {
@@ -56,7 +56,7 @@ export default function EncodingToolkitPanel({ tool: _tool }: { tool: Tool }) {
       if (id !== processId.current) return;
       setOutput(''); setError(cause instanceof Error ? cause.message : 'Could not process this input.');
     }
-  };
+  }, [input, mode, direction]);
 
   const changeInput = (value: string) => {
     processId.current += 1;
@@ -69,7 +69,7 @@ export default function EncodingToolkitPanel({ tool: _tool }: { tool: Tool }) {
     if (input !== debouncedInput) return;
     void process(debouncedInput, mode, direction);
     return () => { processId.current += 1; };
-  }, [input, debouncedInput, mode, direction]);
+  }, [input, debouncedInput, mode, direction, process]);
 
   return <div className="h-full flex flex-col">
     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30 flex-wrap">

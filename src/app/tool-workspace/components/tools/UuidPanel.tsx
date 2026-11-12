@@ -4,9 +4,7 @@ import { Tool } from '@/data/tools';
 import { Copy, RefreshCw, CheckCircle2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type UuidVersion = 'v4';
-
-export default function UuidPanel({ tool }: { tool: Tool }) {
+export default function UuidPanel({ tool: _tool }: { tool: Tool }) {
   const [uuids, setUuids] = useState<string[]>([]);
   const [count, setCount] = useState(5);
   const [copiedId, setCopiedId] = useState<string | null>(null);

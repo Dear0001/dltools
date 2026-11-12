@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import imageCompression from 'browser-image-compression';
 import AppImage from '@/components/ui/AppImage';
 
-export default function ImageCompressPanel({ tool }: { tool: Tool }) {
+export default function ImageCompressPanel({ tool: _tool }: { tool: Tool }) {
   const [original, setOriginal] = useState<{ url: string; size: number; name: string; width: number; height: number } | null>(null);
   const [compressed, setCompressed] = useState<{ url: string; size: number; width: number; height: number } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ export default function ImageCompressPanel({ tool }: { tool: Tool }) {
         setLoading(false);
         toast.success(`Compressed to ${(result.size / 1024).toFixed(1)} KB`);
       };
-    } catch (e) {
+    } catch {
       toast.error('Compression failed — try a different format or quality setting');
       setLoading(false);
     }

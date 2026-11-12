@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Ajv from 'ajv';
 import type { Tool } from '@/data/tools';
 import CodeEditor from '../CodeEditor';
@@ -25,7 +25,7 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
   const debouncedData = useDebouncedValue(data);
   const debouncedSchema = useDebouncedValue(schema);
 
-  const validate = (dataSource = data, schemaSource = schema) => {
+  const validate = useCallback((dataSource = data, schemaSource = schema) => {
     if (!dataSource.trim() || !schemaSource.trim()) {
       setResult('');
       setError('Enter both JSON data and a JSON Schema.');
@@ -48,7 +48,7 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
       setResult('');
       setError(cause instanceof Error ? cause.message : 'Could not validate this schema.');
     }
-  };
+  }, [data, schema]);
 
   useEffect(() => {
     if (data !== debouncedData || schema !== debouncedSchema) {
@@ -62,7 +62,7 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
       return;
     }
     validate(debouncedData, debouncedSchema);
-  }, [data, schema, debouncedData, debouncedSchema]);
+  }, [data, schema, debouncedData, debouncedSchema, validate]);
 
   return <div className="h-full flex flex-col">
     <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-secondary/30">

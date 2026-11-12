@@ -11,7 +11,7 @@ const SAMPLE = `.container{display:flex;flex-direction:column;align-items:center
 
 type Status = 'idle' | 'success' | 'error';
 
-export default function CssFormatterPanel({ tool }: { tool: Tool }) {
+export default function CssFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');

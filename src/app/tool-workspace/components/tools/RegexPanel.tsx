@@ -9,7 +9,7 @@ For billing: billing@devtoolkit.io
 Invalid: notanemail@, @nodomain.com, plaintext
 Developer: dev+tools@devtoolkit.io`;
 
-export default function RegexPanel({ tool }: { tool: Tool }) {
+export default function RegexPanel({ tool: _tool }: { tool: Tool }) {
   const [pattern, setPattern] = useState(SAMPLE_PATTERN);
   const [flags, setFlags] = useState({ g: true, i: false, m: true, s: false });
   const [testStr, setTestStr] = useState(SAMPLE_TEST);
@@ -31,7 +31,7 @@ export default function RegexPanel({ tool }: { tool: Tool }) {
           if (!flags.g) break;
         }
       } else {
-        let m = re.exec(testStr);
+        const m = re.exec(testStr);
         if (m) matches.push({ value: m[0], index: m.index, groups: m.slice(1) });
       }
       const replaced = replaceStr !== undefined ? testStr.replace(re, replaceStr) : '';
@@ -40,16 +40,6 @@ export default function RegexPanel({ tool }: { tool: Tool }) {
       return { matches: [], error: e instanceof Error ? e.message : 'Invalid regex', replaced: '', count: 0 };
     }
   }, [pattern, flagStr, testStr, replaceStr, flags.g]);
-
-  const highlightMatches = useMemo(() => {
-    if (!pattern || result.error || result.matches.length === 0) return testStr;
-    try {
-      const re = new RegExp(pattern, flagStr);
-      return testStr.replace(re, (match) => `\x00${match}\x01`);
-    } catch {
-      return testStr;
-    }
-  }, [pattern, flagStr, testStr, result]);
 
   return (
     <div className="h-full overflow-auto scrollbar-thin p-6">

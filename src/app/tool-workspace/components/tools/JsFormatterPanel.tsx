@@ -10,7 +10,7 @@ const SAMPLE = `const fetchUserData=async(userId)=>{const response=await fetch(\
 
 type Status = 'idle' | 'success' | 'error';
 
-export default function JsFormatterPanel({ tool }: { tool: Tool }) {
+export default function JsFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');

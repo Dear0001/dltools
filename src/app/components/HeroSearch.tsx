@@ -71,6 +71,8 @@ export default function HeroSearch() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query && setOpen(true)}
+          role="combobox"
+          aria-autocomplete="list"
           aria-label={t('searchAria')}
           aria-expanded={open}
           aria-controls="tool-search-results"

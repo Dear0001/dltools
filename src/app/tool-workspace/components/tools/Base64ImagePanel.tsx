@@ -12,7 +12,7 @@ import DocumentPreview, { type PreviewKind } from './DocumentPreview';
 
 type Mode = 'encode' | 'decode';
 
-export default function Base64ImagePanel({ tool }: { tool: Tool }) {
+export default function Base64ImagePanel({ tool: _tool }: { tool: Tool }) {
   const [mode, setMode] = useState<Mode>('encode');
   const [base64, setBase64] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');

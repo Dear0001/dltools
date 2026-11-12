@@ -7,7 +7,7 @@ import { useDebouncedValue } from '../useDebouncedValue';
 
 const SAMPLE_DECODED = 'https://api.devtoolkit.io/v2/search?query=json formatter&category=formatters&lang=en&sort=popular&page=1&limit=20&tags=json,format,validate';
 
-export default function UrlCodecPanel({ tool }: { tool: Tool }) {
+export default function UrlCodecPanel({ tool: _tool }: { tool: Tool }) {
   const [decoded, setDecoded] = useState(SAMPLE_DECODED);
   const [encoded, setEncoded] = useState('');
   const [error, setError] = useState('');
@@ -38,7 +38,7 @@ export default function UrlCodecPanel({ tool }: { tool: Tool }) {
       setEncoded(encodeURIComponent(decoded));
       setActiveSide('decoded');
       setError('');
-    } catch (e: unknown) {
+    } catch {
       setError('Encode error');
     }
   };
@@ -48,7 +48,7 @@ export default function UrlCodecPanel({ tool }: { tool: Tool }) {
       setDecoded(decodeURIComponent(encoded));
       setActiveSide('encoded');
       setError('');
-    } catch (e: unknown) {
+    } catch {
       setError('Decode error — invalid percent-encoded string');
     }
   };

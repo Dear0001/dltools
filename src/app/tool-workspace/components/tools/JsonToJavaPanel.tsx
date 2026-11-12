@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
@@ -36,7 +36,7 @@ function sanitizeIdentifier(name: string) {
   return s;
 }
 
-function inferType(value: any) {
+function inferType(value: unknown) {
   if (value === null) return { kind: 'any' } as const;
   if (Array.isArray(value)) return { kind: 'array', items: value } as const;
   const t = typeof value;
@@ -47,7 +47,7 @@ function inferType(value: any) {
   return { kind: 'any' } as const;
 }
 
-export default function JsonToJavaPanel({ tool }: { tool: Tool }) {
+export default function JsonToJavaPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [lang, setLang] = useState<Lang>('java');
@@ -55,13 +55,13 @@ export default function JsonToJavaPanel({ tool }: { tool: Tool }) {
   const [error, setError] = useState('');
   const debouncedInput = useDebouncedValue(input);
 
-  const generate = (source = input, language = lang, root = rootName) => {
+  const generate = useCallback((source = input, language = lang, root = rootName) => {
     setError('');
     try {
       const parsed = JSON.parse(source);
       const models = new Map<string, string>();
 
-      function gen(name: string, value: any) {
+      function gen(name: string, value: unknown): string {
         const className = toPascal(name || 'Model');
         if (models.has(className)) return className;
 
@@ -84,7 +84,7 @@ export default function JsonToJavaPanel({ tool }: { tool: Tool }) {
           if (t.kind === 'object') {
             const childName = toPascal(k);
             const childClass = gen(childName, t.value);
-            fields.push(renderField(language, id, childClass, k));
+            fields.push(renderField(language, id, childClass));
           } else if (t.kind === 'array') {
             // determine array item type
             let itemType = 'Object';
@@ -98,9 +98,9 @@ export default function JsonToJavaPanel({ tool }: { tool: Tool }) {
                 itemType = mapType(language, it);
               }
             }
-            fields.push(renderArrayField(language, id, itemType, k));
+            fields.push(renderArrayField(language, id, itemType));
           } else {
-            fields.push(renderField(language, id, mapType(language, t), k));
+            fields.push(renderField(language, id, mapType(language, t)));
           }
         }
 
@@ -119,12 +119,12 @@ export default function JsonToJavaPanel({ tool }: { tool: Tool }) {
       setError(e instanceof Error ? e.message : 'Invalid JSON');
       setOutput('');
     }
-  };
+  }, [input, lang, rootName]);
 
   useEffect(() => {
     if (input !== debouncedInput || !debouncedInput.trim()) { setOutput(''); setError(''); return; }
     generate(debouncedInput, lang, rootName);
-  }, [input, debouncedInput, lang, rootName]);
+  }, [input, debouncedInput, lang, rootName, generate]);
 
   return (
     <div className="h-full flex flex-col">
@@ -160,7 +160,7 @@ export default function JsonToJavaPanel({ tool }: { tool: Tool }) {
   );
 }
 
-function mapType(lang: Lang, t: any): string {
+function mapType(lang: Lang, t: { kind: string }): string {
   if (t.kind === 'string') return lang === 'kotlin' ? 'String' : lang === 'csharp' ? 'string' : 'String';
   if (t.kind === 'int') return lang === 'kotlin' ? 'Int' : lang === 'csharp' ? 'int' : 'int';
   if (t.kind === 'double') return lang === 'kotlin' ? 'Double' : lang === 'csharp' ? 'double' : 'double';
@@ -168,7 +168,7 @@ function mapType(lang: Lang, t: any): string {
   return lang === 'kotlin' ? 'Any' : lang === 'csharp' ? 'object' : 'Object';
 }
 
-function renderField(lang: Lang, id: string, typeName: string, originalKey?: string) {
+function renderField(lang: Lang, id: string, typeName: string) {
   const propName = lang === 'csharp' ? toPascal(id) : id;
   if (lang === 'java') return `  public ${typeName} ${id};`;
   if (lang === 'kotlin') return `  val ${id}: ${typeName}? = null`;
@@ -176,7 +176,7 @@ function renderField(lang: Lang, id: string, typeName: string, originalKey?: str
   return '';
 }
 
-function renderArrayField(lang: Lang, id: string, itemType: string, originalKey?: string) {
+function renderArrayField(lang: Lang, id: string, itemType: string) {
   if (lang === 'java') return `  public java.util.List<${itemType}> ${id};`;
   if (lang === 'kotlin') return `  val ${id}: List<${itemType}>? = null`;
   if (lang === 'csharp') return `  public List<${itemType}> ${toPascal(id)} { get; set; }`;

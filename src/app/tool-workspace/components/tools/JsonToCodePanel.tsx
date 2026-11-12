@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Tool } from '@/data/tools';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
@@ -101,14 +101,14 @@ export default function JsonToCodePanel({ tool }: { tool: Tool }) {
   const [rootName, setRootName] = useState('RootModel');
   const [error, setError] = useState('');
   const debouncedInput = useDebouncedValue(input);
-  const generate = (source = input) => {
+  const generate = useCallback((source = input) => {
     try { setOutput(generateCode(JSON.parse(source), rootName || 'RootModel', target)); setError(''); }
     catch (cause) { setOutput(''); setError(cause instanceof Error ? cause.message : 'Could not generate code.'); }
-  };
+  }, [input, rootName, target]);
   useEffect(() => {
     if (input !== debouncedInput || !debouncedInput.trim()) { setOutput(''); setError(''); return; }
     generate(debouncedInput);
-  }, [input, debouncedInput, rootName, target]);
+  }, [input, debouncedInput, generate]);
 
   const language: 'typescript' | 'text' = target === 'zod' || target === 'typescript' ? 'typescript' : 'text';
   return <div className="h-full flex flex-col">

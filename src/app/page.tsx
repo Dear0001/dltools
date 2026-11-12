@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import HeroSearch from './components/HeroSearch';
+import HeroIllustration from './components/HeroIllustration';
 import ToolCard from './components/ToolCard';
 import ToolBrowser from './components/ToolBrowser';
 import RecentTools from './components/RecentTools';
@@ -23,7 +24,8 @@ export default function HomePage() {
       <Toast />
       <div className="mx-auto w-full max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-16">
         {/* 1. Hero */}
-        <section className="landing-section-enter mx-auto flex max-w-3xl flex-col items-center py-12 text-center sm:py-16 lg:py-20" aria-labelledby="hero-heading">
+        <section className="landing-section-enter grid grid-cols-1 items-center gap-8 py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:py-20" aria-labelledby="hero-heading">
+          <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col items-center text-center lg:mx-0 lg:items-start lg:text-left">
           <h1
             id="hero-heading"
             className={`text-balance font-semibold text-foreground ${kh ? 'text-3xl leading-[1.5] sm:text-4xl' : 'text-4xl leading-[1.1] tracking-tight sm:text-5xl'}`}
@@ -39,7 +41,7 @@ export default function HomePage() {
             <p className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">{t('devicePrivacy')}</p>
           </div>
 
-          <nav className="mt-5 flex flex-wrap items-center justify-center gap-2" aria-label={t('popular')}>
+          <nav className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start" aria-label={t('popular')}>
             <span className="text-xs font-medium text-muted-foreground">{t('popular')}:</span>
             {popular.slice(0, 5).map((tool) => (
               <Link
@@ -55,6 +57,9 @@ export default function HomePage() {
           <p className="mt-8 text-xs text-muted-foreground">
             <strong className="font-semibold text-foreground">{TOOLS.length}</strong> {t('tools')} · <strong className="font-semibold text-foreground">{CATEGORIES.length}</strong> {t('collections')}
           </p>
+          </div>
+
+          <HeroIllustration className="mx-auto w-full max-w-md sm:max-w-lg lg:max-w-none" />
         </section>
 
         {/* 2. Popular tools */}

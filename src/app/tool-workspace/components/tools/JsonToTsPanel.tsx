@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Tool } from '@/data/tools';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
@@ -31,7 +31,7 @@ const SAMPLE = `{
 
 type Status = 'idle' | 'success' | 'error';
 
-export default function JsonToTsPanel({ tool }: { tool: Tool }) {
+export default function JsonToTsPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');
@@ -40,7 +40,7 @@ export default function JsonToTsPanel({ tool }: { tool: Tool }) {
   const [useInterface, setUseInterface] = useState(true);
   const debouncedInput = useDebouncedValue(input);
 
-  const convert = (source = input) => {
+  const convert = useCallback((source = input) => {
     try {
       const parsed = JSON.parse(source);
       // Backend integration point: json-to-ts library
@@ -57,7 +57,7 @@ export default function JsonToTsPanel({ tool }: { tool: Tool }) {
       setError(msg);
       setOutput('');
     }
-  };
+  }, [input, rootName, useInterface]);
 
   useEffect(() => {
     if (input !== debouncedInput || !debouncedInput.trim()) {
@@ -67,7 +67,7 @@ export default function JsonToTsPanel({ tool }: { tool: Tool }) {
       return;
     }
     convert(debouncedInput);
-  }, [input, debouncedInput, rootName, useInterface]);
+  }, [input, debouncedInput, convert]);
 
   return (
     <div className="h-full flex flex-col">

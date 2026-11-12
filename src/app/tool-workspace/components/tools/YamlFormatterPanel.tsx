@@ -26,7 +26,7 @@ server:
 
 type Status = 'idle' | 'success' | 'error';
 
-export default function YamlFormatterPanel({ tool }: { tool: Tool }) {
+export default function YamlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<Status>('idle');

@@ -91,7 +91,12 @@ export default function SvgViewerPanel({ tool: _tool }: { tool: Tool }) {
         <section className="flex min-h-0 flex-col" aria-label="SVG preview">
           <h2 className="border-b border-border px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preview</h2>
           <div className="flex min-h-44 flex-1 items-center justify-center overflow-auto bg-[linear-gradient(45deg,var(--tw-gradient-stops))] from-muted via-background to-muted p-6">
-            {previewUrl ? <img src={previewUrl} alt="Sanitized SVG preview" className="max-h-full max-w-full object-contain" /> : <p className="text-sm text-muted-foreground">Enter valid SVG markup to preview it.</p>}
+            {previewUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- user-generated blob/data URL; next/image cannot optimise it */}
+                <img src={previewUrl} alt="Sanitized SVG preview" className="max-h-full max-w-full object-contain" />
+              </>
+            ) : <p className="text-sm text-muted-foreground">Enter valid SVG markup to preview it.</p>}
           </div>
           <div className="flex flex-wrap gap-2 border-t border-border p-3">
             {output && <button type="button" className="btn-ghost inline-flex items-center gap-1.5 text-xs" onClick={() => void copy(output, 'SVG')}><Copy size={14} />Copy sanitized SVG</button>}

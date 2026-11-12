@@ -10,7 +10,7 @@ import { analyzeKhqr, formatAmount, withCorrectCrc } from './emvQr';
 /** Render scale for crisp PNG export (card is 400×560 CSS px). */
 const EXPORT_SCALE = 3;
 
-export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
+export default function KhqrBuilderPanel({ tool: _tool }: { tool: Tool }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderRequestRef = useRef(0);
   const [khqrString, setKhqrString] = useState('');
@@ -42,7 +42,7 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
     canvas.width = cardWidth * EXPORT_SCALE;
     canvas.height = cardHeight * EXPORT_SCALE;
     const qrCanvas = document.createElement('canvas');
-    const opts: any = {
+    const opts: Parameters<typeof QRCode.toCanvas>[2] = {
       width: qrSize * EXPORT_SCALE,
       margin: 2,
       color: { dark: fgColor, light: bgColor },
@@ -149,8 +149,8 @@ export default function KhqrBuilderPanel({ tool }: { tool: Tool }) {
             ctx.clip();
             ctx.imageSmoothingEnabled = true;
             // preserve aspect ratio
-            let iw = img.width;
-            let ih = img.height;
+            const iw = img.width;
+            const ih = img.height;
             const ratio = Math.min(size / iw, size / ih);
             const dw = Math.round(iw * ratio);
             const dh = Math.round(ih * ratio);

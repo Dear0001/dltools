@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Tool } from '@/data/tools';
 import CodeEditor from '../CodeEditor';
 import { useDebouncedValue } from '../useDebouncedValue';
@@ -105,7 +105,7 @@ export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
   const debouncedJson = useDebouncedValue(json);
   const debouncedExpression = useDebouncedValue(expression);
 
-  const run = (jsonSource = json, expressionSource = expression) => {
+  const run = useCallback((jsonSource = json, expressionSource = expression) => {
     if (!jsonSource.trim() || !expressionSource.trim()) {
       setResult('');
       setError('Enter a JSON document and JSONPath expression.');
@@ -119,7 +119,7 @@ export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
       setResult('');
       setError(cause instanceof Error ? cause.message : 'Could not evaluate this JSONPath.');
     }
-  };
+  }, [json, expression]);
 
   useEffect(() => {
     if (json !== debouncedJson || expression !== debouncedExpression) {
@@ -133,7 +133,7 @@ export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
       return;
     }
     run(debouncedJson, debouncedExpression);
-  }, [json, expression, debouncedJson, debouncedExpression]);
+  }, [json, expression, debouncedJson, debouncedExpression, run]);
 
   return <div className="h-full flex flex-col">
     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-secondary/30">

@@ -34,7 +34,7 @@ interface DiffLine {
   lineNum: number;
 }
 
-export default function DiffPanel({ tool }: { tool: Tool }) {
+export default function DiffPanel({ tool: _tool }: { tool: Tool }) {
   const [left, setLeft] = useState(SAMPLE_LEFT);
   const [right, setRight] = useState(SAMPLE_RIGHT);
   const [mode, setMode] = useState<'split' | 'unified'>('split');
@@ -46,7 +46,6 @@ export default function DiffPanel({ tool }: { tool: Tool }) {
     const lines: DiffLine[] = [];
     let lineNum = 1;
     for (const part of changes) {
-      const partLines = part.value.split('\n').filter((_, i, a) => i < a.length - 1 || part.value.endsWith('\n') || i < a.length - 1);
       const rawLines = part.value.split('\n');
       for (let i = 0; i < rawLines.length; i++) {
         if (i === rawLines.length - 1 && rawLines[i] === '') continue;
