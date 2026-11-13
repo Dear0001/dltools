@@ -1,11 +1,12 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { Globe2, Heart, Link2, ShieldCheck } from 'lucide-react';
+import { Check, Globe2, Heart, Link2, Share2, ShieldCheck } from 'lucide-react';
 import { getToolPrivacyMode } from '@/data/toolPrivacy';
 import { Breadcrumbs } from '@/components/PageHeader';
 import ToolIcon from '@/components/ui/ToolIcon';
-import { useFavorites } from '@/lib/favorites';
+import { useFavoriteAction } from '@/lib/useFavoriteAction';
+import ActionButton from '@/components/ui/ActionButton';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { CATEGORIES } from '@/data/tools';
@@ -106,13 +107,24 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
   const { data: session, status: authStatus } = useSession();
   const trackedToolId = useRef('');
   const category = CATEGORIES.find((c) => c.id === tool.category);
-  const { isFavorite, toggle } = useFavorites();
+  const { isFavorite, toggleWithFeedback } = useFavoriteAction();
   const favorite = isFavorite(tool.id);
   const toolName = getToolName(tool.id, tool.name, locale);
   const PanelComponent = PANEL_MAP[tool.id] || GenericComingSoon;
   // Tool panels use browser-only APIs (DOMParser, window, localStorage), so render them after mount.
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // Share only appears where the browser has a native share sheet (mostly mobile).
+  const [canShare, setCanShare] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+  }, []);
+  useEffect(() => {
+    if (!linkCopied) return;
+    const timer = window.setTimeout(() => setLinkCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [linkCopied]);
 
   // Save to recent
   useEffect(() => {
@@ -163,13 +175,22 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
       toast.success(t('linkCopied'));
     } catch {
       toast.error(t('copyFailed'));
     }
   };
+  const share = async () => {
+    try {
+      await navigator.share({ title: toolName, text: description, url: window.location.href });
+    } catch (error) {
+      // Closing the share sheet is not an error.
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      toast.error(t('shareFailed'));
+    }
+  };
   const privacyMode = getToolPrivacyMode(tool.id);
-  const favoriteLabel = favorite ? t('removeFromFavorites') : t('addToFavorites');
 
   return (
     <div className="flex flex-col lg:h-[calc(100dvh-4rem)]">
@@ -190,24 +211,38 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{toolName}</h1>
                 <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
-                <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground" title={privacyMode === 'local' ? t('privacyLocalHelp') : t('privacyNetworkHelp')}>
+                <p className="mt-2 flex max-w-3xl items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
                   {privacyMode === 'local'
-                    ? <ShieldCheck size={13} className="text-success" aria-hidden="true" />
-                    : <Globe2 size={13} className="text-warning" aria-hidden="true" />}
-                  <span className="font-medium text-foreground">{privacyMode === 'local' ? t('runsLocally') : t('sendsRequests')}</span>
-                  <span className="hidden sm:inline">· {privacyMode === 'local' ? t('privacyLocalHelp') : t('privacyNetworkHelp')}</span>
+                    ? <ShieldCheck size={13} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
+                    : <Globe2 size={13} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />}
+                  <span>
+                    <span className="font-medium text-foreground">{privacyMode === 'local' ? t('runsLocally') : t('sendsRequests')}</span>
+                    {' · '}
+                    {privacyMode === 'local' ? t('privacyLocalHelp') : t('privacyNetworkHelp')}
+                  </span>
                 </p>
               </div>
             </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <button type="button" onClick={copyLink} className="btn-ghost" aria-label={t('copyLink')}>
-                <Link2 size={15} aria-hidden="true" />
-                <span className="hidden sm:inline">{t('copyLink')}</span>
-              </button>
-              <button type="button" onClick={() => { if (!toggle(tool.id)) toast.error(t('favoriteSaveFailed')); }} aria-pressed={favorite} className="btn-ghost" aria-label={favoriteLabel}>
-                <Heart size={15} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
-                <span className="hidden sm:inline">{favorite ? t('favorited') : t('favorite')}</span>
-              </button>
+            <div role="group" aria-label={t('toolActions')} className="flex shrink-0 flex-wrap items-center gap-2">
+              <ActionButton
+                icon={Link2}
+                successIcon={Check}
+                showSuccess={linkCopied}
+                label={linkCopied ? t('linkCopied') : t('copyLink')}
+                tooltip={t('copyLinkTip')}
+                onClick={() => void copyLink()}
+              />
+              {canShare && (
+                <ActionButton icon={Share2} label={t('share')} tooltip={t('shareTip')} onClick={() => void share()} />
+              )}
+              <ActionButton
+                icon={Heart}
+                iconClassName={favorite ? 'fill-primary text-primary' : ''}
+                label={t('favorite')}
+                tooltip={favorite ? t('favoriteRemoveTip') : t('favoriteAddTip')}
+                aria-pressed={favorite}
+                onClick={() => toggleWithFeedback(tool.id, toolName)}
+              />
               <SavedToolDataDialog tool={tool} />
             </div>
           </div>

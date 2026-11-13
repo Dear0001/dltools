@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { permanentRedirect } from 'next/navigation';
-import Toast from '@/components/ui/Toast';
 import NoToolSelected from './components/NoToolSelected';
 import { TOOLS, getToolPath } from '@/data/tools';
 
@@ -25,7 +24,6 @@ export default async function ToolWorkspacePage({
 
   return (
     <>
-      <Toast />
       <NoToolSelected />
     </>
   );

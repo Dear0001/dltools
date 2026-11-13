@@ -9,7 +9,6 @@ import ToolCard from './components/ToolCard';
 import ToolBrowser from './components/ToolBrowser';
 import RecentTools from './components/RecentTools';
 import SeoContent from './components/SeoContent';
-import Toast from '@/components/ui/Toast';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { TOOLS, CATEGORIES, CATEGORY_COUNTS, getToolPath, getToolsByCategory } from '@/data/tools';
 import { getCategoryDescription, getCategoryName, getToolName, useLocale } from '@/i18n/LocaleProvider';
@@ -40,7 +39,6 @@ export default function HomePage() {
 
   return (
     <>
-      <Toast />
 
       {/* 1. Hero */}
       <section className="border-b border-border" aria-labelledby="hero-heading">

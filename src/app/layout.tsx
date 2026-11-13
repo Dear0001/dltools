@@ -10,6 +10,7 @@ import AutoTranslate from '@/components/AutoTranslate';
 import AuthProvider from '@/components/AuthProvider';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import JsonLd from '@/components/JsonLd';
+import Toast from '@/components/ui/Toast';
 import { SITE_NAME, SITE_TITLE, SITE_URL, SITE_DESCRIPTION } from '@/lib/site';
 import { DEFAULT_OG_IMAGE, buildSiteJsonLd } from '@/lib/seo';
 import '../styles/tailwind.css';
@@ -75,6 +76,7 @@ export default function RootLayout({
           <AuthProvider>
             <GoogleAnalytics />
             <Analytics />
+            <Toast />
             <Topbar />
             <main id="main-content" tabIndex={-1} className="relative min-h-[calc(100dvh-4rem)] bg-background text-foreground focus:outline-none">
               {children}

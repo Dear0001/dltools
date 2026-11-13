@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Heart } from 'lucide-react';
 import ToolIcon from '@/components/ui/ToolIcon';
-import { useFavorites } from '@/lib/favorites';
+import { useFavoriteAction } from '@/lib/useFavoriteAction';
 import { CATEGORIES, getToolPath, type Tool } from '@/data/tools';
 import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
@@ -14,7 +14,7 @@ import { getCategoryName, getToolDescription, getToolName, useLocale } from '@/i
  */
 export default function ToolCard({ tool, showCategory = true }: { tool: Tool; showCategory?: boolean }) {
   const { locale, t } = useLocale();
-  const { isFavorite, toggle } = useFavorites();
+  const { isFavorite, toggleWithFeedback } = useFavoriteAction();
   const favorite = isFavorite(tool.id);
   const name = getToolName(tool.id, tool.name, locale);
   const category = CATEGORIES.find((item) => item.id === tool.category);
@@ -49,11 +49,11 @@ export default function ToolCard({ tool, showCategory = true }: { tool: Tool; sh
       </Link>
       <button
         type="button"
-        onClick={() => toggle(tool.id)}
+        onClick={() => toggleWithFeedback(tool.id, name)}
         aria-pressed={favorite}
-        aria-label={`${favoriteLabel}: ${name}`}
+        aria-label={`${t('favorite')}: ${name}`}
         title={favoriteLabel}
-        className="btn-icon absolute right-3 top-3"
+        className="btn-icon absolute right-3 top-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Heart size={16} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
       </button>

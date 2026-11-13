@@ -64,7 +64,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'tool-html-formatter',
     name: 'HTML Formatter',
-    description: 'Beautify or minify HTML markup with configurable indent size and attribute wrapping.',
+    description: 'Beautify or minify HTML markup with a configurable indent size.',
     category: 'formatters',
     tags: ['html', 'beautify', 'minify', 'format'],
     icon: 'Code2',

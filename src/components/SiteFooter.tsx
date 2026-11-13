@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { Globe2, ShieldCheck } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import { CATEGORIES, CATEGORY_COUNTS, TOOLS } from '@/data/tools';
-import { getCategoryName, useLocale } from '@/i18n/LocaleProvider';
+import { PRIVACY_COUNTS } from '@/data/toolPrivacy';
+import { fill, getCategoryName, useLocale } from '@/i18n/LocaleProvider';
 
 const GITHUB_URL = 'https://github.com/Dear0001';
 
@@ -39,8 +40,12 @@ export default function SiteFooter() {
           </Link>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">{t('brandTagline')}</p>
           <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <ShieldCheck size={15} className="text-success" aria-hidden="true" /> {t('devicePrivacy')}
+            <li className="flex items-start gap-2">
+              <ShieldCheck size={15} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
+              <span>
+                {fill(t('footerPrivacy'), PRIVACY_COUNTS)}{' '}
+                <Link href="/privacy" className="text-foreground underline underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t('privacyDetails')}</Link>
+              </span>
             </li>
             <li className="flex items-center gap-2">
               <Globe2 size={15} className="text-primary" aria-hidden="true" /> {t('footerLanguages')}

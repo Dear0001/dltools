@@ -1,5 +1,5 @@
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from './site';
-import { getToolPath, type Tool, type ToolCategory } from '@/data/tools';
+import { CATEGORIES, getToolPath, type Tool, type ToolCategory } from '@/data/tools';
 
 export interface OgImage {
   url: string;
@@ -91,9 +91,16 @@ export function buildToolJsonLd(tool: Pick<Tool, 'id' | 'name' | 'description' |
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
+          // Mirrors the visible trail: Home › All Tools › Category › Tool.
           { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name: 'Tools', item: absoluteUrl('/tools') },
-          { '@type': 'ListItem', position: 3, name: tool.name, item: url },
+          { '@type': 'ListItem', position: 2, name: 'All Tools', item: absoluteUrl('/tools') },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: CATEGORIES.find((c) => c.id === tool.category)?.label ?? tool.category,
+            item: absoluteUrl(`/tools?cat=${tool.category}`),
+          },
+          { '@type': 'ListItem', position: 4, name: tool.name, item: url },
         ],
       },
     ],

@@ -7,7 +7,7 @@ export interface ToolContent {
 const C: Record<string, ToolContent> = {
   'json-formatter': {
     about: 'The JSON Formatter pretty-prints, minifies and validates JSON. Paste messy or single-line JSON and get readable, indented output with syntax highlighting, or catch syntax errors with a clear message pointing to the problem.',
-    steps: ['Paste your JSON into the input panel.', 'Choose Format to indent it, or Minify to remove whitespace.', 'Fix any reported error, then copy the result.'],
+    steps: ['Paste your JSON into the input panel.', 'Choose Format JSON to indent it, or Minify to remove whitespace.', 'Fix any reported error, then copy the result.'],
     uses: ['Reading API responses and log payloads', 'Validating config files before committing them', 'Shrinking JSON before sending it over the network'],
   },
   'js-formatter': {
@@ -16,8 +16,8 @@ const C: Record<string, ToolContent> = {
     uses: ['Cleaning up code copied from a snippet or a minified bundle', 'Checking how Prettier would format a file', 'Making code samples consistent in documentation'],
   },
   'html-formatter': {
-    about: 'Beautify or minify HTML markup. Set the indent size and attribute wrapping to turn compressed or hand-written HTML into a clean, readable structure, or strip whitespace for a smaller payload.',
-    steps: ['Paste your HTML.', 'Set the indent size and wrapping, then choose Beautify or Minify.', 'Copy the result.'],
+    about: 'Beautify or minify HTML markup. Set the indent size to turn compressed or hand-written HTML into a clean, readable structure, or strip whitespace for a smaller payload.',
+    steps: ['Paste your HTML.', 'Set the indent size, then choose Format HTML or Minify.', 'Copy the result.'],
     uses: ['Reading HTML from a page source or email template', 'Minifying small snippets', 'Normalising markup before reviewing a diff'],
   },
   'css-formatter': {
@@ -32,7 +32,7 @@ const C: Record<string, ToolContent> = {
   },
   'xml-formatter': {
     about: 'Pretty-print or minify XML documents and check that they are well-formed. The tool uses the browser XML parser, so malformed documents are reported with an error instead of silently changing.',
-    steps: ['Paste your XML.', 'Choose Format or Minify.', 'Review any error message and copy the output.'],
+    steps: ['Paste your XML.', 'Choose Format XML or Minify.', 'Review any error message and copy the output.'],
     uses: ['Reading SOAP and RSS payloads', 'Validating configuration files', 'Compacting XML before transfer'],
   },
   'yaml-formatter': {

@@ -68,10 +68,11 @@ describe('buildToolJsonLd', () => {
     expect(app.image).toBe(`${SITE_URL}/assets/images/og-default.jpg`);
   });
 
-  it('builds a three-level breadcrumb ending at the tool', () => {
-    expect(breadcrumbs.itemListElement.map((item) => item.name)).toEqual(['Home', 'Tools', tool.name]);
-    expect(breadcrumbs.itemListElement.map((item) => item.position)).toEqual([1, 2, 3]);
-    expect(breadcrumbs.itemListElement[2].item).toBe(app.url);
+  it('builds a four-level breadcrumb (home, all tools, category, tool) matching the visible trail', () => {
+    expect(breadcrumbs.itemListElement.map((item) => item.position)).toEqual([1, 2, 3, 4]);
+    expect(breadcrumbs.itemListElement.map((item) => item.name)).toEqual(['Home', 'All Tools', 'PDF & Word', tool.name]);
+    expect(breadcrumbs.itemListElement[2].item).toMatch(/\/tools\?cat=documents$/);
+    expect(breadcrumbs.itemListElement[3].item).toBe(app.url);
   });
 
   it('classifies developer tools and utilities differently', () => {
@@ -89,7 +90,7 @@ describe('buildToolJsonLd', () => {
       const [a, b] = buildToolJsonLd(t)['@graph'] as unknown as [AppNode, BreadcrumbNode];
       expect(a.url).toMatch(/^https?:\/\//);
       expect(a.name).toBeTruthy();
-      expect(b.itemListElement).toHaveLength(3);
+      expect(b.itemListElement).toHaveLength(4);
     }
   });
 });

@@ -6,6 +6,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import type { Tool } from '@/data/tools';
 import { getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
+import ActionButton from '@/components/ui/ActionButton';
 
 interface SavedItem {
   id: string;
@@ -17,7 +18,7 @@ interface SavedItem {
 }
 
 export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const { status } = useSession();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -152,16 +153,15 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
 
   return (
     <>
-      <button
+      <ActionButton
         ref={triggerRef}
-        type="button"
+        icon={Database}
+        label={t('savedData')}
+        tooltip={t('savedDataTip')}
         onClick={() => setOpen(true)}
-        className="btn-ghost"
         aria-haspopup="dialog"
-      >
-        <Database size={15} aria-hidden="true" />
-        {translateText('Saved data', locale)}
-      </button>
+        aria-expanded={open}
+      />
       {open && (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-background/75 p-4 backdrop-blur-sm"
@@ -214,7 +214,7 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
                   </label>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[11px] text-muted-foreground">
-                      {translateText('Stored as text in the database, not automatically collected. Don’t save secrets.', locale)}
+                      {translateText('Saved to our server as text in your account, only when you click Save data. Don’t save secrets.', locale)}
                     </p>
                     <button
                       type="button"

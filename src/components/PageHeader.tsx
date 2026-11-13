@@ -9,30 +9,46 @@ export interface Crumb {
   href?: string;
 }
 
-/** Home › … › current page. The same breadcrumb trail is used on every page, including tool pages. */
+/** Drops empty labels and consecutive duplicates so the ordered list never has blank or repeated entries. */
+export function normalizeCrumbs(items: Crumb[]): Crumb[] {
+  return items
+    .map((item) => ({ ...item, label: item.label.trim() }))
+    .filter((item, index, all) => item.label !== '' && (index === 0 || item.label !== all[index - 1].label));
+}
+
+const crumbLink =
+  'rounded-sm underline-offset-2 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+/**
+ * Home › … › current page, used on every page including tool pages.
+ * Each <li> is one real step; separators are decorative icons inside the item,
+ * so the ordered list is numbered 1..n with no empty entries.
+ */
 export function Breadcrumbs({ items, className = '' }: { items: Crumb[]; className?: string }) {
   const { t } = useLocale();
+  const trail: Crumb[] = [{ label: t('home'), href: '/' }, ...normalizeCrumbs(items)];
   return (
-    <nav aria-label={t('breadcrumb')} className={`text-xs text-muted-foreground ${className}`}>
-      <ol className="flex flex-wrap items-center gap-1">
-        <li>
-          <Link href="/" className="inline-flex items-center gap-1 rounded hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Home size={13} aria-hidden="true" /> {t('home')}
-          </Link>
-        </li>
-        {items.map((item, index) => {
-          const last = index === items.length - 1;
+    <nav aria-label={t('breadcrumb')} className={`min-w-0 text-xs text-muted-foreground ${className}`}>
+      <ol role="list" className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1.5">
+        {trail.map((item, index) => {
+          const first = index === 0;
+          const last = index === trail.length - 1;
           return (
-            <React.Fragment key={`${item.label}-${index}`}>
-              <li aria-hidden="true"><ChevronRight size={12} /></li>
-              <li aria-current={last ? 'page' : undefined} className={last ? 'font-medium text-foreground' : undefined}>
-                {item.href && !last ? (
-                  <Link href={item.href} className="rounded hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{item.label}</Link>
-                ) : (
-                  item.label
-                )}
-              </li>
-            </React.Fragment>
+            <li key={`${index}-${item.label}`} className={`inline-flex min-w-0 items-center gap-1 ${last ? 'max-w-full' : 'shrink-0'}`}>
+              {!first && <ChevronRight size={12} className="shrink-0 opacity-60" aria-hidden="true" />}
+              {last ? (
+                <span aria-current="page" title={item.label} className="min-w-0 truncate font-medium text-foreground">
+                  {item.label}
+                </span>
+              ) : item.href ? (
+                <Link href={item.href} className={`inline-flex items-center gap-1 ${crumbLink}`}>
+                  {first && <Home size={13} aria-hidden="true" />}
+                  {item.label}
+                </Link>
+              ) : (
+                <span>{item.label}</span>
+              )}
+            </li>
           );
         })}
       </ol>

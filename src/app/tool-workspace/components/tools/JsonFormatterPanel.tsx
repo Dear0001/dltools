@@ -616,7 +616,7 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
           />
           <span className="text-xs text-muted-foreground">Sort keys</span>
         </label>
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           <button type="button" className="btn-ghost text-xs" onClick={previewImages}>
             <ImageIcon size={12} aria-hidden="true" />
             Preview image

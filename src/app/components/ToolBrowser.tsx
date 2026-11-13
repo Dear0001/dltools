@@ -1,5 +1,5 @@
 'use client';
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, SearchX, X } from 'lucide-react';
@@ -13,29 +13,70 @@ import { searchTools } from '@/lib/searchTools';
 type SortMode = 'popular' | 'az';
 
 const POPULAR = TOOLS.filter((tool) => tool.popular).slice(0, 4);
+const QUERY_SYNC_DELAY_MS = 300;
 
+/** Filters live in the URL (`?cat=…&q=…`) so they survive refresh, back/forward and shared links. */
 function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
   const { locale, t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const catParam = searchParams.get('cat');
+  const qParam = searchParams.get('q') ?? '';
   const active: ToolCategory | 'all' = CATEGORIES.some((c) => c.id === catParam) ? (catParam as ToolCategory) : 'all';
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(qParam);
   const [sort, setSort] = useState<SortMode>('popular');
+  // The last q value this component wrote, so URL changes we caused do not overwrite newer typing.
+  const writtenQuery = useRef(qParam);
 
-  const setCategory = (cat: string) => {
+  const writeUrl = (next: { cat?: string; q?: string }) => {
     const params = new URLSearchParams(searchParams.toString());
+    const cat = next.cat ?? active;
+    const q = (next.q ?? query).trim();
     if (cat === 'all') params.delete('cat');
     else params.set('cat', cat);
+    if (q) params.set('q', q);
+    else params.delete('q');
+    writtenQuery.current = q;
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
+  const setCategory = (cat: string) => writeUrl({ cat });
+  const clearFilters = () => {
+    setQuery('');
+    writeUrl({ cat: 'all', q: '' });
+  };
+
+  // Back/forward or a link changed ?q=: follow it.
+  useEffect(() => {
+    if (qParam !== writtenQuery.current) {
+      writtenQuery.current = qParam;
+      setQuery(qParam);
+    }
+  }, [qParam]);
+
+  // Typing: write ?q= after a short pause instead of on every keystroke.
+  useEffect(() => {
+    if (query.trim() === writtenQuery.current) return;
+    const timer = window.setTimeout(() => {
+      // A category click in the meantime already wrote this query; writing again would undo that click.
+      if (query.trim() !== writtenQuery.current) writeUrl({ q: query });
+    }, QUERY_SYNC_DELAY_MS);
+    return () => window.clearTimeout(timer);
+    // Re-run only when the typed query changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  const hasFilters = active !== 'all' || query.trim() !== '';
+
   const results = useMemo(() => {
     const scoped = active === 'all' ? TOOLS : TOOLS.filter((tool) => tool.category === active);
     const matched = searchTools(query, locale, scoped);
-    if (sort === 'az') return [...matched].sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === 'az') {
+      const collator = new Intl.Collator(locale === 'kh' ? 'km' : 'en');
+      return [...matched].sort((a, b) => collator.compare(getToolName(a.id, a.name, locale), getToolName(b.id, b.name, locale)));
+    }
     // With a query, keep relevance order; otherwise popular tools first, in catalogue order.
     if (query.trim()) return matched;
     return [...matched].sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
@@ -68,7 +109,7 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
             autoComplete="off"
           />
           {query && (
-            <button type="button" className="btn-icon absolute right-1.5 top-1/2 -translate-y-1/2" onClick={() => setQuery('')} aria-label={t('clearSearch')}>
+            <button type="button" className="btn-icon absolute right-1.5 top-1/2 -translate-y-1/2" onClick={() => { setQuery(''); writeUrl({ q: '' }); }} aria-label={t('clearSearch')}>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -95,9 +136,17 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
         ))}
       </div>
 
-      <p className="mt-5 text-sm text-muted-foreground" aria-live="polite">
-        {results.length === 1 ? t('showingOneTool') : fill(t('showingTools'), { n: results.length })}
-      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {results.length === 1 ? t('showingOneTool') : fill(t('showingTools'), { n: results.length })}
+        </p>
+        {hasFilters && results.length > 0 && (
+          <button type="button" className="btn-ghost text-xs" onClick={clearFilters}>
+            <X size={13} aria-hidden="true" />
+            {t('clearFilters')}
+          </button>
+        )}
+      </div>
 
       <div className="mt-3">
         {results.length === 0 ? (
@@ -127,7 +176,7 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
                   {t('searchAllCategories')}
                 </button>
               ) : (
-                <button type="button" className="btn-primary" onClick={() => { setQuery(''); setCategory('all'); }}>
+                <button type="button" className="btn-primary" onClick={clearFilters}>
                   {t('clearFilters')}
                 </button>
               )
