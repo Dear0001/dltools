@@ -245,15 +245,6 @@ export const KH_TOOLS: Record<string, string> = {
   'Could not delete this saved item.': 'មិនអាចលុបធាតុដែលបានរក្សាទុកនេះបានទេ។',
   'Close saved data': 'បិទទិន្នន័យដែលបានរក្សាទុក',
   'Sign in with Google': 'ចូលដោយប្រើ Google',
-  // Analytics consent banner
-  'Privacy settings': 'ការកំណត់ឯកជនភាព',
-  'Help improve DLTools': 'ជួយកែលម្អ DLTools',
-  'Allow Google Analytics to count visits and tool opens. Your tool inputs and outputs are never sent.': 'អនុញ្ញាតឱ្យ Google Analytics រាប់ចំនួនការចូលមើល និងការបើកឧបករណ៍។ ទិន្នន័យដែលអ្នកបញ្ចូល និងលទ្ធផលមិនត្រូវបានផ្ញើទេ។',
-  'Reject': 'បដិសេធ',
-  'Allow analytics': 'អនុញ្ញាតការវិភាគ',
-  'Open analytics privacy settings': 'បើកការកំណត់ឯកជនភាពនៃការវិភាគ',
-  'Close privacy settings': 'បិទការកំណត់ឯកជនភាព',
-  'Your browser could not save this choice. It will apply for this visit only.': 'កម្មវិធីរុករករបស់អ្នកមិនអាចរក្សាទុកជម្រើសនេះបានទេ។ វានឹងអនុវត្តសម្រាប់ការចូលមើលលើកនេះតែប៉ុណ្ណោះ។',
   // ── Added during the UI audit (tool panels left untranslated) ──
   'Compare': 'ប្រៀបធៀប',
   'Differences': 'ភាពខុសគ្នា',

@@ -45,13 +45,13 @@ export default function ToolContent({ tool }: { tool: Tool }) {
             <div className="mt-8 grid gap-8 md:grid-cols-2">
               <div>
                 <h3 className="text-base font-semibold text-foreground">{t('howToUse')}</h3>
-                {/* The <ol> supplies the numbering for assistive tech; the badge is its visual twin, so it is hidden from AT. */}
-                <ol role="list" className="mt-3 list-none space-y-2 p-0">
+                {/*
+                  The browser's own list marker is the only number. Step text must not start with a number,
+                  and no numeric badge is rendered, so screen readers, reader mode and copied text show "1. Paste…", never "1. 1 Paste…".
+                */}
+                <ol className="mt-3 list-decimal space-y-2 pl-6 marker:font-semibold marker:text-primary">
                   {content.steps.map((step, index) => (
-                    <li key={index} className="flex gap-3">
-                      <span aria-hidden="true" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary tabular-nums">{index + 1}</span>
-                      <span>{step}</span>
-                    </li>
+                    <li key={index} className="pl-1">{step}</li>
                   ))}
                 </ol>
               </div>

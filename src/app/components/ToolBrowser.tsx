@@ -29,7 +29,8 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
   // The last q value this component wrote, so URL changes we caused do not overwrite newer typing.
   const writtenQuery = useRef(qParam);
 
-  const writeUrl = (next: { cat?: string; q?: string }) => {
+  // Category changes push a history entry so Back/Forward step through them; typing replaces it.
+  const writeUrl = (next: { cat?: string; q?: string }, mode: 'push' | 'replace' = 'replace') => {
     const params = new URLSearchParams(searchParams.toString());
     const cat = next.cat ?? active;
     const q = (next.q ?? query).trim();
@@ -39,13 +40,17 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
     else params.delete('q');
     writtenQuery.current = q;
     const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const href = qs ? `${pathname}?${qs}` : pathname;
+    if (mode === 'push') router.push(href, { scroll: false });
+    else router.replace(href, { scroll: false });
   };
 
-  const setCategory = (cat: string) => writeUrl({ cat });
+  const setCategory = (cat: string) => {
+    if (cat !== active) writeUrl({ cat }, 'push');
+  };
   const clearFilters = () => {
     setQuery('');
-    writeUrl({ cat: 'all', q: '' });
+    writeUrl({ cat: 'all', q: '' }, 'push');
   };
 
   // Back/forward or a link changed ?q=: follow it.

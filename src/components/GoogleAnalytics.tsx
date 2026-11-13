@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { CATEGORIES, type Tool } from '@/data/tools';
 import { BarChart3, X } from 'lucide-react';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? '';
 const isEnabled =
@@ -75,10 +76,11 @@ function PageViewTracker() {
 }
 
 export default function GoogleAnalytics() {
+  const { t } = useLocale();
   const [consent, setConsent] = useState<AnalyticsConsent>('unknown');
   const [consentReady, setConsentReady] = useState(false);
   const [showPrompt, setShowPrompt] = useState(true);
-  const [storageWarning, setStorageWarning] = useState('');
+  const [storageWarning, setStorageWarning] = useState(false);
 
   useEffect(() => {
     if (!isEnabled) return;
@@ -91,7 +93,7 @@ export default function GoogleAnalytics() {
         setShowPrompt(false);
       }
     } catch {
-      setStorageWarning('Your browser could not save this choice. It will apply for this visit only.');
+      setStorageWarning(true);
     } finally {
       setConsentReady(true);
     }
@@ -101,7 +103,7 @@ export default function GoogleAnalytics() {
     analyticsConsentGranted = nextConsent === 'granted';
     setConsent(nextConsent);
     setShowPrompt(false);
-    setStorageWarning('');
+    setStorageWarning(false);
 
     if (!analyticsConsentGranted) {
       window.gtag?.('consent', 'update', { analytics_storage: 'denied' });
@@ -113,7 +115,7 @@ export default function GoogleAnalytics() {
     try {
       window.localStorage.setItem(consentStorageKey, nextConsent);
     } catch {
-      setStorageWarning('Your browser could not save this choice. It will apply for this visit only.');
+      setStorageWarning(true);
     }
   };
 
@@ -139,10 +141,10 @@ export default function GoogleAnalytics() {
               type="button"
               onClick={() => setShowPrompt(true)}
               className="fixed bottom-4 left-4 z-[70] inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground shadow-lg transition-colors hover:text-foreground"
-              aria-label="Open analytics privacy settings"
+              aria-label={t('consentOpenSettings')}
             >
-              <BarChart3 size={14} />
-              Privacy settings
+              <BarChart3 size={14} aria-hidden="true" />
+              {t('consentSettings')}
             </button>
           )}
           {showPrompt && (
@@ -155,11 +157,11 @@ export default function GoogleAnalytics() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 id="analytics-consent-title" className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <BarChart3 size={15} className="text-primary" />
-                    Help improve DLTools
+                    <BarChart3 size={15} className="text-primary" aria-hidden="true" />
+                    {t('consentTitle')}
                   </h2>
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    Allow Google Analytics to count visits and tool opens. Your tool inputs and outputs are never sent.
+                    {t('consentBody')}
                   </p>
                 </div>
                 {consent !== 'unknown' && (
@@ -167,9 +169,9 @@ export default function GoogleAnalytics() {
                     type="button"
                     onClick={() => setShowPrompt(false)}
                     className="btn-icon -mr-2 -mt-2"
-                    aria-label="Close privacy settings"
+                    aria-label={t('consentCloseSettings')}
                   >
-                    <X size={14} />
+                    <X size={14} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -179,19 +181,19 @@ export default function GoogleAnalytics() {
                   onClick={() => chooseConsent('denied')}
                   className="btn-ghost text-xs"
                 >
-                  Reject
+                  {t('consentReject')}
                 </button>
                 <button
                   type="button"
                   onClick={() => chooseConsent('granted')}
                   className="btn-primary text-xs"
                 >
-                  Allow analytics
+                  {t('consentAllow')}
                 </button>
               </div>
               {storageWarning && (
                 <p className="mt-3 text-xs text-warning" role="status">
-                  {storageWarning}
+                  {t('consentStorageWarning')}
                 </p>
               )}
             </section>

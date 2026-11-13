@@ -55,3 +55,20 @@ describe('every tool is complete', () => {
     expect(TOOLS.filter((t) => getToolPrivacyMode(t.id) === 'network').map((t) => t.id)).toEqual(['tool-api-tester']);
   });
 });
+
+describe('how-to steps', () => {
+  // The <ol> numbers each step; text that also starts with a number reads "1. 1 Paste…".
+  const leadingNumber = /^\s*(?:step\s*)?[0-9០-៩]+\s*[.):\-–]?\s/i;
+  it.each(TOOLS.map((t) => [t.id, t] as const))('%s steps do not repeat the list number', (_id, tool) => {
+    const slug = getToolSlug(tool);
+    for (const step of [...(getToolContent(slug)?.steps ?? []), ...(getToolContentKh(slug)?.steps ?? [])]) {
+      expect(step, step).not.toMatch(leadingNumber);
+    }
+  });
+
+  it('renders steps with native list numbering only', () => {
+    const source = readFileSync('src/app/tools/[slug]/ToolContent.tsx', 'utf8');
+    expect(source).toContain('list-decimal');
+    expect(source).not.toMatch(/\{index \+ 1\}/);
+  });
+});
