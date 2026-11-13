@@ -11,7 +11,7 @@ const FAQ_EN = [
   },
   {
     q: 'Is my data safe?',
-    a: 'Most tools run entirely in your browser, so the text, JSON, images or tokens you paste stay on your device and are never uploaded. Tools that need a server, such as some document conversions, say so on their page.',
+    a: 'Yes. Every tool runs in your browser, so the text, JSON, images, documents or tokens you paste stay on your device and are not uploaded. The only exception is the API Request Tester, which sends the request you configure to the URL you enter. Data is stored only if you sign in and choose to save it.',
   },
   {
     q: 'Do I need to install anything?',
@@ -30,11 +30,11 @@ const FAQ_KH = [
   },
   {
     q: 'តើទិន្នន័យរបស់ខ្ញុំមានសុវត្ថិភាពទេ?',
-    a: 'ឧបករណ៍ភាគច្រើនដំណើរការក្នុងកម្មវិធីរុករករបស់អ្នក ដូច្នេះអត្ថបទ JSON រូបភាព ឬ token ដែលអ្នកបិទភ្ជាប់នៅលើឧបករណ៍របស់អ្នក ហើយមិនត្រូវបានផ្ទុកឡើងទេ។ ឧបករណ៍ដែលត្រូវការម៉ាស៊ីនមេ ដូចជាការបម្លែងឯកសារមួយចំនួន នឹងប្រាប់ច្បាស់នៅលើទំព័ររបស់វា។',
+    a: 'មានសុវត្ថិភាព។ ឧបករណ៍ទាំងអស់ដំណើរការក្នុងកម្មវិធីរុករករបស់អ្នក ដូច្នេះអត្ថបទ JSON រូបភាព ឯកសារ ឬ token ដែលអ្នកបិទភ្ជាប់នៅលើឧបករណ៍របស់អ្នក ហើយមិនត្រូវបានផ្ទុកឡើងទេ។ ករណីលើកលែងតែមួយគត់គឺ API Request Tester ដែលផ្ញើសំណើដែលអ្នកកំណត់ទៅ URL ដែលអ្នកបញ្ចូល។ ទិន្នន័យត្រូវបានរក្សាទុកតែនៅពេលអ្នកចូលគណនី ហើយជ្រើសរើសរក្សាទុកប៉ុណ្ណោះ។',
   },
   {
     q: 'តើខ្ញុំត្រូវដំឡើងអ្វីទេ?',
-    a: 'មិនចាំបាច់ទេ។ DLTools ដំណើរការលើកម្មវិធីរុករក ទំនើបណាមួយ ទាំងកុំព្យូទ័រ និងទូរស័ព្ទ។ បើកឧបករណ៍ បិទភ្ជាប់ទិន្នន័យ ហើយចម្លងលទ្ធផល។',
+    a: 'មិនចាំបាច់ទេ។ DLTools ដំណើរការលើកម្មវិធីរុករកទំនើបណាមួយ ទាំងកុំព្យូទ័រ និងទូរស័ព្ទ។ បើកឧបករណ៍ បិទភ្ជាប់ទិន្នន័យ ហើយចម្លងលទ្ធផល។',
   },
   {
     q: 'តើ KHQR ជាអ្វី ហើយខ្ញុំអាចបង្កើត ឬពិនិត្យវានៅទីនេះបានទេ?',

@@ -16,7 +16,6 @@ export function useRecentTools() {
   const { locale } = useLocale();
   const { data: session, status: authStatus } = useSession();
   const [recents, setRecents] = useState<string[] | null>(null);
-  const [synced, setSynced] = useState(false);
 
   useEffect(() => {
     let localRecents: string[] = [];
@@ -32,7 +31,6 @@ export function useRecentTools() {
     setRecents(localRecents);
 
     if (authStatus !== 'authenticated' || !session?.user?.id) {
-      setSynced(false);
       return;
     }
 
@@ -55,12 +53,10 @@ export function useRecentTools() {
         if (!response.ok) throw new Error(result.error ?? 'Could not load recent tools.');
         if (active) {
           setRecents((result.toolIds ?? []).filter((id) => TOOLS.some((tool) => tool.id === id)));
-          setSynced(true);
         }
       } catch (error) {
         if (!active) return;
         toast.error(translateText(error instanceof Error ? error.message : 'Could not sync recent tools.', locale));
-        setSynced(false);
       }
     };
     void loadRecents();
@@ -75,7 +71,7 @@ export function useRecentTools() {
   const remove = async (id: string) => {
     const next = (recents ?? []).filter((recentId) => recentId !== id);
     try {
-      if (synced) {
+      if (authStatus === 'authenticated') {
         const response = await fetch(`/api/user/recents/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (!response.ok) {
           const result = (await response.json()) as { error?: string };

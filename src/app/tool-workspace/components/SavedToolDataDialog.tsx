@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BookmarkPlus, Check, Copy, Database, LogIn, Trash2, X } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -26,6 +26,46 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const fail = (error: unknown, fallback: string) =>
+    toast.error(translateText(error instanceof Error ? error.message : fallback, locale));
+
+  // Modal behaviour: Escape closes, Tab stays inside, page scroll is locked, focus returns to the trigger.
+  useEffect(() => {
+    if (!open) return;
+    const trigger = triggerRef.current;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    const dialog = dialogRef.current;
+    const focusables = () =>
+      Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input, textarea, [href], [tabindex]:not([tabindex="-1"])') ?? []);
+    (dialog?.querySelector<HTMLElement>('input, textarea') ?? focusables()[0])?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+      } else if (event.key === 'Tab') {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = overflow;
+      trigger?.focus();
+    };
+  }, [open, status]);
 
   useEffect(() => {
     if (!open || status !== 'authenticated') return;
@@ -43,7 +83,7 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
       })
       .catch((error: unknown) => {
         if (!active) return;
-        toast.error(error instanceof Error ? error.message : 'Could not load saved data.');
+        toast.error(translateText(error instanceof Error ? error.message : 'Could not load saved data.', locale));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -52,6 +92,8 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
     return () => {
       active = false;
     };
+    // `locale` only localizes the error toast.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, status, tool.id]);
 
   const save = async () => {
@@ -71,7 +113,7 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
       setContent('');
       toast.success(locale === 'kh' ? 'បានរក្សាទុកទិន្នន័យក្នុងគណនីរបស់អ្នក' : 'Data saved to your account');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not save this data.');
+      fail(error, 'Could not save this data.');
     } finally {
       setSaving(false);
     }
@@ -90,9 +132,9 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
       await navigator.clipboard.writeText(content);
       setCopiedId(item.id);
       window.setTimeout(() => setCopiedId(null), 1500);
-      toast.success('Saved data copied');
+      toast.success(translateText('Saved data copied', locale));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Clipboard access was denied.');
+      fail(error, 'Clipboard access was denied.');
     }
   };
 
@@ -102,21 +144,22 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error ?? 'Could not delete this saved item.');
       setItems((current) => current.filter((item) => item.id !== id));
-      toast.success('Saved data deleted');
+      toast.success(translateText('Saved data deleted', locale));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not delete this saved item.');
+      fail(error, 'Could not delete this saved item.');
     }
   };
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="btn-ghost px-3 py-1.5 text-xs"
+        className="btn-ghost"
         aria-haspopup="dialog"
       >
-        <Database size={14} />
+        <Database size={15} aria-hidden="true" />
         {translateText('Saved data', locale)}
       </button>
       {open && (
@@ -127,6 +170,7 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
           }}
         >
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="saved-tool-data-title"
@@ -139,8 +183,8 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">{getToolName(tool.id, tool.name, locale)} · {translateText('Synced to your account', locale)}</p>
               </div>
-              <button type="button" className="btn-icon" onClick={() => setOpen(false)} aria-label={locale === 'kh' ? 'បិទទិន្នន័យដែលបានរក្សាទុក' : 'Close saved data'}>
-                <X size={15} />
+              <button type="button" className="btn-icon" onClick={() => setOpen(false)} aria-label={locale === 'kh' ? 'បិទប្រអប់ទិន្នន័យដែលបានរក្សាទុក' : 'Close saved data'}>
+                <X size={15} aria-hidden="true" />
               </button>
             </header>
 
@@ -184,7 +228,7 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
                   </div>
                 </div>
 
-                <section aria-label="Previously saved data" className="space-y-2">
+                <section aria-label={translateText('Previously saved data', locale)} className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {translateText('Previously saved', locale)}
                   </h3>
@@ -233,6 +277,8 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
                   )}
                 </section>
               </div>
+            ) : status === 'loading' ? (
+              <p className="p-8 text-center text-sm text-muted-foreground" role="status">{translateText('Loading saved data…', locale)}</p>
             ) : (
               <div className="flex flex-col items-center gap-3 p-8 text-center">
                 <p className="max-w-sm text-sm text-muted-foreground">

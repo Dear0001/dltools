@@ -1,11 +1,11 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { Heart, Link2, ShieldCheck } from 'lucide-react';
+import { Globe2, Heart, Link2, ShieldCheck } from 'lucide-react';
+import { getToolPrivacyMode } from '@/data/toolPrivacy';
 import { Breadcrumbs } from '@/components/PageHeader';
 import ToolIcon from '@/components/ui/ToolIcon';
 import { useFavorites } from '@/lib/favorites';
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { CATEGORIES } from '@/data/tools';
@@ -168,6 +168,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
       toast.error(t('copyFailed'));
     }
   };
+  const privacyMode = getToolPrivacyMode(tool.id);
   const favoriteLabel = favorite ? t('removeFromFavorites') : t('addToFavorites');
 
   return (
@@ -189,21 +190,23 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{toolName}</h1>
                 <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+                <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground" title={privacyMode === 'local' ? t('privacyLocalHelp') : t('privacyNetworkHelp')}>
+                  {privacyMode === 'local'
+                    ? <ShieldCheck size={13} className="text-success" aria-hidden="true" />
+                    : <Globe2 size={13} className="text-warning" aria-hidden="true" />}
+                  <span className="font-medium text-foreground">{privacyMode === 'local' ? t('runsLocally') : t('sendsRequests')}</span>
+                  <span className="hidden sm:inline">· {privacyMode === 'local' ? t('privacyLocalHelp') : t('privacyNetworkHelp')}</span>
+                </p>
               </div>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground xl:inline-flex">
-                <ShieldCheck size={13} className="text-success" aria-hidden="true" /> {t('runsLocally')}
-              </span>
-              <button type="button" onClick={copyLink} className="btn-ghost" title={t('copyLink')}>
+              <button type="button" onClick={copyLink} className="btn-ghost" aria-label={t('copyLink')}>
                 <Link2 size={15} aria-hidden="true" />
                 <span className="hidden sm:inline">{t('copyLink')}</span>
-                <span className="sr-only sm:hidden">{t('copyLink')}</span>
               </button>
-              <button type="button" onClick={() => toggle(tool.id)} aria-pressed={favorite} className="btn-ghost" title={favoriteLabel}>
+              <button type="button" onClick={() => { if (!toggle(tool.id)) toast.error(t('favoriteSaveFailed')); }} aria-pressed={favorite} className="btn-ghost" aria-label={favoriteLabel}>
                 <Heart size={15} className={favorite ? 'fill-primary text-primary' : ''} aria-hidden="true" />
                 <span className="hidden sm:inline">{favorite ? t('favorited') : t('favorite')}</span>
-                <span className="sr-only sm:hidden">{favoriteLabel}</span>
               </button>
               <SavedToolDataDialog tool={tool} />
             </div>

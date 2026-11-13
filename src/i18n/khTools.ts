@@ -359,7 +359,7 @@ export const KH_TOOLS: Record<string, string> = {
   'Loading tool': 'កំពុងផ្ទុកឧបករណ៍',
   'Could not save recent tools on this device.': 'មិនអាចរក្សាទុកឧបករណ៍ថ្មីៗនៅលើឧបករណ៍នេះបានទេ។',
   'Could not read recent tools from this device.': 'មិនអាចអានឧបករណ៍ថ្មីៗពីឧបករណ៍នេះបានទេ។',
-  'Could not save the theme on this device.': 'មិនអាចរក្សាទុកធីមនៅលើឧបករណ៍នេះបានទេ។',
+  'Could not save the theme on this device.': 'មិនអាចរក្សាទុករចនាប័ទ្មនៅលើឧបករណ៍នេះបានទេ។',
   'Previously saved data': 'ទិន្នន័យដែលបានរក្សាទុកពីមុន',
   'Saved data copied': 'បានចម្លងទិន្នន័យដែលបានរក្សាទុក',
   'Saved data deleted': 'បានលុបទិន្នន័យដែលបានរក្សាទុក',

@@ -57,6 +57,8 @@ export default function SearchDialog({ open, onClose }: { open: boolean; onClose
   };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
+    // Khmer and other IMEs use Enter/arrows to pick candidates; don't hijack those keystrokes.
+    if (event.nativeEvent.isComposing) return;
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setActive((i) => (results.length ? (i + 1) % results.length : 0));
@@ -114,9 +116,20 @@ export default function SearchDialog({ open, onClose }: { open: boolean; onClose
             {query.trim() ? t('searchResults') : t('searchSuggested')}
           </p>
           {results.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
+            <div className="px-2 py-6 text-center">
               <p className="text-sm text-muted-foreground">{t('noSearchMatches')}</p>
-              <button type="button" className="btn-ghost" onClick={() => { onClose(); router.push('/tools'); }}>
+              <p className="mt-4 text-left text-xs font-semibold text-muted-foreground">{t('searchSuggested')}</p>
+              <ul className="mt-1 text-left">
+                {SUGGESTED.slice(0, 4).map((tool) => (
+                  <li key={tool.id}>
+                    <button type="button" className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-primary/10" onClick={() => { onClose(); router.push(getToolPath(tool)); }}>
+                      <ToolIcon tool={tool} size="sm" />
+                      <span className="truncate text-sm font-medium text-foreground">{getToolName(tool.id, tool.name, locale)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button type="button" className="btn-ghost mt-3" onClick={() => { onClose(); router.push('/tools'); }}>
                 {t('viewAllTools')}
               </button>
             </div>

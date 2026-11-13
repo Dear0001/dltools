@@ -1,15 +1,18 @@
 'use client';
 import React, { Suspense, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, SearchX, X } from 'lucide-react';
 import ToolCard from './ToolCard';
 import EmptyState from '@/components/ui/EmptyState';
 import CategoryIcon from '@/components/ui/CategoryIcon';
-import { CATEGORIES, CATEGORY_COUNTS, TOOLS, type ToolCategory } from '@/data/tools';
-import { fill, getCategoryName, useLocale } from '@/i18n/LocaleProvider';
+import { CATEGORIES, CATEGORY_COUNTS, TOOLS, getToolPath, type ToolCategory } from '@/data/tools';
+import { fill, getCategoryName, getToolName, useLocale } from '@/i18n/LocaleProvider';
 import { searchTools } from '@/lib/searchTools';
 
 type SortMode = 'popular' | 'az';
+
+const POPULAR = TOOLS.filter((tool) => tool.popular).slice(0, 4);
 
 function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
   const { locale, t } = useLocale();
@@ -102,6 +105,22 @@ function ToolBrowserInner({ idPrefix }: { idPrefix: string }) {
             icon={<SearchX size={28} />}
             title={t('noToolsMatch')}
             description={otherMatches > 0 ? fill(t('matchesInOtherCategories'), { n: otherMatches }) : t('noToolsMatchHelp')}
+            suggestions={
+              otherMatches > 0 ? null : (
+                <div className="mt-6 w-full max-w-xl">
+                  <p className="mb-2 text-xs font-semibold text-muted-foreground">{t('searchSuggested')}</p>
+                  <ul className="flex flex-wrap justify-center gap-2">
+                    {POPULAR.map((tool) => (
+                      <li key={tool.id}>
+                        <Link href={getToolPath(tool)} className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                          {getToolName(tool.id, tool.name, locale)}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
             action={
               otherMatches > 0 ? (
                 <button type="button" className="btn-primary" onClick={() => setCategory('all')}>

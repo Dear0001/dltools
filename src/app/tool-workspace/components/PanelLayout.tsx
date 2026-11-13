@@ -96,7 +96,8 @@ export default function PanelLayout({
     a.href = url;
     a.download = downloadName;
     a.click();
-    URL.revokeObjectURL(url);
+    // Revoking synchronously can cancel the download in Safari and Firefox.
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast.success(`${t('downloaded')}: ${downloadName}`);
   };
 
@@ -110,7 +111,7 @@ export default function PanelLayout({
   return (
     <div className={containerClass}>
       {/* Input panel */}
-      <div className={panelClass}>
+      <div className={panelClass} role="group" aria-label={translateText(inputLabel, locale)}>
         <div className="panel-header flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="status-dot-idle" />
@@ -145,7 +146,7 @@ export default function PanelLayout({
       <div className={vertical ? 'h-2 flex-shrink-0' : 'w-2 flex-shrink-0 hidden lg:block'} />
 
       {/* Output panel */}
-      <div className={panelClass}>
+      <div className={panelClass} role="group" aria-label={translateText(outputLabel, locale)}>
         <div className="panel-header flex-shrink-0">
           <div className="flex items-center gap-2">
             {outputStatus === 'success' && <span className="status-dot-success" />}
@@ -153,7 +154,7 @@ export default function PanelLayout({
             {outputStatus === 'idle' && <span className="status-dot-idle" />}
             <span className="text-xs font-semibold text-muted-foreground">{translateText(outputLabel, locale)}</span>
             {errorMessage && (
-              <span role="alert" className="max-w-[12rem] truncate font-mono text-xs text-error sm:max-w-xs" title={errorMessage}>{errorMessage}</span>
+              <span role="alert" className="line-clamp-2 max-w-[12rem] break-words font-mono text-xs text-error sm:max-w-md" title={errorMessage}>{errorMessage}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
