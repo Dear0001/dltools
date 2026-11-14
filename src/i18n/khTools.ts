@@ -97,6 +97,10 @@ export const KH_TOOLS: Record<string, string> = {
   'Decode error — invalid percent-encoded string': 'កំហុសពេលឌិកូដ — ខ្សែអក្សរ percent-encoded មិនត្រឹមត្រូវ',
   'Paste a PEM-encoded X.509 certificate.': 'បិទភ្ជាប់វិញ្ញាបនបត្រ X.509 ជាទ្រង់ទ្រាយ PEM។',
   'This is not an X.509 certificate sequence.': 'នេះមិនមែនជាវិញ្ញាបនបត្រ X.509 ទេ។',
+  'JWT must have exactly 3 parts separated by dots': 'JWT ត្រូវមាន ៣ ផ្នែក ដែលបំបែកដោយសញ្ញាចុច (.)',
+  'The JWT header is not valid Base64URL-encoded JSON.': 'ផ្នែក header របស់ JWT មិនមែនជា JSON ដែលបានអ៊ិនកូដជា Base64URL ត្រឹមត្រូវទេ។',
+  'The JWT payload is not valid Base64URL-encoded JSON.': 'ផ្នែក payload របស់ JWT មិនមែនជា JSON ដែលបានអ៊ិនកូដជា Base64URL ត្រឹមត្រូវទេ។',
+  'Certificate signature algorithm is malformed.': 'ផ្នែក signature algorithm របស់វិញ្ញាបនបត្រមិនត្រឹមត្រូវ។',
   'Certificate has truncated ASN.1 data.': 'ទិន្នន័យ ASN.1 របស់វិញ្ញាបនបត្រត្រូវបានកាត់ខ្លី។',
   'Certificate has an invalid ASN.1 length.': 'ប្រវែង ASN.1 របស់វិញ្ញាបនបត្រមិនត្រឹមត្រូវ។',
   'Certificate ASN.1 value exceeds the available data.': 'តម្លៃ ASN.1 របស់វិញ្ញាបនបត្រលើសទិន្នន័យដែលមាន។',
@@ -108,6 +112,8 @@ export const KH_TOOLS: Record<string, string> = {
   'Signature algorithm OID': 'OID របស់ signature algorithm',
   'Public key algorithm OID': 'OID របស់ public key algorithm',
   'Public key size': 'ទំហំ public key',
+  'Signature algorithm': 'ក្បួនដោះស្រាយ signature',
+  'Public key algorithm': 'ក្បួនដោះស្រាយ public key',
   'Subject alternative names': 'Subject alternative names (SAN)',
   'Validity could not be determined': 'មិនអាចកំណត់សុពលភាពបានទេ',
   'Not yet valid': 'មិនទាន់មានសុពលភាព',
@@ -292,6 +298,12 @@ export const KH_TOOLS: Record<string, string> = {
   'added': 'បានបន្ថែម',
   'removed': 'បានដកចេញ',
   'unchanged': 'មិនផ្លាស់ប្តូរ',
+  'Paste plain text, JSON, or text containing JSON…\n{"key": "value"}': 'បិទភ្ជាប់អត្ថបទធម្មតា JSON ឬអត្ថបទដែលមាន JSON…\n{"key": "value"}',
+  'Paste JSON here… {"key": "value"}': 'បិទភ្ជាប់ JSON នៅទីនេះ… {"key": "value"}',
+  'Paste Base64 here…\nJVBERi0xLjQK… or data:application/pdf;base64,JVBERi0x…': 'បិទភ្ជាប់ Base64 នៅទីនេះ…\nJVBERi0xLjQK… ឬ data:application/pdf;base64,JVBERi0x…',
+  'No differences found. Both sides are identical.': 'រកមិនឃើញភាពខុសគ្នាទេ។ ខ្លឹមសារទាំងសងខាងដូចគ្នា។',
+  'Both documents are re-indented before comparing, so layout-only differences are ignored.': 'ឯកសារទាំងពីរត្រូវបានរៀបចំចន្លោះជួរឡើងវិញមុនពេលប្រៀបធៀប ដូច្នេះភាពខុសគ្នាត្រឹមតែប្លង់ ឬការចុះបន្ទាត់មិនត្រូវបានរាប់ទេ។',
+  'One of the documents is not well-formed XML, so it is compared as plain text.': 'ឯកសារមួយមិនមែនជា XML ដែលមានទម្រង់ត្រឹមត្រូវទេ ដូច្នេះវាត្រូវបានប្រៀបធៀបជាអត្ថបទធម្មតា។',
   'KHQR / EMVCo string': 'ខ្សែអក្សរ KHQR / EMVCo',
   'Load sample': 'ផ្ទុកឧទាហរណ៍',
   'Paste': 'បិទភ្ជាប់',
@@ -412,7 +424,7 @@ export const KH_TOOLS: Record<string, string> = {
   'Write Markdown…': 'សរសេរ Markdown…',
   'Paste SQL query here…': 'បិទភ្ជាប់ SQL query នៅទីនេះ…',
   'Formatted SQL appears here…': 'SQL ដែលបានរៀបចំនឹងបង្ហាញនៅទីនេះ…',
-  Dialect: 'Dialect',
+  Dialect: 'ប្រភេទ SQL (Dialect)',
   'Standard SQL': 'SQL ស្តង់ដារ',
   'Uppercase keywords': 'Keywords អក្សរធំ',
 
@@ -773,5 +785,9 @@ export function translateKhPattern(text: string): string | null {
   if (m) return `UUID ${m[1]}`;
   m = text.match(/^Show all (\d+)$/);
   if (m) return `បង្ហាញទាំង ${m[1]}`;
+  m = text.match(/^All (\d+) checks passed\.$/);
+  if (m) return `ការពិនិត្យទាំង ${m[1]} បានជាប់។`;
+  m = text.match(/^(\w+) · (.+) · (\d+) chars$/);
+  if (m) return `${m[1]} · ${m[2]} · ${m[3]} តួអក្សរ`;
   return null;
 }

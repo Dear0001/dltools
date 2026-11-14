@@ -8,6 +8,7 @@ import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 import JsonToTS from 'json-to-ts';
+import { generateDartModels } from './dartModel';
 
 type Target = 'typescript' | 'go' | 'python' | 'pydantic' | 'rust' | 'zod' | 'dart';
 const SAMPLE = `{"user":{"id":42,"name":"Dara","active":true,"roles":["admin","editor"]}}`;
@@ -25,6 +26,7 @@ const quote = (name: string) => JSON.stringify(name);
 
 function generateCode(value: unknown, root: string, target: Target): string {
   if (target === 'typescript') return JsonToTS(value, { rootName: root }).join('\n\n');
+  if (target === 'dart') return generateDartModels(value, root);
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('The root JSON value must be an object.');
 
   const definitions = new Map<string, Record<string, unknown>>();
@@ -45,16 +47,16 @@ function generateCode(value: unknown, root: string, target: Target): string {
   const typeOf = (item: unknown, name: string): string => {
     if (item === null) return target === 'rust' ? 'Option<serde_json::Value>' : 'Any';
     if (Array.isArray(item)) {
-      if (!item.length) return target === 'rust' ? 'Vec<serde_json::Value>' : target === 'go' ? '[]any' : target === 'dart' ? 'List<dynamic>' : 'List[Any]';
+      if (!item.length) return target === 'rust' ? 'Vec<serde_json::Value>' : target === 'go' ? '[]any' : 'List[Any]';
       const sample = item[0];
-      if (sample && typeof sample === 'object') return target === 'rust' ? `Vec<${pascal(`${name}Item`)}>` : target === 'go' ? `[]${pascal(`${name}Item`)}` : target === 'dart' ? `List<${pascal(`${name}Item`)}>` : `List[${pascal(`${name}Item`)}]`;
+      if (sample && typeof sample === 'object') return target === 'rust' ? `Vec<${pascal(`${name}Item`)}>` : target === 'go' ? `[]${pascal(`${name}Item`)}` : `List[${pascal(`${name}Item`)}]`;
       const scalar = typeOf(sample, name);
-      return target === 'rust' ? `Vec<${scalar}>` : target === 'go' ? `[]${scalar}` : target === 'dart' ? `List<${scalar}>` : `List[${scalar}]`;
+      return target === 'rust' ? `Vec<${scalar}>` : target === 'go' ? `[]${scalar}` : `List[${scalar}]`;
     }
     if (item && typeof item === 'object') return pascal(name);
-    if (typeof item === 'string') return target === 'go' ? 'string' : target === 'dart' ? 'String' : target === 'rust' ? 'String' : target === 'zod' ? 'string' : 'str';
-    if (typeof item === 'boolean') return target === 'go' ? 'bool' : target === 'dart' ? 'bool' : target === 'rust' ? 'bool' : target === 'zod' ? 'boolean' : 'bool';
-    if (typeof item === 'number') return target === 'go' ? (Number.isInteger(item) ? 'int64' : 'float64') : target === 'dart' ? (Number.isInteger(item) ? 'int' : 'double') : target === 'rust' ? (Number.isInteger(item) ? 'i64' : 'f64') : target === 'zod' ? 'number' : (target === 'python' || target === 'pydantic') ? (Number.isInteger(item) ? 'int' : 'float') : 'number';
+    if (typeof item === 'string') return target === 'go' ? 'string' : target === 'rust' ? 'String' : target === 'zod' ? 'string' : 'str';
+    if (typeof item === 'boolean') return target === 'go' ? 'bool' : target === 'rust' ? 'bool' : target === 'zod' ? 'boolean' : 'bool';
+    if (typeof item === 'number') return target === 'go' ? (Number.isInteger(item) ? 'int64' : 'float64') : target === 'rust' ? (Number.isInteger(item) ? 'i64' : 'f64') : target === 'zod' ? 'number' : (target === 'python' || target === 'pydantic') ? (Number.isInteger(item) ? 'int' : 'float') : 'number';
     return 'Any';
   };
 
@@ -76,7 +78,6 @@ function generateCode(value: unknown, root: string, target: Target): string {
     const entries = Object.entries(fields);
     if (target === 'go') return `type ${className} struct {\n${entries.map(([key, item]) => `  ${pascal(key)} ${typeOf(item, key)} \`json:${quote(key)}\``).join('\n')}\n}`;
     if (target === 'rust') return `#[derive(Debug, serde::Serialize, serde::Deserialize)]\npub struct ${className} {\n${entries.map(([key, item]) => `    #[serde(rename = ${quote(key)})]\n    pub ${snake(key)}: ${typeOf(item, key)},`).join('\n')}\n}`;
-    if (target === 'dart') return `class ${className} {\n${entries.map(([key, item]) => `  final ${typeOf(item, key)} ${snake(key)};`).join('\n')}\n\n  ${className}({${entries.map(([key]) => `required this.${snake(key)}`).join(', ')}});\n}`;
     const isPydantic = target === 'pydantic';
     const pythonFields = entries.map(([key, item]) => {
       const fieldType = typeOf(item, key);

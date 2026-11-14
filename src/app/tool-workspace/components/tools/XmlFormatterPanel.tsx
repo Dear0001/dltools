@@ -6,31 +6,11 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { formatXml } from './xmlFormat';
 
 const SAMPLE = `<?xml version="1.0" encoding="UTF-8"?><catalog><book id="bk101"><author>Gambardella, Matthew</author><title>XML Developer's Guide</title><genre>Computer</genre><price>44.95</price><publish_date>2000-10-01</publish_date></book><book id="bk102"><author>Ralls, Kim</author><title>Midnight Rain</title><genre>Fantasy</genre><price>5.95</price><publish_date>2000-12-16</publish_date></book></catalog>`;
 
 type Status = 'idle' | 'success' | 'error';
-
-function formatXml(xml: string, indent: number): string {
-  const INDENT = ' '.repeat(indent);
-  let formatted = '';
-  let depth = 0;
-  const tokens = xml.replace(/(>)(<)(\/*)/g, '$1\n$2$3').split('\n');
-  for (const token of tokens) {
-    const stripped = token.trim();
-    if (!stripped) continue;
-    if (stripped.startsWith('</')) {
-      depth = Math.max(0, depth - 1);
-      formatted += INDENT.repeat(depth) + stripped + '\n';
-    } else if (stripped.startsWith('<') && !stripped.startsWith('<?') && !stripped.startsWith('<!') && !stripped.endsWith('/>') && !stripped.includes('</')) {
-      formatted += INDENT.repeat(depth) + stripped + '\n';
-      depth++;
-    } else {
-      formatted += INDENT.repeat(depth) + stripped + '\n';
-    }
-  }
-  return formatted.trim();
-}
 
 export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
   const [input, setInput] = useState(SAMPLE);

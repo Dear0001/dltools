@@ -45,7 +45,7 @@ export function AboutContent() {
       <h2>របៀបដំណើរការ</h2>
       <p>ឧបករណ៍ {local} ក្នុងចំណោម {total} ដំណើរការអត្ថបទ ឯកសារ និង token ដែលអ្នកបញ្ចូលក្នុងកម្មវិធីរុករករបស់អ្នក ហើយមិនផ្ទុកទិន្នន័យនោះឡើងទៅម៉ាស៊ីនមេរបស់យើងទេ។ ករណីលើកលែងគឺ «សាកល្បង HTTP Request» ដែលផ្ញើសំណើដែលអ្នកកំណត់ពីកម្មវិធីរុករកដោយផ្ទាល់ទៅ URL ដែលអ្នកបញ្ចូល។ ទំព័រឧបករណ៍នីមួយៗបង្ហាញថាវាជាប្រភេទណា។ សូមមើល <Link href="/privacy">គោលការណ៍ឯកជនភាព</Link> អំពីអ្វីដែលម៉ាស៊ីនមេរបស់យើងរក្សាទុក។</p>
       <h2>គណនី</h2>
-      <p>មិនចាំបាច់មានគណនីដើម្បីប្រើឧបករណ៍ណាមួយទេ។ ការចូលដោយប្រើ Google គ្រាន់តែធ្វើសមកាលកម្មការកំណត់ ឧបករណ៍ដែលបានប្រើថ្មីៗ និងទិន្នន័យដែលបានរក្សាទុករបស់អ្នកនៅលើឧបករណ៍ផ្សេងៗប៉ុណ្ណោះ។</p>
+      <p>មិនចាំបាច់មានគណនីដើម្បីប្រើឧបករណ៍ណាមួយទេ។ ការចូលដោយប្រើ Google ធ្វើសមកាលកម្មរចនាប័ទ្ម ភាសា និងឧបករណ៍ដែលបានប្រើថ្មីៗ នៅលើឧបករណ៍ផ្សេងៗ ហើយអនុញ្ញាតឱ្យអ្នករក្សាទុកអត្ថបទដែលអ្នកជ្រើសរើសក្នុង «ទិន្នន័យដែលបានរក្សាទុក»។ ឧបករណ៍ដែលចូលចិត្តនៅតែក្នុងកម្មវិធីរុករកដែលអ្នកបានបន្ថែមប៉ុណ្ណោះ។</p>
     </InfoPage>
   ) : (
     <InfoPage title="About DLTools">
@@ -54,7 +54,7 @@ export function AboutContent() {
       <h2>How it works</h2>
       <p>{local} of the {total} tools process the text, files and tokens you enter in your browser; that input is not uploaded to our server. The exception is the HTTP Request Tester, which sends the request you configure from your browser directly to the URL you enter. Each tool page shows which kind of tool it is. See the <Link href="/privacy">Privacy Policy</Link> for what our server does store.</p>
       <h2>Accounts</h2>
-      <p>No account is needed to use any tool. Signing in with Google only syncs your preferences, recently used tools and saved data across devices.</p>
+      <p>No account is needed to use any tool. Signing in with Google syncs your theme, language and recently used tools across devices, and lets you keep text you choose to save with Saved data. Favourites stay in the browser where you added them.</p>
     </InfoPage>
   );
 }
@@ -65,17 +65,17 @@ export function PrivacyContent() {
     <InfoPage title="គោលការណ៍ឯកជនភាព">
       <p>ទំព័រនេះសង្ខេបពីរបៀបដែល DLTools គ្រប់គ្រងព័ត៌មាន។ វាគឺជាសេចក្តីសង្ខេបជាភាសាងាយយល់ មិនមែនជាប្រឹក្សាផ្លូវច្បាប់ទេ។</p>
       <h2>ដំណើរការក្នុងកម្មវិធីរុករករបស់អ្នក</h2>
-      <p>ឧបករណ៍ {local} ក្នុងចំណោម {total} ដំណើរការទិន្នន័យដែលអ្នកបញ្ចូលក្នុងកម្មវិធីរុករក រួមទាំងការបម្លែង PDF, Word និងរូបភាព។ ទិន្នន័យនោះមិនត្រូវបានផ្ញើទៅម៉ាស៊ីនមេរបស់យើង ឬសេវាផ្សេងទៀតទេ។</p>
+      <p>ឧបករណ៍ {local} ក្នុងចំណោម {total} ដំណើរការទិន្នន័យដែលអ្នកបញ្ចូលក្នុងកម្មវិធីរុករក រួមទាំងការបម្លែង PDF, Word និងរូបភាព។ ទិន្នន័យនោះមិនត្រូវបានផ្ញើទៅម៉ាស៊ីនមេរបស់យើង ឬសេវាផ្សេងទៀតទេ លុះត្រាតែអ្នកជ្រើសរើសរក្សាទុកវាក្នុង «ទិន្នន័យដែលបានរក្សាទុក» (សូមមើលខាងក្រោម)។</p>
       <h2>ផ្ញើពីកម្មវិធីរុករកទៅ URL ដែលអ្នកជ្រើសរើស</h2>
       <p>«សាកល្បង HTTP Request» ផ្ញើសំណើដែលអ្នកកំណត់ (method, URL, header និង body) ពីកម្មវិធីរុករកដោយផ្ទាល់ទៅ URL ដែលអ្នកបញ្ចូល។ សំណើនោះមិនឆ្លងកាត់ម៉ាស៊ីនមេរបស់យើងទេ ប៉ុន្តែគេហទំព័រដែលអ្នកហៅនឹងទទួលបានអ្វីៗទាំងអស់ក្នុងសំណើ។ ទំព័រឧបករណ៍នោះប្រាប់ពីរឿងនេះ។</p>
       <h2>រក្សាទុកនៅលើម៉ាស៊ីនមេរបស់យើង</h2>
       <ul>
-        <li>តែនៅពេលអ្នកចូលគណនីដោយ Google៖ ព័ត៌មានគណនីមូលដ្ឋាន (ឈ្មោះ អ៊ីមែល រូបតំណាង) ការកំណត់ និងឧបករណ៍ដែលបានប្រើថ្មីៗ។</li>
+        <li>តែនៅពេលអ្នកចូលគណនីដោយ Google៖ ព័ត៌មានគណនីមូលដ្ឋាន (ឈ្មោះ អ៊ីមែល រូបតំណាង) រចនាប័ទ្ម ភាសា និងឧបករណ៍ដែលបានប្រើថ្មីៗ។</li>
         <li>តែនៅពេលអ្នកចុច «រក្សាទុកទិន្នន័យ» ក្នុងប្រអប់ «ទិន្នន័យដែលបានរក្សាទុក»៖ ចំណងជើង និងអត្ថបទដែលអ្នកបញ្ចូលនៅទីនោះ។ ទិន្នន័យឧបករណ៍មិនត្រូវបានរក្សាទុកដោយស្វ័យប្រវត្តិទេ។ កុំរក្សាទុកពាក្យសម្ងាត់ ឬ token សម្ងាត់។</li>
       </ul>
       <h2>រក្សាទុកក្នុងកម្មវិធីរុករករបស់អ្នក</h2>
       <ul>
-        <li>រចនាប័ទ្ម (ភ្លឺ/ងងឹត) ភាសា ឧបករណ៍ដែលបានប្រើថ្មីៗ និងឧបករណ៍ដែលចូលចិត្ត (local storage របស់កម្មវិធីរុករក)។ ទិន្នន័យទាំងនេះមិនត្រូវបានផ្ញើទៅម៉ាស៊ីនមេទេ លើកលែងតែឧបករណ៍ដែលបានប្រើថ្មីៗ នៅពេលអ្នកចូលគណនី។</li>
+        <li>រចនាប័ទ្ម (ភ្លឺ/ងងឹត) ភាសា ឧបករណ៍ដែលបានប្រើថ្មីៗ និងឧបករណ៍ដែលចូលចិត្ត (local storage របស់កម្មវិធីរុករក)។ ឧបករណ៍ដែលចូលចិត្តនៅតែក្នុងកម្មវិធីរុករកនេះជានិច្ច។ នៅពេលអ្នកចូលគណនី រចនាប័ទ្ម ភាសា និងឧបករណ៍ដែលបានប្រើថ្មីៗ ក៏ត្រូវបានធ្វើសមកាលកម្មទៅគណនីរបស់អ្នកដែរ។</li>
       </ul>
       <h2>ការវិភាគ</h2>
       <p>Google Analytics ដំណើរការតែនៅពេលអ្នកយល់ព្រមក្នុងផ្ទាំងសួរអំពីការវិភាគប៉ុណ្ណោះ។ វារាប់ការចូលមើលទំព័រ និងឧបករណ៍ដែលត្រូវបានបើក (ឈ្មោះ និងប្រភេទឧបករណ៍)។ អ្នកអាចប្តូរជម្រើសនេះបានគ្រប់ពេល តាមប៊ូតុងការកំណត់ការវិភាគ។</p>
@@ -86,17 +86,17 @@ export function PrivacyContent() {
     <InfoPage title="Privacy Policy">
       <p>This page summarises how DLTools handles information. It is a plain-language summary, not legal advice.</p>
       <h2>Processed in your browser</h2>
-      <p>{local} of the {total} tools process your input in your browser, including PDF, Word and image conversion. That input is not sent to our server or to any other service.</p>
+      <p>{local} of the {total} tools process your input in your browser, including PDF, Word and image conversion. That input is not sent to our server or to any other service unless you choose to save it with Saved data (see below).</p>
       <h2>Sent from your browser to a URL you choose</h2>
       <p>The HTTP Request Tester sends the request you configure (method, URL, headers and body) from your browser directly to the URL you enter. It does not pass through our server, but the site you call receives everything in the request. Its tool page says so.</p>
       <h2>Stored on our server</h2>
       <ul>
-        <li>Only if you sign in with Google: your basic profile (name, email, avatar), your preferences and your recently used tools.</li>
+        <li>Only if you sign in with Google: your basic profile (name, email, avatar), your theme and language, and your recently used tools.</li>
         <li>Only when you click “Save data” in a tool’s Saved data dialog: the title and text you entered there. Tool input is never saved automatically. Do not save passwords or secret tokens.</li>
       </ul>
       <h2>Stored in your browser</h2>
       <ul>
-        <li>Your theme, language, recently used tools and favourites (browser local storage). They are not sent to our server, except recently used tools when you are signed in.</li>
+        <li>Your theme, language, recently used tools and favourites (browser local storage). Favourites always stay in this browser. When you are signed in, your theme, language and recently used tools are also synced to your account.</li>
       </ul>
       <h2>Analytics</h2>
       <p>Google Analytics runs only if you accept it in the analytics prompt. It counts page views and which tools are opened (tool name and category). You can change your choice at any time with the Analytics settings button.</p>

@@ -42,12 +42,21 @@ export default function JwtPanel({ tool: _tool }: { tool: Tool }) {
     try {
       const parts = source.trim().split('.');
       if (parts.length !== 3) throw new Error('JWT must have exactly 3 parts separated by dots');
-      const decodeB64 = (s: string) => {
-        const padded = s + '=='.slice(0, (4 - s.length % 4) % 4);
-        return JSON.parse(atob(padded.replace(/-/g, '+').replace(/_/g, '/')));
+      // Base64URL → bytes → UTF-8 text → JSON. TextDecoder keeps non-ASCII claims (e.g. Khmer names) intact.
+      const decodePart = (s: string, part: 'header' | 'payload') => {
+        try {
+          const padded = s + '=='.slice(0, (4 - s.length % 4) % 4);
+          const binary = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
+          const text = new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
+          return JSON.parse(text);
+        } catch {
+          throw new Error(part === 'header'
+            ? 'The JWT header is not valid Base64URL-encoded JSON.'
+            : 'The JWT payload is not valid Base64URL-encoded JSON.');
+        }
       };
-      setHeader(decodeB64(parts[0]));
-      setPayload(decodeB64(parts[1]));
+      setHeader(decodePart(parts[0], 'header'));
+      setPayload(decodePart(parts[1], 'payload'));
       setSignature(parts[2]);
       setError('');
     } catch (e: unknown) {

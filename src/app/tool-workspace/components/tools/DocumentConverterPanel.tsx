@@ -14,6 +14,11 @@ type ConversionResult = { url: string; previewUrl: string; filename: string; typ
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
+/** "3.2 KB" for small files, "1.45 MB" for larger ones (a 3 KB file used to show as "0.00 MB"). */
+function formatFileSize(bytes: number): string {
+  return bytes < 1024 * 1024 ? `${Math.max(0.1, bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 function loadBrowserImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const imageUrl = URL.createObjectURL(file);
@@ -438,7 +443,7 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground">{files.length > 1 ? `${t('selectedFile')} ${index + 1}` : t('selectedFile')}</p>
                     <p className="truncate text-sm font-medium text-foreground" title={selectedFile.name}>{selectedFile.name}</p>
-                    <p className="text-xs text-muted-foreground">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
                   </div>
                   <button type="button" className="btn-icon" onClick={() => removeFile(index)} aria-label={locale === 'kh' ? `ដក ${selectedFile.name}` : `Remove ${selectedFile.name}`}>
                     <X size={15} />
@@ -448,7 +453,7 @@ export default function DocumentConverterPanel({ tool: _tool }: { tool: Tool }) 
               {isImageMode && files.length < 20 && (
                 <button type="button" className="btn-ghost px-3 py-1.5 text-sm" onClick={() => inputRef.current?.click()}>{t('addImages')}</button>
               )}
-              {isImageMode && <p className="text-xs text-muted-foreground">{files.length} {t('imagesSelected')} · {(files.reduce((sum, selected) => sum + selected.size, 0) / (1024 * 1024)).toFixed(2)} MB</p>}
+              {isImageMode && <p className="text-xs text-muted-foreground">{files.length} {t('imagesSelected')} · {formatFileSize(files.reduce((sum, selected) => sum + selected.size, 0))}</p>}
             </div>
           ) : (
             <>

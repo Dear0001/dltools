@@ -10,7 +10,7 @@ import { useLocale } from '@/i18n/LocaleProvider';
 const FAQ_EN = [
   {
     q: 'Is DLTools free to use?',
-    a: 'Yes. Every tool is free, and you don’t need to sign up to format, convert, generate or inspect your data. An optional account only syncs your preferences, recent tools and saved data.',
+    a: 'Yes. Every tool is free, and you don’t need to sign up to format, convert, generate or inspect your data. An optional account syncs your theme, language and recent tools, and keeps text you choose to save.',
   },
   {
     q: 'Is my data uploaded to a server?',
@@ -29,7 +29,7 @@ const FAQ_EN = [
 const FAQ_KH = [
   {
     q: 'តើ DLTools ឥតគិតថ្លៃមែនទេ?',
-    a: 'បាទ/ចាស។ ឧបករណ៍ទាំងអស់ឥតគិតថ្លៃ ហើយមិនចាំបាច់ចុះឈ្មោះដើម្បីរៀបចំ បម្លែង បង្កើត ឬពិនិត្យទិន្នន័យទេ។ គណនីស្រេចចិត្តប្រើតែដើម្បីធ្វើសមកាលកម្មការកំណត់ ឧបករណ៍ថ្មីៗ និងទិន្នន័យដែលបានរក្សាទុក។',
+    a: 'បាទ/ចាស។ ឧបករណ៍ទាំងអស់ឥតគិតថ្លៃ ហើយមិនចាំបាច់ចុះឈ្មោះដើម្បីរៀបចំ បម្លែង បង្កើត ឬពិនិត្យទិន្នន័យទេ។ គណនីស្រេចចិត្តធ្វើសមកាលកម្មរចនាប័ទ្ម ភាសា និងឧបករណ៍ដែលបានប្រើថ្មីៗ ហើយរក្សាទុកអត្ថបទដែលអ្នកជ្រើសរើសរក្សាទុក។',
   },
   {
     q: 'តើទិន្នន័យរបស់ខ្ញុំត្រូវបានផ្ទុកឡើងទៅម៉ាស៊ីនមេទេ?',

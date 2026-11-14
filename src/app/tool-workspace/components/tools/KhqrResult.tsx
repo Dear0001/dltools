@@ -203,7 +203,7 @@ export default function KhqrResult({ data, onFixCrc }: { data: string; onFixCrc?
         </div>
         {visibleChecks.length === 0 ? (
           <p className="flex items-center gap-2 px-4 py-3 text-xs text-primary">
-            <CheckCircle2 size={14} /> All {counts.pass} checks passed.
+            <CheckCircle2 size={14} aria-hidden="true" /> {`All ${counts.pass} checks passed.`}
           </p>
         ) : (
           <ul className="divide-y divide-border">

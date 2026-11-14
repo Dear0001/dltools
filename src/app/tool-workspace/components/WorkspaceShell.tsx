@@ -223,7 +223,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
                 </p>
               </div>
             </div>
-            <div role="group" aria-label={t('toolActions')} className="flex shrink-0 flex-wrap items-center gap-2">
+            <div role="group" aria-label={t('toolActions')} className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-wrap sm:items-center md:justify-end">
               <ActionButton
                 icon={Link2}
                 successIcon={Check}
@@ -238,9 +238,10 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
               <ActionButton
                 icon={Heart}
                 iconClassName={favorite ? 'fill-primary text-primary' : ''}
-                label={t('favorite')}
+                // The label names the current state ("Add to favorites" / "Favorited"), so no aria-pressed:
+                // a toggle button must keep one fixed name, and a changing label already says what a click does.
+                label={favorite ? t('favorited') : t('addToFavorites')}
                 tooltip={favorite ? t('favoriteRemoveTip') : t('favoriteAddTip')}
-                aria-pressed={favorite}
                 onClick={() => toggleWithFeedback(tool.id, toolName)}
               />
               <SavedToolDataDialog tool={tool} />

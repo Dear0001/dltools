@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { BookmarkPlus, Check, Copy, Database, LogIn, Trash2, X } from 'lucide-react';
+import { BookmarkPlus, Check, Copy, Database, Lock, LogIn, Trash2, X } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import type { Tool } from '@/data/tools';
@@ -157,7 +157,8 @@ export default function SavedToolDataDialog({ tool }: { tool: Tool }) {
         ref={triggerRef}
         icon={Database}
         label={t('savedData')}
-        tooltip={t('savedDataTip')}
+        tooltip={status === 'authenticated' ? t('savedDataSignedInTip') : t('savedDataTip')}
+        trailingIcon={status === 'authenticated' ? undefined : Lock}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
