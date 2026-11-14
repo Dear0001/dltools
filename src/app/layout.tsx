@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Analytics } from '@vercel/analytics/next';
+import VercelAnalytics from '@/components/VercelAnalytics';
 import { Inter, JetBrains_Mono, Noto_Sans_Khmer } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
@@ -75,7 +75,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <GoogleAnalytics />
-            <Analytics />
+            <VercelAnalytics />
             <Toast />
             <Topbar />
             <main id="main-content" tabIndex={-1} className="relative min-h-[calc(100dvh-4rem)] bg-background text-foreground focus:outline-none">

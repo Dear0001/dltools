@@ -404,6 +404,16 @@
     line-height: 2rem;
   }
 
+  /*
+   * Khmer stacks subscript consonants (coeng) and vowel signs above and below the base line, so
+   * Tailwind's Latin-tuned line heights (1.33 for text-xs, 1.43 for text-sm) make wrapped lines touch.
+   * Elements that pick their own leading-* class keep it.
+   */
+  :lang(km) .text-xs:not([class*='leading-']) { line-height: 1.25rem; }
+  :lang(km) .text-sm:not([class*='leading-']) { line-height: 1.5rem; }
+  :lang(km) .text-base:not([class*='leading-']) { line-height: 1.75rem; }
+  :lang(km) .leading-snug { line-height: 1.6; }
+
   /* ---- Form fields shared by tool panels ---- */
   .field-label {
     display: block;

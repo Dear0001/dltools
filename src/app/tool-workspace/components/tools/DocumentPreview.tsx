@@ -104,6 +104,7 @@ export default function DocumentPreview({ bytes, kind }: { bytes: Uint8Array; ki
             <button
               key={`${item.name}-${index}`}
               role="tab"
+              data-no-translate
               aria-selected={index === activeSheet}
               onClick={() => setActiveSheet(index)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${index === activeSheet ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
@@ -117,7 +118,7 @@ export default function DocumentPreview({ bytes, kind }: { bytes: Uint8Array; ki
       {sheet.rows.length === 0 ? (
         <p className="text-xs text-muted-foreground">This worksheet is empty.</p>
       ) : (
-        <div className="max-h-[28rem] overflow-auto rounded-lg border border-border bg-card scrollbar-thin">
+        <div data-no-translate className="max-h-[28rem] overflow-auto rounded-lg border border-border bg-card scrollbar-thin">
           <table className="border-collapse text-xs">
             <thead className="sticky top-0 bg-muted">
               <tr>

@@ -14,7 +14,7 @@ const FAQ_EN = [
   },
   {
     q: 'Is my data uploaded to a server?',
-    a: `Not for ${local} of the ${total} tools. They process your text, JSON, images and documents (including PDF and Word conversion) in your browser, and the input is not sent to our server. The exception is the HTTP Request Tester: it sends the request you build from your browser directly to the URL you enter. Our server receives tool data only if you sign in and save it with Saved data.`,
+    a: `Not for ${local} of the ${total} tools. They process your text, JSON, images and documents (including PDF and Word conversion) in your browser, and the input is not sent to our server. The exception is the HTTP Request Tester: it sends the request you build from your browser directly to the URL you enter, and that destination receives everything in it, including any headers or tokens. Our server receives tool data only if you sign in and save it with Saved data.`,
   },
   {
     q: 'Do I need to install anything?',
@@ -33,7 +33,7 @@ const FAQ_KH = [
   },
   {
     q: 'តើទិន្នន័យរបស់ខ្ញុំត្រូវបានផ្ទុកឡើងទៅម៉ាស៊ីនមេទេ?',
-    a: `មិនផ្ទុកឡើងទេ សម្រាប់ឧបករណ៍ ${local} ក្នុងចំណោម ${total}។ ឧបករណ៍ទាំងនោះដំណើរការអត្ថបទ JSON រូបភាព និងឯកសាររបស់អ្នក (រួមទាំងការបម្លែង PDF និង Word) ក្នុងកម្មវិធីរុករក ហើយមិនផ្ញើទិន្នន័យទៅម៉ាស៊ីនមេរបស់យើងទេ។ ករណីលើកលែងគឺ «សាកល្បង HTTP Request»៖ វាផ្ញើសំណើដែលអ្នកបង្កើតពីកម្មវិធីរុករកដោយផ្ទាល់ទៅ URL ដែលអ្នកបញ្ចូល។ ម៉ាស៊ីនមេរបស់យើងទទួលទិន្នន័យឧបករណ៍ លុះត្រាតែអ្នកចូលគណនី ហើយរក្សាទុកវាក្នុង «ទិន្នន័យដែលបានរក្សាទុក» ប៉ុណ្ណោះ។`,
+    a: `មិនផ្ទុកឡើងទេ សម្រាប់ឧបករណ៍ ${local} ក្នុងចំណោម ${total}។ ឧបករណ៍ទាំងនោះដំណើរការអត្ថបទ JSON រូបភាព និងឯកសាររបស់អ្នក (រួមទាំងការបម្លែង PDF និង Word) ក្នុងកម្មវិធីរុករក ហើយមិនផ្ញើទិន្នន័យទៅម៉ាស៊ីនមេរបស់យើងទេ។ ករណីលើកលែងគឺ «សាកល្បង HTTP Request»៖ វាផ្ញើសំណើដែលអ្នកបង្កើតពីកម្មវិធីរុករកដោយផ្ទាល់ទៅ URL ដែលអ្នកបញ្ចូល ហើយគេហទំព័រគោលដៅនោះទទួលបានអ្វីៗទាំងអស់ក្នុងសំណើ រួមទាំង header ឬ token។ ម៉ាស៊ីនមេរបស់យើងទទួលទិន្នន័យឧបករណ៍ លុះត្រាតែអ្នកចូលគណនី ហើយរក្សាទុកវាក្នុង «ទិន្នន័យដែលបានរក្សាទុក» ប៉ុណ្ណោះ។`,
   },
   {
     q: 'តើខ្ញុំត្រូវដំឡើងអ្វីទេ?',
@@ -53,12 +53,12 @@ export default function SeoContent() {
   const reasons = kh
     ? [
         { icon: Gift, title: 'ឥតគិតថ្លៃ', text: `ឧបករណ៍ទាំង ${TOOLS.length} ប្រើបានដោយមិនចាំបាច់ចុះឈ្មោះ។` },
-        { icon: ShieldCheck, title: 'ឯកជន', text: `ឧបករណ៍ ${local} ក្នុងចំណោម ${total} ដំណើរការក្នុងកម្មវិធីរុករក។ «សាកល្បង HTTP Request» ផ្ញើតែសំណើដែលអ្នកកំណត់ទៅ URL របស់អ្នក។` },
+        { icon: ShieldCheck, title: 'ឯកជន', text: `ឧបករណ៍ ${local} ក្នុងចំណោម ${total} ដំណើរការក្នុងកម្មវិធីរុករក។ «សាកល្បង HTTP Request» ផ្ញើសំណើរបស់អ្នកដោយផ្ទាល់ទៅ URL ដែលអ្នកបញ្ចូល ហើយគេហទំព័រនោះទទួលបានសំណើនោះ។` },
         { icon: Zap, title: 'រហ័ស', text: 'មិនចាំបាច់ដំឡើងអ្វីទេ។ បើក បិទភ្ជាប់ ចម្លង ហើយចប់។' },
       ]
     : [
         { icon: Gift, title: 'Free', text: `All ${TOOLS.length} tools are free to use, with no sign-up.` },
-        { icon: ShieldCheck, title: 'Private', text: `${local} of ${total} tools process your input in your browser. The HTTP Request Tester only sends the request you configure to your URL.` },
+        { icon: ShieldCheck, title: 'Private', text: `${local} of ${total} tools process your input in your browser. The HTTP Request Tester sends your request straight to the URL you enter, and that site receives it.` },
         { icon: Zap, title: 'Fast', text: 'Nothing to install. Open a tool, paste, copy, done.' },
       ];
 

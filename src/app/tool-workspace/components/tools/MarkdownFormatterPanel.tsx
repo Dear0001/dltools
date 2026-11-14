@@ -116,7 +116,7 @@ export default function MarkdownFormatterPanel({ tool: _tool }: { tool: Tool }) 
         outputBody={preview ? 'content' : 'code'}
         inputPanel={<CodeEditor value={input} onChange={(value) => { setInput(value); setFormatted(value); }} minHeight="100%" placeholder="Write Markdown…" />}
         outputPanel={preview
-          ? <article className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+          ? <article data-no-translate className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: safeHtml }} />
           : <CodeOutput value={formatted} language="text" placeholder="Formatted Markdown appears here…" />}
         outputText={formatted}
         outputStatus={formatted ? 'success' : 'idle'}

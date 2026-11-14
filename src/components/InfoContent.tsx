@@ -78,7 +78,9 @@ export function PrivacyContent() {
         <li>រចនាប័ទ្ម (ភ្លឺ/ងងឹត) ភាសា ឧបករណ៍ដែលបានប្រើថ្មីៗ និងឧបករណ៍ដែលចូលចិត្ត (local storage របស់កម្មវិធីរុករក)។ ទិន្នន័យទាំងនេះមិនត្រូវបានផ្ញើទៅម៉ាស៊ីនមេទេ លើកលែងតែឧបករណ៍ដែលបានប្រើថ្មីៗ នៅពេលអ្នកចូលគណនី។</li>
       </ul>
       <h2>ការវិភាគ</h2>
-      <p>ប្រសិនបើអ្នកយល់ព្រម យើងប្រើ Google Analytics ដើម្បីរាប់ការចូលមើលទំព័រ និងឧបករណ៍ដែលត្រូវបានបើក (ឈ្មោះ និងប្រភេទឧបករណ៍)។ យើងក៏ប្រើ Vercel Web Analytics ដែលរាប់ការចូលមើលទំព័រដោយមិនប្រើ cookie។ សេវាទាំងពីរមិនទទួលអ្វីដែលអ្នកវាយ ឬបិទភ្ជាប់ក្នុងឧបករណ៍ទេ។</p>
+      <p>Google Analytics ដំណើរការតែនៅពេលអ្នកយល់ព្រមក្នុងផ្ទាំងសួរអំពីការវិភាគប៉ុណ្ណោះ។ វារាប់ការចូលមើលទំព័រ និងឧបករណ៍ដែលត្រូវបានបើក (ឈ្មោះ និងប្រភេទឧបករណ៍)។ អ្នកអាចប្តូរជម្រើសនេះបានគ្រប់ពេល តាមប៊ូតុងការកំណត់ការវិភាគ។</p>
+      <p>Vercel Web Analytics ដំណើរការសម្រាប់អ្នកចូលមើលទាំងអស់ ទោះអ្នកជ្រើសរើសយ៉ាងណាក្នុងផ្ទាំងនោះក៏ដោយ។ វារាប់ការចូលមើលទំព័រដោយមិនប្រើ cookie ហើយពាក្យស្វែងរកត្រូវបានលុបចេញពីអាសយដ្ឋានទំព័រ មុនពេលផ្ញើ។</p>
+      <p>សេវាទាំងពីរមិនទទួលអ្វីដែលអ្នកវាយ ឬបិទភ្ជាប់ក្នុងឧបករណ៍ទេ។</p>
     </InfoPage>
   ) : (
     <InfoPage title="Privacy Policy">
@@ -97,7 +99,9 @@ export function PrivacyContent() {
         <li>Your theme, language, recently used tools and favourites (browser local storage). They are not sent to our server, except recently used tools when you are signed in.</li>
       </ul>
       <h2>Analytics</h2>
-      <p>If you accept analytics, we use Google Analytics to count page views and which tools are opened (tool name and category). We also use Vercel Web Analytics, which counts page views without cookies. Neither receives what you type or paste into a tool.</p>
+      <p>Google Analytics runs only if you accept it in the analytics prompt. It counts page views and which tools are opened (tool name and category). You can change your choice at any time with the Analytics settings button.</p>
+      <p>Vercel Web Analytics runs for every visitor, whatever you choose in that prompt. It counts page views without cookies, and search text is removed from the page address before it is sent.</p>
+      <p>Neither service receives what you type or paste into a tool.</p>
     </InfoPage>
   );
 }

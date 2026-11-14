@@ -209,7 +209,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
             <div className="flex min-w-0 items-start gap-3.5">
               <ToolIcon tool={tool} size="lg" className="hidden sm:inline-flex" />
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{toolName}</h1>
+                <h1 className={`text-xl font-semibold text-foreground sm:text-2xl ${locale === 'kh' ? 'leading-8 sm:leading-9' : 'tracking-tight'}`}>{toolName}</h1>
                 <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
                 <p className="mt-2 flex max-w-3xl items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
                   {privacyMode === 'local'
