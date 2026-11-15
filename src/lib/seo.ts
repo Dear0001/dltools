@@ -98,9 +98,38 @@ export function buildToolJsonLd(tool: Pick<Tool, 'id' | 'name' | 'description' |
             '@type': 'ListItem',
             position: 3,
             name: CATEGORIES.find((c) => c.id === tool.category)?.label ?? tool.category,
-            item: absoluteUrl(`/tools?cat=${tool.category}`),
+            item: absoluteUrl(`/categories/${tool.category}`),
           },
           { '@type': 'ListItem', position: 4, name: tool.name, item: url },
+        ],
+      },
+    ],
+  };
+}
+
+/** CollectionPage + BreadcrumbList for a category page. */
+export function buildCategoryJsonLd(id: string, label: string, tools: Pick<Tool, 'id'>[]) {
+  const url = absoluteUrl(`/categories/${id}`);
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#page`,
+        url,
+        name: label,
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: tools.map((tool, index) => ({ '@type': 'ListItem', position: index + 1, url: absoluteUrl(getToolPath(tool)) })),
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'All Tools', item: absoluteUrl('/tools') },
+          { '@type': 'ListItem', position: 3, name: label, item: url },
         ],
       },
     ],

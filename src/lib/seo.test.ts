@@ -71,7 +71,7 @@ describe('buildToolJsonLd', () => {
   it('builds a four-level breadcrumb (home, all tools, category, tool) matching the visible trail', () => {
     expect(breadcrumbs.itemListElement.map((item) => item.position)).toEqual([1, 2, 3, 4]);
     expect(breadcrumbs.itemListElement.map((item) => item.name)).toEqual(['Home', 'All Tools', 'PDF & Word', tool.name]);
-    expect(breadcrumbs.itemListElement[2].item).toMatch(/\/tools\?cat=documents$/);
+    expect(breadcrumbs.itemListElement[2].item).toMatch(/\/categories\/documents$/);
     expect(breadcrumbs.itemListElement[3].item).toBe(app.url);
   });
 

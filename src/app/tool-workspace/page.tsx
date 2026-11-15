@@ -7,7 +7,6 @@ import { TOOLS, getToolPath } from '@/data/tools';
 export const metadata: Metadata = {
   title: 'Workspace',
   description: 'Your favourite and recently used DLTools in one place.',
-  alternates: { canonical: '/' },
   robots: { index: false, follow: true },
 };
 

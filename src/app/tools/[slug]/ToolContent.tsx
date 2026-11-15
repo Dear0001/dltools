@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import ToolCard from '@/app/components/ToolCard';
 import { getRelatedTools, getToolSlug, type Tool } from '@/data/tools';
 import { getToolContent } from '@/data/toolContent';
+import { getToolDetails } from '@/data/toolDetails';
 import { getToolContentKh } from '@/data/toolContentKh';
 import { fill, getToolDescription, getToolName, useLocale } from '@/i18n/LocaleProvider';
 
@@ -14,6 +15,7 @@ export default function ToolContent({ tool }: { tool: Tool }) {
   const kh = locale === 'kh';
   const slug = getToolSlug(tool);
   const content = (kh ? getToolContentKh(slug) : undefined) ?? getToolContent(slug);
+  const details = getToolDetails(slug);
   const related = getRelatedTools(tool, 4);
   const name = getToolName(tool.id, tool.name, locale);
 
@@ -26,7 +28,7 @@ export default function ToolContent({ tool }: { tool: Tool }) {
               <h2 id="related-tools-heading" className="section-title">{t('relatedTools')}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{t('relatedHelp')}</p>
             </div>
-            <Link href={`/tools?cat=${tool.category}`} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            <Link href={`/categories/${tool.category}`} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               {t('viewAll')} <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
@@ -64,6 +66,44 @@ export default function ToolContent({ tool }: { tool: Tool }) {
                 </ul>
               </div>
             </div>
+          )}
+
+          {details && (
+            <>
+              <div className="mt-8">
+                <h3 className="text-base font-semibold text-foreground">What it supports</h3>
+                <ul className="mt-3 list-disc space-y-2 pl-5 marker:text-primary">
+                  {details.features.map((feature) => <li key={feature}>{feature}</li>)}
+                </ul>
+              </div>
+
+              <div className="mt-8" data-no-translate>
+                <h3 className="text-base font-semibold text-foreground">Example</h3>
+                <p className="mt-2 text-sm">{details.example.note}</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Input</p>
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border bg-card p-3 font-mono text-xs text-foreground">{details.example.input}</pre>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Output</p>
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border bg-card p-3 font-mono text-xs text-foreground">{details.example.output}</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-base font-semibold text-foreground">Common errors and fixes</h3>
+                <dl className="mt-3 space-y-3">
+                  {details.errors.map((error) => (
+                    <div key={error.problem}>
+                      <dt className="font-medium text-foreground">{error.problem}</dt>
+                      <dd className="mt-0.5">{error.fix}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </>
           )}
 
           <p className="mt-8 text-sm">{fill(t('partOfDltools'), { name })}</p>

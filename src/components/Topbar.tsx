@@ -308,7 +308,7 @@ export default function Topbar() {
                       {CATEGORIES.map((category) => (
                         <li key={category.id}>
                           <Link
-                            href={`/tools?cat=${category.id}`}
+                            href={`/categories/${category.id}`}
                             onClick={closeCategories}
                             className="group flex items-start gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                           >

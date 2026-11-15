@@ -514,13 +514,26 @@ interface LocaleContextValue {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('kh');
+const LOCALE_COOKIE = 'devtoolkit-locale';
+
+function persistLocaleCookie(locale: Locale) {
+  try {
+    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
+  } catch {
+    // The choice still applies to this page view.
+  }
+}
+
+export function LocaleProvider({ children, initialLocale = 'en' }: { children: ReactNode; initialLocale?: Locale }) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem('devtoolkit-locale');
-      if (saved === 'en' || saved === 'kh') setLocaleState(saved);
+      if (saved === 'en' || saved === 'kh') {
+        setLocaleState(saved);
+        persistLocaleCookie(saved);
+      }
     } catch {
       // Keep the default locale when storage is unavailable.
     }
@@ -528,6 +541,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
+    persistLocaleCookie(nextLocale);
     try {
       window.localStorage.setItem('devtoolkit-locale', nextLocale);
     } catch {

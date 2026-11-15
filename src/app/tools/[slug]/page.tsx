@@ -6,6 +6,7 @@ import JsonLd from '@/components/JsonLd';
 import { TOOLS, getToolBySlug, getToolPath, getToolSlug } from '@/data/tools';
 import { SITE_NAME } from '@/lib/site';
 import { buildToolJsonLd, getOgImageForTool } from '@/lib/seo';
+import { getToolDetails } from '@/data/toolDetails';
 
 export const dynamicParams = false;
 
@@ -23,17 +24,18 @@ export async function generateMetadata({
   if (!tool) return {};
 
   const title = `${tool.name} — Free Online Tool`;
+  const description = getToolDetails(getToolSlug(tool))?.metaDescription ?? tool.description;
   const url = getToolPath(tool);
   const ogImage = getOgImageForTool(tool);
   return {
     title,
-    description: tool.description,
+    description,
     keywords: tool.tags,
     alternates: { canonical: url },
     // A page-level openGraph/twitter replaces the layout's, so siteName and images must be repeated here.
     openGraph: {
       title,
-      description: tool.description,
+      description,
       url,
       type: 'website',
       siteName: SITE_NAME,
@@ -42,7 +44,7 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
       title,
-      description: tool.description,
+      description,
       images: [{ url: ogImage.url, alt: ogImage.alt }],
     },
   };
@@ -59,7 +61,7 @@ export default async function ToolPage({
 
   return (
     <>
-      <JsonLd data={buildToolJsonLd(tool)} />
+      <JsonLd data={buildToolJsonLd({ ...tool, description: getToolDetails(getToolSlug(tool))?.metaDescription ?? tool.description })} />
       <WorkspaceShell tool={tool} />
       <ToolContent tool={tool} />
     </>

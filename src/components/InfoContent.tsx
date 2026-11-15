@@ -17,7 +17,7 @@ function CategoryList() {
       <ul>
         {CATEGORIES.map((category) => (
           <li key={category.id}>
-            <Link href={`/tools?cat=${category.id}`}>{getCategoryName(category.id, category.label, locale)}</Link>{' '}
+            <Link href={`/categories/${category.id}`}>{getCategoryName(category.id, category.label, locale)}</Link>{' '}
             <span className="tabular-nums">({CATEGORY_COUNTS[category.id]})</span>
           </li>
         ))}

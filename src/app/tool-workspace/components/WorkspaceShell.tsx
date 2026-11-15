@@ -201,7 +201,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
             className="mb-3"
             items={[
               { label: t('navAllTools'), href: '/tools' },
-              { label: category ? getCategoryName(category.id, category.label, locale) : tool.category, href: `/tools?cat=${tool.category}` },
+              { label: category ? getCategoryName(category.id, category.label, locale) : tool.category, href: `/categories/${tool.category}` },
               { label: toolName },
             ]}
           />

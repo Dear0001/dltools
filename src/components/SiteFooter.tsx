@@ -58,7 +58,7 @@ export default function SiteFooter() {
           <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
             {CATEGORIES.map((category) => (
               <li key={category.id}>
-                <Link href={`/tools?cat=${category.id}`} className={link}>
+                <Link href={`/categories/${category.id}`} className={link}>
                   {getCategoryName(category.id, category.label, locale)}
                   <span className="ml-1 text-xs opacity-70 tabular-nums">{CATEGORY_COUNTS[category.id]}</span>
                 </Link>

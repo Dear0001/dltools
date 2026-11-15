@@ -8,6 +8,7 @@ import Topbar from '@/components/Topbar';
 import SiteFooter from '@/components/SiteFooter';
 import AutoTranslate from '@/components/AutoTranslate';
 import AuthProvider from '@/components/AuthProvider';
+import { getRequestLocale } from '@/lib/locale-server';
 import { getInitialAccountData } from '@/lib/account-data';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import JsonLd from '@/components/JsonLd';
@@ -38,7 +39,6 @@ export const metadata: Metadata = {
     'JWT decoder', 'KHQR', 'QR code', 'UUID generator', 'Base64', 'regex tester',
     'text diff', 'PDF to Word', 'DLTools',
   ],
-  alternates: { canonical: '/' },
   robots: { index: true, follow: true },
   // No `url` here: every page without its own openGraph would inherit it and report "/" as its og:url.
   openGraph: {
@@ -61,9 +61,10 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const { session, account } = await getInitialAccountData();
+  const locale = await getRequestLocale();
   return (
     <html
-      lang="km"
+      lang={locale === 'kh' ? 'km' : 'en'}
       data-theme="alabaster-paper"
       className={`${inter.variable} ${jetbrains.variable} ${khmer.variable}`}
       data-scroll-behavior="smooth"
@@ -75,7 +76,7 @@ export default async function RootLayout({
       </head>
       <body className="relative font-sans" suppressHydrationWarning>
         <ThemeProvider>
-          <AuthProvider session={session} account={account}>
+          <AuthProvider session={session} account={account} initialLocale={locale}>
             <GoogleAnalytics />
             <VercelAnalytics />
             <Toast />

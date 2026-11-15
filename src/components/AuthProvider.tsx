@@ -3,7 +3,7 @@
 import { SessionProvider } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import { createContext, useContext, type ReactNode } from 'react';
-import { LocaleProvider } from '@/i18n/LocaleProvider';
+import { LocaleProvider, type Locale } from '@/i18n/LocaleProvider';
 import type { InitialAccountData } from '@/lib/account-data';
 
 const EMPTY: InitialAccountData = { preferences: null, recentToolIds: null };
@@ -16,15 +16,17 @@ export default function AuthProvider({
   children,
   session,
   account = EMPTY,
+  initialLocale,
 }: {
   children: ReactNode;
   session: Session | null;
   account?: InitialAccountData;
+  initialLocale?: Locale;
 }) {
   return (
     <SessionProvider session={session} refetchOnWindowFocus={false}>
       <InitialAccountContext.Provider value={account}>
-        <LocaleProvider>{children}</LocaleProvider>
+        <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
       </InitialAccountContext.Provider>
     </SessionProvider>
   );
