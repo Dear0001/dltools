@@ -5,7 +5,7 @@
 /*
  * DLTools design tokens
  * ---------------------------------------------------------------------------
- * Every colour used by the UI comes from the variables below. Three themes are
+ * Every colour used by the UI comes from the variables below. Six themes are
  * selected with <html data-theme="...">. Components must use the Tailwind
  * aliases (bg-background, bg-card, text-foreground, text-error, ...) or the
  * helper classes in this file instead of hard-coded colours.
@@ -13,6 +13,11 @@
  *   alabaster-paper  default light theme (warm, low glare)
  *   nordic-frost     cool light theme
  *   midnight         dark theme
+ *   sunrise          warm light theme (morning)
+ *   dusk             warm purple dark theme (evening)
+ *   deep-ocean       teal dark theme (late night)
+ *
+ * Auto mode (see lib/theme.ts AUTO_SCHEDULE) switches between them by local time.
  *
  * Fonts are provided by next/font in layout.tsx (--font-inter, --font-jetbrains,
  * --font-khmer).
@@ -144,6 +149,135 @@
   --code-keyword: #c4b5fd;
   --code-literal: #fdba74;
   --code-function: #60a5fa;
+  --code-emphasis: #fca5a5;
+
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow-color: 0 0 0;
+}
+
+:root[data-theme='sunrise'] {
+  color-scheme: light;
+
+  --background: #fff6ee;
+  --background-secondary: #fbe9da;
+  --surface: #fffaf5;
+  --foreground: #3b2a24;
+  --muted-foreground: #7a5f54;
+  --primary: #c2410c;
+  --primary-foreground: #ffffff;
+  --accent: #f59e0b;
+  --accent-foreground: #451a03;
+  --border: #f0d9c6;
+  --border-strong: #e2c3a8;
+  --success: #15803d;
+  --warning: #b45309;
+  --error: #b91c1c;
+
+  --muted: #f8e6d6;
+  --input: #fffdfa;
+  --ring: #c2410c;
+
+  --editor: #fffaf5;
+  --editor-gutter: #b09484;
+  --editor-selection: #fde4c8;
+
+  --code-text: #3b2a24;
+  --code-comment: #8a7366;
+  --code-punctuation: #7a5f54;
+  --code-string: #15803d;
+  --code-key: #9a3412;
+  --code-markup: #0e7490;
+  --code-tag-name: #be185d;
+  --code-number: #b45309;
+  --code-keyword: #7c3aed;
+  --code-literal: #c2410c;
+  --code-function: #1d4ed8;
+  --code-emphasis: #b91c1c;
+
+  --overlay: rgb(59 42 36 / 0.45);
+  --shadow-color: 59 42 36;
+}
+
+:root[data-theme='dusk'] {
+  color-scheme: dark;
+
+  --background: #1f1a2e;
+  --background-secondary: #181425;
+  --surface: #29233b;
+  --foreground: #ece6f5;
+  --muted-foreground: #b0a6c4;
+  --primary: #fb923c;
+  --primary-foreground: #1f1305;
+  --accent: #f472b6;
+  --accent-foreground: #2a0a1a;
+  --border: #3a3252;
+  --border-strong: #4b4268;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #fb7185;
+
+  --muted: #2f2845;
+  --input: #231e34;
+  --ring: #fb923c;
+
+  --editor: #231e34;
+  --editor-gutter: #7d739a;
+  --editor-selection: #4a3a6b;
+
+  --code-text: #ece6f5;
+  --code-comment: #8b82a6;
+  --code-punctuation: #b0a6c4;
+  --code-string: #86efac;
+  --code-key: #fdba74;
+  --code-markup: #67e8f9;
+  --code-tag-name: #f9a8d4;
+  --code-number: #fcd34d;
+  --code-keyword: #c4b5fd;
+  --code-literal: #fdba74;
+  --code-function: #93c5fd;
+  --code-emphasis: #fda4af;
+
+  --overlay: rgb(10 6 20 / 0.6);
+  --shadow-color: 0 0 0;
+}
+
+:root[data-theme='deep-ocean'] {
+  color-scheme: dark;
+
+  --background: #0a1719;
+  --background-secondary: #071113;
+  --surface: #0f2124;
+  --foreground: #e0f2f1;
+  --muted-foreground: #8fb0b2;
+  --primary: #2dd4bf;
+  --primary-foreground: #04201c;
+  --accent: #38bdf8;
+  --accent-foreground: #0b1220;
+  --border: #1c3438;
+  --border-strong: #2a484d;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87171;
+
+  --muted: #142a2d;
+  --input: #0c1b1e;
+  --ring: #2dd4bf;
+
+  --editor: #0c1b1e;
+  --editor-gutter: #5f8083;
+  --editor-selection: #124a4d;
+
+  --code-text: #e0f2f1;
+  --code-comment: #6f9396;
+  --code-punctuation: #9dbcbe;
+  --code-string: #86efac;
+  --code-key: #5eead4;
+  --code-markup: #7dd3fc;
+  --code-tag-name: #f9a8d4;
+  --code-number: #fdba74;
+  --code-keyword: #c4b5fd;
+  --code-literal: #fdba74;
+  --code-function: #67e8f9;
   --code-emphasis: #fca5a5;
 
   --overlay: rgb(0 0 0 / 0.6);

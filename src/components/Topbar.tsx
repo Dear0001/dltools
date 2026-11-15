@@ -23,7 +23,7 @@ import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import SearchDialog from '@/components/search/SearchDialog';
 import { useTheme } from '@/components/ThemeProvider';
-import { normalizeTheme, type ThemeId } from '@/lib/theme';
+import { normalizePreference, type ThemePreference } from '@/lib/theme';
 import { CATEGORIES, CATEGORY_COUNTS, getToolPath, getToolsByCategory } from '@/data/tools';
 import {
   getCategoryDescription,
@@ -64,7 +64,7 @@ export default function Topbar() {
   const pathname = usePathname() ?? '/';
   const { data: session, status: authStatus } = useSession();
   const { locale, setLocale, t } = useLocale();
-  const { setTheme } = useTheme();
+  const { setPreference } = useTheme();
   const kh = locale === 'kh';
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -176,8 +176,8 @@ export default function Topbar() {
       })
       .then((preferences) => {
         if (!active) return;
-        const savedTheme = normalizeTheme(preferences.theme);
-        if (savedTheme) setTheme(savedTheme);
+        const savedTheme = normalizePreference(preferences.theme);
+        if (savedTheme) setPreference(savedTheme);
         if (preferences.locale === 'en' || preferences.locale === 'kh')
           setLocale(preferences.locale);
         setPreferencesLoadedFor(userId);
@@ -191,9 +191,9 @@ export default function Topbar() {
     };
     // `t` changes with the locale; reloading preferences on every language switch is not wanted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authStatus, session?.user?.id, setLocale, setTheme]);
+  }, [authStatus, session?.user?.id, setLocale, setPreference]);
 
-  const savePreference = async (preference: { theme?: ThemeId; locale?: Locale }) => {
+  const savePreference = async (preference: { theme?: ThemePreference; locale?: Locale }) => {
     if (
       authStatus !== 'authenticated' ||
       !session?.user?.id ||
@@ -212,7 +212,7 @@ export default function Topbar() {
     }
   };
 
-  const onThemeChange = (next: ThemeId) => void savePreference({ theme: next });
+  const onThemeChange = (next: ThemePreference) => void savePreference({ theme: next });
   const onLocaleChange = (next: Locale) => void savePreference({ locale: next });
 
   const userName = session?.user?.name?.trim() || session?.user?.email || t('account');
@@ -412,7 +412,7 @@ export default function Topbar() {
               </button>
               {profileOpen && (
                 <div
-                  className="absolute right-0 top-full z-[70] mt-2 w-72 rounded-2xl border border-border bg-card p-2 shadow-popover fade-in"
+                  className="absolute right-0 top-full z-[70] mt-2 max-h-[calc(100vh-5rem)] w-72 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-popover fade-in"
                   role="menu"
                   aria-label={t('accountMenu')}
                 >
