@@ -3,8 +3,41 @@ export const THEME_STORAGE_KEY = 'devtoolkit-theme';
 export const THEMES = ['alabaster-paper', 'sunrise', 'nordic-frost', 'dusk', 'midnight', 'deep-ocean'] as const;
 export type ThemeId = (typeof THEMES)[number];
 
-/** 'auto' follows the time-of-day schedule below instead of a fixed theme. */
-export type ThemePreference = ThemeId | 'auto';
+/** 'auto' follows the time-of-day schedule below; 'weather' follows the weather at a chosen place. */
+export type ThemePreference = ThemeId | 'auto' | 'weather';
+
+export const WEATHER_LOCATION_KEY = 'devtoolkit-weather-location';
+export const WEATHER_THEME_KEY = 'devtoolkit-weather-theme';
+
+export type WeatherCategory = 'clear' | 'cloudy' | 'fog' | 'rain' | 'snow' | 'storm';
+export interface WeatherSnapshot {
+  category: WeatherCategory;
+  isDay: boolean;
+  /** Within about an hour of sunset. */
+  twilight: boolean;
+}
+export interface WeatherLocation {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** Weather mood on top of day/night: sunny is warm, grey and wet is cool, nights go dark. */
+export function themeForWeather(w: WeatherSnapshot): ThemeId {
+  if (!w.isDay) return w.category === 'rain' || w.category === 'storm' || w.category === 'snow' ? 'deep-ocean' : 'midnight';
+  if (w.twilight) return 'dusk';
+  if (w.category === 'clear') return 'sunrise';
+  if (w.category === 'cloudy' || w.category === 'fog') return 'alabaster-paper';
+  return 'nordic-frost';
+}
+
+export const WEATHER_META = {
+  label: 'Auto (weather)',
+  labelKh: 'ស្វ័យប្រវត្តិ (តាមអាកាសធាតុ)',
+  hint: 'Follows the weather where you are',
+  hintKh: 'តាមអាកាសធាតុនៅកន្លែងរបស់អ្នក',
+  swatch: ['#FFF6EE', '#ECEFF4', '#0A1719'] as [string, string, string],
+};
 
 export const DEFAULT_THEME: ThemeId = 'alabaster-paper';
 
@@ -77,7 +110,7 @@ export function normalizeTheme(value: unknown): ThemeId | null {
 }
 
 export function normalizePreference(value: unknown): ThemePreference | null {
-  return value === 'auto' ? 'auto' : normalizeTheme(value);
+  return value === 'auto' || value === 'weather' ? value : normalizeTheme(value);
 }
 
 /**
@@ -85,4 +118,4 @@ export function normalizePreference(value: unknown): ThemePreference | null {
  * without a flash of the default one. With nothing saved, it follows the
  * operating system's light/dark preference.
  */
-export const THEME_INIT_SCRIPT = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var t=localStorage.getItem(k);var m=${JSON.stringify(LEGACY_THEMES)};var ok=${JSON.stringify(THEMES)};var dk=${JSON.stringify(THEMES.filter((id) => THEME_META[id].dark))};var sc=${JSON.stringify(AUTO_SCHEDULE)};if(t==='auto'){var d=new Date(),n=d.getHours()*60+d.getMinutes();t=sc[0].theme;for(var i=0;i<sc.length;i++)if(sc[i].start<=n)t=sc[i].theme;}else if(ok.indexOf(t)<0)t=m[t]||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'midnight':'alabaster-paper');var r=document.documentElement,isD=dk.indexOf(t)>=0;r.setAttribute('data-theme',t);r.classList.toggle('dark',isD);r.style.colorScheme=isD?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','alabaster-paper');}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var t=localStorage.getItem(k);var m=${JSON.stringify(LEGACY_THEMES)};var ok=${JSON.stringify(THEMES)};var dk=${JSON.stringify(THEMES.filter((id) => THEME_META[id].dark))};var sc=${JSON.stringify(AUTO_SCHEDULE)};var wk=${JSON.stringify(WEATHER_THEME_KEY)};if(t==='weather'){try{var w=JSON.parse(localStorage.getItem(wk)||'null');if(w&&ok.indexOf(w.theme)>=0&&Date.now()-w.at<10800000){t=w.theme;}else{t='auto';}}catch(e2){t='auto';}}if(t==='auto'){var d=new Date(),n=d.getHours()*60+d.getMinutes();t=sc[0].theme;for(var i=0;i<sc.length;i++)if(sc[i].start<=n)t=sc[i].theme;}else if(ok.indexOf(t)<0)t=m[t]||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'midnight':'alabaster-paper');var r=document.documentElement,isD=dk.indexOf(t)>=0;r.setAttribute('data-theme',t);r.classList.toggle('dark',isD);r.style.colorScheme=isD?'dark':'light';}catch(e){document.documentElement.setAttribute('data-theme','alabaster-paper');}})();`;

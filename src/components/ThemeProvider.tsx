@@ -4,12 +4,17 @@ import {
   DEFAULT_THEME,
   THEME_META,
   THEME_STORAGE_KEY,
+  WEATHER_LOCATION_KEY,
+  WEATHER_THEME_KEY,
   msUntilNextSlot,
   normalizePreference,
   normalizeTheme,
   themeForDate,
+  themeForWeather,
   type ThemeId,
   type ThemePreference,
+  type WeatherLocation,
+  type WeatherSnapshot,
 } from '@/lib/theme';
 
 interface ThemeContextValue {
@@ -20,7 +25,14 @@ interface ThemeContextValue {
   setPreference: (preference: ThemePreference) => void;
   /** Pick a fixed theme (leaves auto mode). */
   setTheme: (theme: ThemeId) => void;
+  /** Place followed in 'weather' mode. Kept in this browser only, never saved to the account. */
+  location: WeatherLocation | null;
+  setLocation: (location: WeatherLocation | null) => void;
+  weatherStatus: 'idle' | 'loading' | 'ok' | 'error';
 }
+
+const WEATHER_REFRESH_MS = 30 * 60_000;
+const WEATHER_RETRY_MS = 5 * 60_000;
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -39,6 +51,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>(DEFAULT_THEME);
   const [preference, setPreferenceState] = useState<ThemePreference>(DEFAULT_THEME);
   const themeRef = useRef<ThemeId>(DEFAULT_THEME);
+  const [location, setLocationState] = useState<WeatherLocation | null>(null);
+  const [weatherStatus, setWeatherStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
 
   const show = useCallback((next: ThemeId, animate: boolean) => {
     if (themeRef.current !== next) {
@@ -58,10 +72,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     let stored: string | null = null;
     try {
       stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+      const place = JSON.parse(window.localStorage.getItem(WEATHER_LOCATION_KEY) ?? 'null') as WeatherLocation | null;
+      if (place && typeof place.latitude === 'number' && typeof place.longitude === 'number') setLocationState(place);
     } catch {
       // Storage unavailable; fall through to the theme the init script chose.
     }
-    setPreferenceState(stored === 'auto' ? 'auto' : (current ?? DEFAULT_THEME));
+    setPreferenceState(stored === 'auto' || stored === 'weather' ? stored : (current ?? DEFAULT_THEME));
   }, []);
 
   // Auto mode: follow the clock, re-checking at each schedule boundary and
@@ -86,10 +102,74 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [preference, show]);
 
+  // Weather mode: ask our /api/weather proxy, re-check every 30 minutes and when
+  // the tab comes back. Without a place, or when the lookup fails, use the clock.
+  useEffect(() => {
+    if (preference !== 'weather') return;
+    let cancelled = false;
+    let timer: number | undefined;
+    let lastRun = 0;
+    const byClock = () => show(themeForDate(new Date()), true);
+
+    const load = async () => {
+      window.clearTimeout(timer);
+      lastRun = Date.now();
+      if (!location) {
+        setWeatherStatus('idle');
+        byClock();
+        timer = window.setTimeout(load, WEATHER_RETRY_MS);
+        return;
+      }
+      setWeatherStatus('loading');
+      let delay = WEATHER_REFRESH_MS;
+      try {
+        const res = await fetch(`/api/weather?lat=${location.latitude}&lon=${location.longitude}`);
+        if (!res.ok) throw new Error('weather');
+        const snapshot = (await res.json()) as WeatherSnapshot;
+        if (cancelled) return;
+        const next = themeForWeather(snapshot);
+        show(next, true);
+        setWeatherStatus('ok');
+        try {
+          window.localStorage.setItem(WEATHER_THEME_KEY, JSON.stringify({ theme: next, at: Date.now() }));
+        } catch {
+          // Cache is only a first-paint optimisation.
+        }
+      } catch {
+        if (cancelled) return;
+        setWeatherStatus('error');
+        byClock();
+        delay = WEATHER_RETRY_MS;
+      }
+      if (!cancelled) timer = window.setTimeout(load, delay);
+    };
+
+    void load();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastRun > 10 * 60_000) void load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [preference, location, show]);
+
+  const setLocation = useCallback((next: WeatherLocation | null) => {
+    setLocationState(next);
+    try {
+      if (next) window.localStorage.setItem(WEATHER_LOCATION_KEY, JSON.stringify(next));
+      else window.localStorage.removeItem(WEATHER_LOCATION_KEY);
+    } catch {
+      // Blocked storage: the place applies for this visit only.
+    }
+  }, []);
+
   const setPreference = useCallback(
     (next: ThemePreference) => {
       setPreferenceState(next);
-      if (next !== 'auto') show(next, true);
+      if (next !== 'auto' && next !== 'weather') show(next, true);
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, next);
       } catch {
@@ -106,15 +186,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const next = normalizePreference(event.newValue);
       if (!next) return;
       setPreferenceState(next);
-      if (next !== 'auto') show(next, false);
+      if (next !== 'auto' && next !== 'weather') show(next, false);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, [show]);
 
   const value = useMemo(
-    () => ({ theme, preference, setPreference, setTheme: setPreference }),
-    [theme, preference, setPreference],
+    () => ({ theme, preference, setPreference, setTheme: setPreference, location, setLocation, weatherStatus }),
+    [theme, preference, setPreference, location, setLocation, weatherStatus],
   );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
