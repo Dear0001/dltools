@@ -36,7 +36,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(function A
         ref={ref}
         type="button"
         aria-describedby={tooltipId}
-        className={`btn-ghost w-full min-w-0 justify-start sm:w-auto sm:justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${className}`}
+        className={`btn-ghost h-auto min-h-9 w-full min-w-0 justify-start py-1.5 text-left sm:w-auto sm:justify-center sm:py-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${className}`}
         onKeyDown={(event) => {
           if (event.key === 'Escape') setDismissed(true);
           onKeyDown?.(event);
@@ -52,7 +52,8 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(function A
         {...props}
       >
         <ShownIcon size={15} className={`shrink-0 ${showSuccess ? 'text-success' : iconClassName}`} aria-hidden="true" />
-        <span className="min-w-0 truncate whitespace-nowrap">{label}</span>
+        {/* Wraps on phones so long labels (e.g. Khmer) are never cut off; one line from `sm` up. */}
+        <span className="min-w-0 leading-snug sm:truncate sm:whitespace-nowrap">{label}</span>
         {TrailingIcon && <TrailingIcon size={12} className="shrink-0 text-muted-foreground" aria-hidden="true" />}
       </button>
       <span
