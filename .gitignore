@@ -3,6 +3,7 @@ node_modules/
 package-lock.json
 .env
 .env*.local
+skills/
 
 # Next.js build output
 .next/
