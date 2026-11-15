@@ -1,5 +1,6 @@
 // Thin proxy to Open-Meteo (free, no API key) so the browser never sends the
 // user's location to a third party and responses can be cached for a while.
+import { findCambodiaPlace } from '@/lib/cambodia';
 import type { WeatherCategory } from '@/lib/theme';
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -27,6 +28,10 @@ export async function GET(request: Request) {
   const city = params.get('city')?.trim();
   if (city) {
     if (city.length > 80) return fail('City name is too long.', 400);
+    const local = findCambodiaPlace(city);
+    if (local) {
+      return Response.json({ location: { name: `${local.name}, Cambodia`, latitude: local.latitude, longitude: local.longitude } });
+    }
     try {
       const res = await fetch(`${GEOCODE_URL}?name=${encodeURIComponent(city)}&count=1&language=en&format=json`, {
         signal: AbortSignal.timeout(5000),

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, Clock, CloudSun, LocateFixed, Palette } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { AUTO_META, WEATHER_META, THEME_MENU_ORDER, THEME_META, type ThemePreference } from '@/lib/theme';
+import { CAMBODIA_PLACES } from '@/lib/cambodia';
 import { useLocale } from '@/i18n/LocaleProvider';
 
 /** Palette icon in the top bar; clicking it opens a dropdown listing every theme. */
@@ -206,10 +207,16 @@ function WeatherPlace() {
           value={city}
           onChange={(e) => setCity(e.target.value)}
           maxLength={80}
+          list="weather-places"
           placeholder={kh ? 'ឈ្មោះទីក្រុង' : 'City name'}
           aria-label={kh ? 'ឈ្មោះទីក្រុង' : 'City name'}
           className="min-w-0 flex-1 rounded-md border border-border bg-input px-2 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
+        <datalist id="weather-places">
+          {CAMBODIA_PLACES.map((p) => (
+            <option key={p.name} value={kh ? p.khmer : p.name} />
+          ))}
+        </datalist>
         <button type="submit" disabled={busy || !city.trim()} className="rounded-md bg-primary px-2.5 py-1 text-sm font-medium text-primary-foreground disabled:opacity-50">
           {kh ? 'កំណត់' : 'Set'}
         </button>
