@@ -8,6 +8,7 @@ import Topbar from '@/components/Topbar';
 import SiteFooter from '@/components/SiteFooter';
 import AutoTranslate from '@/components/AutoTranslate';
 import AuthProvider from '@/components/AuthProvider';
+import { getInitialAccountData } from '@/lib/account-data';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import JsonLd from '@/components/JsonLd';
 import Toast from '@/components/ui/Toast';
@@ -56,9 +57,10 @@ export const metadata: Metadata = {
   // Favicons come from the app/icon.png and app/apple-icon.png file conventions.
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { session, account } = await getInitialAccountData();
   return (
     <html
       lang="km"
@@ -73,7 +75,7 @@ export default function RootLayout({
       </head>
       <body className="relative font-sans" suppressHydrationWarning>
         <ThemeProvider>
-          <AuthProvider>
+          <AuthProvider session={session} account={account}>
             <GoogleAnalytics />
             <VercelAnalytics />
             <Toast />

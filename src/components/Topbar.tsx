@@ -23,6 +23,7 @@ import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import SearchDialog from '@/components/search/SearchDialog';
 import { useTheme } from '@/components/ThemeProvider';
+import { useInitialAccountData } from '@/components/AuthProvider';
 import { normalizePreference, type ThemePreference } from '@/lib/theme';
 import { CATEGORIES, CATEGORY_COUNTS, getToolPath, getToolsByCategory } from '@/data/tools';
 import {
@@ -63,6 +64,7 @@ function useDismiss(
 export default function Topbar() {
   const pathname = usePathname() ?? '/';
   const { data: session, status: authStatus } = useSession();
+  const initialAccount = useInitialAccountData();
   const { locale, setLocale, t } = useLocale();
   const { setPreference } = useTheme();
   const kh = locale === 'kh';
@@ -163,33 +165,15 @@ export default function Topbar() {
     const userId = session?.user?.id;
     if (authStatus !== 'authenticated' || !userId) return;
 
-    let active = true;
-    fetch('/api/user/preferences')
-      .then(async (response) => {
-        const result = (await response.json()) as {
-          theme?: string;
-          locale?: string;
-          error?: string;
-        };
-        if (!response.ok) throw new Error(result.error ?? 'load-failed');
-        return result;
-      })
-      .then((preferences) => {
-        if (!active) return;
-        const savedTheme = normalizePreference(preferences.theme);
-        if (savedTheme) setPreference(savedTheme);
-        if (preferences.locale === 'en' || preferences.locale === 'kh')
-          setLocale(preferences.locale);
-        setPreferencesLoadedFor(userId);
-      })
-      .catch(() => {
-        if (active) toast.error(t('loadPrefsFailed'));
-      });
-
-    return () => {
-      active = false;
-    };
-    // `t` changes with the locale; reloading preferences on every language switch is not wanted.
+    // Preferences were rendered by the server, so no browser request is needed.
+    const preferences = initialAccount.preferences;
+    if (preferences) {
+      const savedTheme = normalizePreference(preferences.theme);
+      if (savedTheme) setPreference(savedTheme);
+      if (preferences.locale === 'en' || preferences.locale === 'kh') setLocale(preferences.locale);
+    }
+    setPreferencesLoadedFor(userId);
+    // `t` changes with the locale; re-applying preferences on every language switch is not wanted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authStatus, session?.user?.id, setLocale, setPreference]);
 

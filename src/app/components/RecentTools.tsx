@@ -5,6 +5,7 @@ import { History, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import ToolCard from './ToolCard';
+import { useInitialAccountData } from '@/components/AuthProvider';
 import ToolIcon from '@/components/ui/ToolIcon';
 import { TOOLS, getToolPath, type Tool } from '@/data/tools';
 import { getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
@@ -15,6 +16,7 @@ const STORAGE_KEY = 'devtoolkit-recent';
 export function useRecentTools() {
   const { locale } = useLocale();
   const { data: session, status: authStatus } = useSession();
+  const initialAccount = useInitialAccountData();
   const [recents, setRecents] = useState<string[] | null>(null);
 
   useEffect(() => {
@@ -37,22 +39,20 @@ export function useRecentTools() {
     let active = true;
     const loadRecents = async () => {
       try {
+        let toolIds = initialAccount.recentToolIds ?? [];
+        // Only the one-time device-to-account merge needs a request; plain reads come from the server render.
         if (localRecents.length > 0) {
           const syncResponse = await fetch('/api/user/recents', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ toolIds: localRecents }),
           });
-          if (!syncResponse.ok) {
-            const result = (await syncResponse.json()) as { error?: string };
-            throw new Error(result.error ?? 'Could not sync recent tools.');
-          }
+          const result = (await syncResponse.json()) as { toolIds?: string[]; error?: string };
+          if (!syncResponse.ok) throw new Error(result.error ?? 'Could not sync recent tools.');
+          toolIds = result.toolIds ?? toolIds;
         }
-        const response = await fetch('/api/user/recents');
-        const result = (await response.json()) as { toolIds?: string[]; error?: string };
-        if (!response.ok) throw new Error(result.error ?? 'Could not load recent tools.');
         if (active) {
-          setRecents((result.toolIds ?? []).filter((id) => TOOLS.some((tool) => tool.id === id)));
+          setRecents(toolIds.filter((id) => TOOLS.some((tool) => tool.id === id)));
         }
       } catch (error) {
         if (!active) return;
