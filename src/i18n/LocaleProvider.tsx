@@ -250,7 +250,7 @@ const messages = {
     apiSecurityAdvice: 'Only send credentials to APIs you own or trust, and prefer test keys over production secrets.',
     apiCredentialHeaders: 'Your headers include credentials: {names}. Check that you trust this destination before you send.',
     apiInsecureUrl: 'This URL uses plain HTTP, so anyone on the network can read the request. Use HTTPS for anything sensitive.',
-    apiCors: 'Cross-origin requests require the API to allow CORS.',
+    apiCors: 'Browser CORS rules apply: the API must allow cross-origin requests to see its response. A CORS error does not mean the request was not sent, as the destination may still have received it.',
   },
   kh: {
     toolHub: 'មជ្ឈមណ្ឌលឧបករណ៍',
@@ -495,7 +495,7 @@ const messages = {
     apiSecurityAdvice: 'ផ្ញើព័ត៌មានសម្ងាត់ទៅតែ API ដែលអ្នកជាម្ចាស់ ឬទុកចិត្តប៉ុណ្ណោះ ហើយគួរប្រើ key សាកល្បងជំនួសឱ្យ key សម្ងាត់ពិតប្រាកដ។',
     apiCredentialHeaders: 'header របស់អ្នកមានព័ត៌មានសម្ងាត់៖ {names}។ សូមប្រាកដថាអ្នកទុកចិត្តគោលដៅនេះ មុនពេលផ្ញើ។',
     apiInsecureUrl: 'URL នេះប្រើ HTTP ធម្មតា ដូច្នេះអ្នកណាម្នាក់នៅលើបណ្តាញអាចអានសំណើបាន។ សូមប្រើ HTTPS សម្រាប់ទិន្នន័យសម្ងាត់។',
-    apiCors: 'សំណើ cross-origin តម្រូវឱ្យ API អនុញ្ញាត CORS។',
+    apiCors: 'ច្បាប់ CORS របស់កម្មវិធីរុករកត្រូវបានអនុវត្ត៖ API ត្រូវអនុញ្ញាតសំណើ cross-origin ទើបអ្នកអាចឃើញការឆ្លើយតប។ កំហុស CORS មិនមានន័យថាសំណើមិនត្រូវបានផ្ញើទេ ព្រោះគេហទំព័រគោលដៅប្រហែលជាបានទទួលរួចហើយ។',
   },
 } as const;
 

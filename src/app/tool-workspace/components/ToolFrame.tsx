@@ -7,7 +7,18 @@ import { localizeControlContent, translateText, useLocale } from '@/i18n/LocaleP
  * (normally a PanelLayout). Every tool panel uses this so spacing, toolbar
  * styling and scrolling behave the same everywhere.
  */
-export default function ToolFrame({ toolbar, children, notice }: { toolbar?: React.ReactNode; children: React.ReactNode; notice?: React.ReactNode }) {
+export default function ToolFrame({
+  toolbar,
+  children,
+  notice,
+  noticePlacement = 'bottom',
+}: {
+  toolbar?: React.ReactNode;
+  children: React.ReactNode;
+  notice?: React.ReactNode;
+  /** `top` puts the notice between the toolbar and the panels, for warnings that must be seen before the user acts. */
+  noticePlacement?: 'top' | 'bottom';
+}) {
   const { locale } = useLocale();
   return (
     <div className="flex h-full flex-col gap-3">
@@ -16,10 +27,11 @@ export default function ToolFrame({ toolbar, children, notice }: { toolbar?: Rea
           {localizeControlContent(toolbar, locale)}
         </div>
       )}
+      {notice && noticePlacement === 'top' && <p className="flex-shrink-0 text-xs leading-relaxed text-muted-foreground">{notice}</p>}
       {/* Panels share the toolbar's outer edges, which match the page header's gutter. */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-hidden">
         <div className="min-h-0 flex-1">{children}</div>
-        {notice && <p className="flex-shrink-0 text-xs leading-relaxed text-muted-foreground">{notice}</p>}
+        {notice && noticePlacement === 'bottom' && <p className="flex-shrink-0 text-xs leading-relaxed text-muted-foreground">{notice}</p>}
       </div>
     </div>
   );

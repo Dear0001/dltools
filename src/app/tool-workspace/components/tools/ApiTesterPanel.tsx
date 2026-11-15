@@ -83,6 +83,7 @@ export default function ApiTesterPanel({ tool: _tool }: { tool: Tool }) {
   const insecure = isInsecureRemoteUrl(url);
   return (
     <ToolFrame
+      noticePlacement="top"
       toolbar={<>
         <select className="select-input" aria-label={t('apiMethod')} value={method} onChange={(event) => setMethod(event.target.value)}>{['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'].map((item) => <option key={item}>{item}</option>)}</select>
         <input className="input-field min-w-0 flex-1 font-mono text-sm" aria-label={t('apiUrl')} value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://api.example.com/resource" />
@@ -93,7 +94,7 @@ export default function ApiTesterPanel({ tool: _tool }: { tool: Tool }) {
           <ShieldAlert size={15} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
           <span>
             <strong className="font-semibold">{t('apiSecurityTitle')}</strong>{' '}
-            {t('apiSecurityBody')} {t('apiSecurityAdvice')}
+            {t('apiSecurityBody')} {t('apiSecurityAdvice')} {t('apiCors')}
           </span>
         </span>
         {(credentialHeaders.length > 0 || insecure) && (
@@ -105,7 +106,6 @@ export default function ApiTesterPanel({ tool: _tool }: { tool: Tool }) {
             </span>
           </span>
         )}
-        <span>{t('apiCors')}</span>
       </span>}
     >
       <PanelLayout
