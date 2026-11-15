@@ -18,7 +18,7 @@ import {
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import AppLogo from '@/components/ui/AppLogo';
-import ThemeSwitcher, { ThemeOptions } from '@/components/ui/ThemeSwitcher';
+import { ThemeMenu, ThemeOptions } from '@/components/ui/ThemeSwitcher';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import SearchDialog from '@/components/search/SearchDialog';
@@ -391,7 +391,7 @@ export default function Topbar() {
             </button>
 
             <LanguageSwitcher onChange={onLocaleChange} className="hidden sm:inline-flex" />
-            <ThemeSwitcher onChange={onThemeChange} className="hidden sm:inline-flex" />
+            <ThemeMenu onChange={onThemeChange} className="hidden sm:block" />
 
             <div ref={profileRef} className="relative hidden md:block">
               <button
@@ -412,7 +412,7 @@ export default function Topbar() {
               </button>
               {profileOpen && (
                 <div
-                  className="absolute right-0 top-full z-[70] mt-2 max-h-[calc(100vh-5rem)] w-72 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-popover fade-in"
+                  className="absolute right-0 top-full z-[70] mt-2 w-72 rounded-2xl border border-border bg-card p-2 shadow-popover fade-in"
                   role="menu"
                   aria-label={t('accountMenu')}
                 >
@@ -462,11 +462,6 @@ export default function Topbar() {
                     <HandCoins size={15} className="text-muted-foreground" aria-hidden="true" />{' '}
                     {t('supportProject')}
                   </button>
-                  <div className="my-1 border-t border-border" />
-                  <p className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">
-                    {t('theme')}
-                  </p>
-                  <ThemeOptions onChange={onThemeChange} />
                   <div className="my-1 border-t border-border" />
                   {signedIn ? (
                     <button

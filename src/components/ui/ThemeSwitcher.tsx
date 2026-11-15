@@ -1,34 +1,57 @@
 'use client';
-import React from 'react';
-import { Check, Clock, Moon, Sun } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, Clock, Palette } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
-import { AUTO_META, THEME_MENU_ORDER, THEME_META, type ThemeId, type ThemePreference } from '@/lib/theme';
+import { AUTO_META, THEME_MENU_ORDER, THEME_META, type ThemePreference } from '@/lib/theme';
 import { useLocale } from '@/i18n/LocaleProvider';
 
-/**
- * One-click light/dark toggle for the top bar. `onChange` lets callers sync the
- * choice to the signed-in account.
- */
-export default function ThemeSwitcher({ onChange, className = '' }: { onChange?: (theme: ThemePreference) => void; className?: string }) {
-  const { theme, setPreference: setTheme } = useTheme();
+/** Palette icon in the top bar; clicking it opens a dropdown listing every theme. */
+export function ThemeMenu({ onChange, className = '' }: { onChange?: (theme: ThemePreference) => void; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const { t } = useLocale();
-  const dark = THEME_META[theme].dark;
-  const next: ThemeId = dark ? 'alabaster-paper' : 'midnight';
-  const label = dark ? t('switchToLight') : t('switchToDark');
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <button
-      type="button"
-      className={`btn-icon ${className}`}
-      aria-label={label}
-      title={label}
-      onClick={() => {
-        setTheme(next);
-        onChange?.(next);
-      }}
-    >
-      {dark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
-    </button>
+    <div ref={ref} className={`relative ${className}`}>
+      <button
+        type="button"
+        className="btn-icon"
+        aria-label={t('theme')}
+        title={t('theme')}
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Palette size={18} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-[70] mt-2 max-h-[calc(100vh-5rem)] w-64 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-popover fade-in">
+          <p className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">{t('theme')}</p>
+          <ThemeOptions
+            onChange={(next) => {
+              onChange?.(next);
+              setOpen(false);
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
