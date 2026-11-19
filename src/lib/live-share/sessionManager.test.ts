@@ -24,7 +24,8 @@ let config: LiveShareConfig;
 function setup(overrides: Partial<LiveShareConfig> = {}) {
   now = 1_000_000;
   transport = new FakeTransport();
-  config = loadConfig({}, overrides);
+  // Most tests here exercise the host-approval flow; the no-approval default has its own describe block.
+  config = loadConfig({}, { requireApproval: true, ...overrides });
   manager = new SessionManager(config, transport, () => now);
 }
 const send = (id: string, m: ClientMessage) => manager.handle(id, m);
@@ -100,6 +101,49 @@ describe('session creation and pairing', () => {
     manager.connect('v', '9.9.9.9');
     send('v', { type: 'JOIN_REQUEST', code: host.code, name: 'v' });
     expect(transport.last('v', 'ERROR')?.code).toBe('INVALID_CODE');
+  });
+});
+
+describe('no approval (default)', () => {
+  beforeEach(() => setup({ requireApproval: false }));
+
+  it('defaults to admitting viewers without approval', () => {
+    expect(loadConfig({}).requireApproval).toBe(false);
+    expect(loadConfig({ LIVE_SHARE_REQUIRE_APPROVAL: 'true' }).requireApproval).toBe(true);
+  });
+
+  it('a valid code admits the viewer immediately with the current snapshot', () => {
+    const host = createHost();
+    send(host.id, update(1, { input: 'hello', output: 'HELLO', status: 'success' }, true));
+    manager.connect('v', '10.0.0.2');
+    send('v', { type: 'JOIN_REQUEST', code: host.code, name: 'v' });
+    expect(transport.of('v', 'JOIN_PENDING')).toHaveLength(0);
+    expect(transport.last('v', 'JOIN_APPROVED')!.snapshot.fields.input).toBe('hello');
+    const state = transport.last(host.id, 'HOST_STATE')!.state;
+    expect(state.viewers).toHaveLength(1);
+    expect(state.pending).toHaveLength(0);
+    send(host.id, update(2, { input: 'next' }));
+    expect(transport.last('v', 'CONTENT_UPDATE')?.fields.input).toBe('next');
+  });
+
+  it('still rejects wrong and expired codes, and still caps viewers', () => {
+    const host = createHost();
+    manager.connect('bad', '10.0.0.9');
+    send('bad', { type: 'JOIN_REQUEST', code: 'AAAA-AAAA', name: 'bad' });
+    expect(transport.last('bad', 'ERROR')?.code).toBe('INVALID_CODE');
+    expect(transport.of('bad', 'JOIN_APPROVED')).toHaveLength(0);
+    for (let i = 0; i < config.maxViewers; i++) {
+      manager.connect(`v${i}`, `10.0.1.${i}`);
+      send(`v${i}`, { type: 'JOIN_REQUEST', code: host.code, name: `v${i}` });
+      expect(transport.last(`v${i}`, 'JOIN_APPROVED')).toBeTruthy();
+    }
+    manager.connect('extra', '10.0.2.1');
+    send('extra', { type: 'JOIN_REQUEST', code: host.code, name: 'extra' });
+    expect(transport.last('extra', 'ERROR')?.code).toBe('SESSION_FULL');
+    now += config.pairingTtlMs + 1;
+    manager.connect('late', '10.0.3.1');
+    send('late', { type: 'JOIN_REQUEST', code: host.code, name: 'late' });
+    expect(transport.of('late', 'JOIN_APPROVED')).toHaveLength(0);
   });
 });
 

@@ -50,7 +50,7 @@ describe('state-machine fuzzing', () => {
       const r = rng(seed);
       let now = 1_000_000;
       const sink = new Sink();
-      const config = loadConfig({}, { joinAttemptsPerMinute: 10_000, failedJoinLockThreshold: 10_000, createsPerHour: 10_000, messagesPerSecond: 1e6, messageBurst: 1e6, maxViewers: 3 });
+      const config = loadConfig({}, { joinAttemptsPerMinute: 10_000, failedJoinLockThreshold: 10_000, createsPerHour: 10_000, messagesPerSecond: 1e6, messageBurst: 1e6, maxViewers: 3, requireApproval: true });
       const m = new SessionManager(config, sink, () => now);
       const ids = Array.from({ length: 8 }, (_, i) => `c${i}`);
       ids.forEach((id) => m.connect(id, `10.0.0.${id.slice(1)}`));
@@ -165,7 +165,8 @@ describe('throughput', () => {
         m.connect(id, `4.4.${s}.${v}`);
         m.handle(id, { type: 'JOIN_REQUEST', code, name: 'v' });
         const st = [...sink.out.get(host)!].reverse().find((x) => x.type === 'HOST_STATE');
-        if (st?.type === 'HOST_STATE') m.handle(host, { type: 'APPROVE', requestId: st.state.pending[0].requestId });
+        // Default config admits on a valid code; approve only if a request is actually pending.
+        if (st?.type === 'HOST_STATE' && st.state.pending[0]) m.handle(host, { type: 'APPROVE', requestId: st.state.pending[0].requestId });
       }
     }
     const t0 = performance.now();

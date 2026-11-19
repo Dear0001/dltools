@@ -461,6 +461,8 @@ export class SessionManager {
     conn.role = 'pending';
     conn.sessionId = session.id;
     conn.participantId = pending.id;
+    // Without approval, a valid code (typed, link or QR) is the invitation: admit immediately.
+    if (!this.config.requireApproval) return this.approve(session, pending.id);
     this.transport.send(conn.id, { type: 'JOIN_PENDING', requestId: pending.id, expiresAt: pending.expiresAt });
     this.pushHostState(session);
   }

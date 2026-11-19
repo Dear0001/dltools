@@ -59,7 +59,7 @@ beforeEach(async () => {
     port: 0,
     host: '127.0.0.1',
     allowedOrigins: [ORIGIN],
-    config: loadConfig({}, { hostGraceMs: 1500, viewerGraceMs: 5000 }),
+    config: loadConfig({}, { hostGraceMs: 1500, viewerGraceMs: 5000, requireApproval: true }),
     tickMs: 50,
   });
   const port = await server.start();

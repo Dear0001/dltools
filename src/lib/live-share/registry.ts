@@ -40,6 +40,10 @@ import { THEMES } from '../theme';
 
 const STATUS = ['idle', 'success', 'error'] as const;
 const MAX_CODE = 200_000;
+/** KHQR payloads are a few hundred characters; this leaves room for long custom strings. */
+const KHQR_MAX = 4_000;
+/** Largest KHQR logo/header image (as a data URL) that is synchronized; larger images are not sent. */
+export const KHQR_IMAGE_MAX = 150_000;
 
 const code = (label: string, role: 'input' | 'output', maxChars = MAX_CODE): LiveShareFieldSpec => ({ label, kind: 'code', role, maxChars });
 const text = (label: string, role: 'input' | 'option', maxChars = 2_000): LiveShareFieldSpec => ({ label, kind: 'text', role, maxChars });
@@ -123,18 +127,34 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
   'tool-json-to-ts': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-dart': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-java': jsonToCode('lang', ['java', 'kotlin', 'csharp']),
+  // ---- KHQR: payment QR payloads are public by design (printed for customers); viewers stay read-only. ----
+  'tool-khqr-validator': native({ fields: { input: code('KHQR / EMVCo string', 'input', KHQR_MAX) } }),
+  'tool-khqr-builder': native({
+    fields: {
+      khqr: code('Raw string', 'input', KHQR_MAX),
+      fgColor: text('Foreground', 'option', 16),
+      bgColor: text('Background', 'option', 16),
+      headerText: text('Header text', 'option', 24),
+      headerColor: text('Header color', 'option', 16),
+      logoSize: num('Logo size'),
+      // Uploaded artwork is file content: withheld unless the host enables "share file content".
+      logo: { label: 'Logo image', kind: 'code', role: 'option', maxChars: KHQR_IMAGE_MAX, optIn: 'files' },
+      headerImage: { label: 'Header image', kind: 'code', role: 'option', maxChars: KHQR_IMAGE_MAX, optIn: 'files' },
+    },
+  }),
 };
 
 /**
  * Deliberately NOT shareable: password generator, JWT decoder, hash, API tester, cURL generator,
  * certificate inspector (credentials / secrets), and every file-based tool — Base64 image,
- * image compressor, QR/KHQR, PDF/Word/image converters (files need an explicit extra approval step that
- * v1 does not implement). `registry.test.ts` pins this list.
+ * image compressor, QR reader, PDF/Word/image converters (files need an explicit extra approval step that
+ * v1 does not implement). IP / CIDR calculator is excluded by product decision. `registry.test.ts` pins this list.
  */
 export const LIVE_SHARE_EXCLUDED_TOOLS: readonly string[] = [
   'tool-password-generator', 'tool-jwt-decoder', 'tool-hash', 'tool-api-tester', 'tool-curl-generator', 'tool-certificate-inspector',
-  'tool-base64-image', 'tool-image-compress', 'tool-qr-reader', 'tool-khqr-builder', 'tool-khqr-validator',
+  'tool-base64-image', 'tool-image-compress', 'tool-qr-reader',
   'tool-pdf-word-converter', 'tool-image-to-pdf', 'tool-image-to-word',
+  'tool-ip-cidr', // product decision: not part of Live Share
 ];
 
 export function isLiveShareTool(toolId: string): boolean {

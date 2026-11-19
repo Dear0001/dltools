@@ -36,6 +36,20 @@ describe('Live Share tool registry', () => {
     expect(checkField('tool-password-generator', 'password', 'x').ok).toBe(false);
   });
 
+  it('shares the KHQR tools natively, with uploaded images gated behind file sharing', () => {
+    expect(isLiveShareTool('tool-khqr-validator')).toBe(true);
+    expect(isLiveShareTool('tool-khqr-builder')).toBe(true);
+    expect(LIVE_SHARE_TOOLS['tool-khqr-builder'].native).toBe(true);
+    expect(checkField('tool-khqr-builder', 'khqr', '00020101021229').ok).toBe(true);
+    expect(checkField('tool-khqr-builder', 'logoSize', '0.16').ok).toBe(true);
+    expect(checkField('tool-khqr-builder', 'logoSize', 'big').ok).toBe(false);
+    expect(checkField('tool-khqr-builder', 'merchantSecret', 'x').ok).toBe(false);
+    const fields = LIVE_SHARE_TOOLS['tool-khqr-builder'].fields;
+    expect(fields.logo.optIn).toBe('files');
+    expect(fields.headerImage.optIn).toBe('files');
+    expect(isLiveShareTool('tool-ip-cidr')).toBe(false);
+  });
+
   it('adds the host theme and language to every tool, and validates them', () => {
     for (const id of Object.keys(LIVE_SHARE_TOOLS)) {
       const spec = getLiveShareTool(id)!;

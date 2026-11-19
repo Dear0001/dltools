@@ -7,7 +7,7 @@ import { TOOLS, getToolPath } from '@/data/tools';
 import { getToolName } from '@/i18n/LocaleProvider';
 import { getAvailability, useHost, useIsClient } from '@/lib/live-share/react';
 import { Card, ConnectionBadge, Countdown, PrivacyNotice, useLs } from './shared';
-import PairingQr from './PairingQr';
+import PairingQr, { joinLink } from './PairingQr';
 import type { LsKey } from './messages';
 
 const ENDED_KEY: Record<string, LsKey> = {
@@ -77,7 +77,7 @@ export default function HostDashboard() {
 
   const copy = async (what: 'code' | 'link') => {
     try {
-      const text = what === 'code' ? host.code ?? '' : `${window.location.origin}/live-share/join?code=${host.code}`;
+      const text = what === 'code' ? host.code ?? '' : joinLink(host.code ?? '');
       await navigator.clipboard.writeText(text);
       setCopied(what);
     } catch { window.alert(t('copyFailed')); }

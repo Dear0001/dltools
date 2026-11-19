@@ -2,13 +2,18 @@
 import React, { useEffect, useState } from 'react';
 import { useLs } from './shared';
 
-/** Renders a QR that opens the join page with the code prefilled. Generated locally in the browser. */
+/** Join link for a pairing code. `join=1` makes the join page connect immediately, so opening it is enough. */
+export function joinLink(code: string): string {
+  return `${window.location.origin}/live-share/join?code=${encodeURIComponent(code)}&join=1`;
+}
+
+/** Renders a QR that opens the join page and joins right away. Generated locally in the browser. */
 export default function PairingQr({ code, size = 176 }: { code: string; size?: number }) {
   const { t } = useLs();
   const [src, setSrc] = useState('');
   useEffect(() => {
     let cancelled = false;
-    const link = `${window.location.origin}/live-share/join?code=${encodeURIComponent(code)}`;
+    const link = joinLink(code);
     // Loaded on demand so the QR library is not part of every tool page's JavaScript.
     import('qrcode')
       .then((mod) => (mod.default ?? mod).toDataURL(link, { width: size * 2, margin: 1, errorCorrectionLevel: 'M' }))

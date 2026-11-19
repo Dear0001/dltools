@@ -2,11 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, LogIn, Radio, RefreshCw, Share2, Square, UserCheck, UserX, X } from 'lucide-react';
+import { Check, Copy, Link2, LogIn, Radio, RefreshCw, Share2, Square, UserCheck, UserX, X } from 'lucide-react';
 import ActionButton from '@/components/ui/ActionButton';
 import { getAvailability, useHost, useIsClient } from '@/lib/live-share/react';
 import { Countdown, PrivacyNotice, useLs } from './shared';
-import PairingQr from './PairingQr';
+import PairingQr, { joinLink } from './PairingQr';
 
 type Mode = 'host' | 'join';
 
@@ -24,7 +24,7 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
   const [mode, setMode] = useState<Mode>('host');
   const [code, setCode] = useState('');
   const [joinError, setJoinError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'code' | 'link' | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const coolTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -72,7 +72,7 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
 
   useEffect(() => {
     if (!copied) return;
-    const id = setTimeout(() => setCopied(false), 2000);
+    const id = setTimeout(() => setCopied(null), 2000);
     return () => clearTimeout(id);
   }, [copied]);
 
@@ -81,9 +81,10 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
     ? viewerCount === 0 ? t('waitingForDevice') : viewerCount === 1 ? t('sharingWithOne') : t('sharingWithMany').replace('{n}', String(viewerCount))
     : '';
 
-  const copyCode = async () => {
+  const copy = async (what: 'code' | 'link') => {
     if (!host?.code) return;
-    try { await navigator.clipboard.writeText(host.code); setCopied(true); } catch { window.alert(t('copyFailed')); }
+    const text = what === 'code' ? host.code : joinLink(host.code);
+    try { await navigator.clipboard.writeText(text); setCopied(what); } catch { window.alert(t('copyFailed')); }
   };
   const join = (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,9 +158,14 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
                         <PairingQr code={host.code} size={152} />
                         <p data-no-translate className="select-all whitespace-nowrap font-mono text-3xl font-semibold tracking-[0.12em] text-foreground">{host.code}</p>
                         <p className="text-xs text-muted-foreground">{t('codeExpiresIn')} <Countdown until={host.pairingExpiresAt} /></p>
-                        <button type="button" className="btn-ghost" onClick={() => void copyCode()}>
-                          {copied ? <Check size={15} className="text-success" /> : <Copy size={15} />} {copied ? t('copied') : t('copyCode')}
-                        </button>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <button type="button" className="btn-ghost" onClick={() => void copy('code')}>
+                            {copied === 'code' ? <Check size={15} className="text-success" /> : <Copy size={15} />} {copied === 'code' ? t('copied') : t('copyCode')}
+                          </button>
+                          <button type="button" className="btn-ghost" onClick={() => void copy('link')}>
+                            {copied === 'link' ? <Check size={15} className="text-success" /> : <Link2 size={15} />} {copied === 'link' ? t('copied') : t('copyLink')}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="text-center">

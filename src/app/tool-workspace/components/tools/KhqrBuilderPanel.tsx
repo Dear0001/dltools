@@ -9,26 +9,48 @@ import { toast } from 'sonner';
 import QRCode from 'qrcode';
 import { useDebouncedValue } from '../useDebouncedValue';
 import { analyzeKhqr, formatAmount, withCorrectCrc } from './emvQr';
+import { useLiveState, type Codec } from '@/lib/live-share/useLiveState';
+import { KHQR_IMAGE_MAX } from '@/lib/live-share/registry';
 
 /** Render scale for crisp PNG export (card is 400×560 CSS px). */
 const EXPORT_SCALE = 3;
+const DEFAULT_LOGO = '/assets/images/bakong-mark.png';
+
+// ---- Live Share codecs: what a viewer receives is validated before it reaches the canvas. ----
+const isImageDataUrl = (v: string) => /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(v);
+/** Uploaded images: not sent when too large (a truncated data URL would just be a broken image). */
+const shareImage = (v: string | null) => (v && v !== DEFAULT_LOGO && v.length <= KHQR_IMAGE_MAX && isImageDataUrl(v) ? v : '');
+const logoCodec: Codec<string | null> = {
+  encode: shareImage,
+  // Nothing shared (default logo, file sharing off, or too large) → the viewer shows the default Bakong logo.
+  decode: (raw) => (isImageDataUrl(raw) ? raw : DEFAULT_LOGO),
+};
+const headerImageCodec: Codec<string | null> = {
+  encode: shareImage,
+  decode: (raw) => (isImageDataUrl(raw) ? raw : null),
+};
+const colorCodec: Codec<string> = {
+  encode: (v) => v,
+  decode: (raw, fallback) => (/^#[0-9a-f]{6}$/i.test(raw) ? raw : fallback),
+};
 
 export default function KhqrBuilderPanel({ tool: _tool }: { tool: Tool }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderRequestRef = useRef(0);
   const [khqrString, setKhqrString] = useState('');
   const [generated, setGenerated] = useState(false);
-  const [customString, setCustomString] = useState('');
-  const [fgColor, setFgColor] = useState('#000000');
-  const [bgColor, setBgColor] = useState('#ffffff');
-  const defaultLogo = '/assets/images/bakong-mark.png';
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(defaultLogo);
+  // Shared with Live Share viewers (see registry.ts): they render the same QR card locally, read-only.
+  const [customString, setCustomString] = useLiveState('khqr', '');
+  const [fgColor, setFgColor] = useLiveState('fgColor', '#000000', colorCodec);
+  const [bgColor, setBgColor] = useLiveState('bgColor', '#ffffff', colorCodec);
+  const defaultLogo = DEFAULT_LOGO;
+  const [logoDataUrl, setLogoDataUrl] = useLiveState<string | null>('logo', defaultLogo, logoCodec);
   const [logoName, setLogoName] = useState<string | null>('Bakong logo');
-  const [logoSize, setLogoSize] = useState(0.16);
-  const [headerText, setHeaderText] = useState('KHQR');
-  const [headerImageDataUrl, setHeaderImageDataUrl] = useState<string | null>(null);
+  const [logoSize, setLogoSize] = useLiveState('logoSize', 0.16);
+  const [headerText, setHeaderText] = useLiveState('headerText', 'KHQR');
+  const [headerImageDataUrl, setHeaderImageDataUrl] = useLiveState<string | null>('headerImage', null, headerImageCodec);
   const [headerImageName, setHeaderImageName] = useState('');
-  const [headerColor, setHeaderColor] = useState('#e31b23');
+  const [headerColor, setHeaderColor] = useLiveState('headerColor', '#e31b23', colorCodec);
   const debouncedCustomString = useDebouncedValue(customString, 200);
 
   // no external form state - only raw string input

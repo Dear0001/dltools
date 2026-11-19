@@ -22,7 +22,14 @@ export interface LiveShareConfig {
   messagesPerSecond: number;
   messageBurst: number;
   backpressureBytes: number;
+  /**
+   * `false` (default): a valid pairing code, link or QR scan admits the viewer immediately.
+   * `true`: the host must approve each join request. Env: LIVE_SHARE_REQUIRE_APPROVAL=true.
+   */
+  requireApproval: boolean;
 }
+
+type NumericKey = Exclude<keyof LiveShareConfig, 'requireApproval'>;
 
 export const DEFAULT_CONFIG: LiveShareConfig = {
   pairingTtlMs: 5 * 60_000,
@@ -47,9 +54,10 @@ export const DEFAULT_CONFIG: LiveShareConfig = {
   messagesPerSecond: 30,
   messageBurst: 90,
   backpressureBytes: 512 * 1024,
+  requireApproval: false,
 };
 
-const ENV_KEYS: Record<keyof LiveShareConfig, string> = {
+const ENV_KEYS: Record<NumericKey, string> = {
   pairingTtlMs: 'LIVE_SHARE_PAIRING_TTL_MS',
   sessionTtlMs: 'LIVE_SHARE_SESSION_TTL_MS',
   sessionExtendMs: 'LIVE_SHARE_SESSION_EXTEND_MS',
@@ -80,11 +88,13 @@ export function loadConfig(
   overrides: Partial<LiveShareConfig> = {},
 ): LiveShareConfig {
   const config = { ...DEFAULT_CONFIG };
-  for (const key of Object.keys(ENV_KEYS) as Array<keyof LiveShareConfig>) {
+  for (const key of Object.keys(ENV_KEYS) as NumericKey[]) {
     const raw = env[ENV_KEYS[key]];
     if (raw === undefined || raw.trim() === '') continue;
     const value = Number(raw);
     if (Number.isFinite(value) && value > 0) config[key] = Math.floor(value);
   }
+  const approval = env.LIVE_SHARE_REQUIRE_APPROVAL?.trim().toLowerCase();
+  if (approval === 'true' || approval === '1') config.requireApproval = true;
   return { ...config, ...overrides };
 }

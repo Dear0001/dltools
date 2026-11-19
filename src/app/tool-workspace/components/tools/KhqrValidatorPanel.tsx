@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { OutputPlaceholder } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
@@ -9,10 +9,12 @@ import { toast } from 'sonner';
 import KhqrResult from './KhqrResult';
 import { KHQR_SAMPLE as SAMPLE } from './khqrSample';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 
 export default function KhqrValidatorPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
+  // Shared with Live Share viewers, who see the same validation result computed from the host's string.
+  const [input, setInput] = useLiveState('input', SAMPLE);
   const debounced = useDebouncedValue(input).trim();
 
   const paste = async () => {

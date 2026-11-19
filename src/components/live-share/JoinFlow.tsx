@@ -31,7 +31,7 @@ export default function JoinFlow() {
     if (fromUrl) {
       const clean = fromUrl.toUpperCase().slice(0, 16);
       setCode(clean);
-      // Coming from the Share dialog: the user already asked to join, so start (the host still has to approve).
+      // Coming from the Share dialog: the user already asked to join, so start right away.
       if (params.get('join') === '1' && controller && clean.replace(/[^A-Z0-9]/g, '').length >= 6 && controller.state.phase === 'idle') controller.start(clean, '');
       // Don't leave the pairing code in the address bar, browser history or Referer headers.
       try { window.history.replaceState(null, '', window.location.pathname); } catch { /* non-critical */ }
