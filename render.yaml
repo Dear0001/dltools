@@ -1,0 +1,15 @@
+# Render Blueprint for the Live Share WebSocket service. Dashboard: New + > Blueprint > pick this repository.
+services:
+  - type: web
+    name: dltools-live-share
+    runtime: docker
+    dockerfilePath: ./Dockerfile.live-share
+    dockerContext: .
+    plan: free # sleeps after ~15 min idle (first click then takes ~30-60 s); use "starter" for always-on
+    healthCheckPath: /healthz
+    numInstances: 1 # sessions live in memory: never scale beyond one instance
+    envVars:
+      - key: LIVE_SHARE_ALLOWED_ORIGINS
+        value: https://dltools.vercel.app
+      - key: LIVE_SHARE_TRUST_PROXY
+        value: "true"
