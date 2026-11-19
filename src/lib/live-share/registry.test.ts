@@ -51,9 +51,9 @@ describe('Live Share tool registry', () => {
     expect(isLiveShareTool('tool-ip-cidr')).toBe(false);
   });
 
-  it('shares only the QR reader\'s decoded text, and withholds Wi-Fi passwords', () => {
+  it('shares the QR reader\'s decoded text and image preview, and withholds Wi-Fi passwords', () => {
     expect(isLiveShareTool('tool-qr-reader')).toBe(true);
-    expect(Object.keys(LIVE_SHARE_TOOLS['tool-qr-reader'].fields).sort()).toEqual(['error', 'result', 'source']);
+    expect(Object.keys(LIVE_SHARE_TOOLS['tool-qr-reader'].fields).sort()).toEqual(['error', 'image', 'result', 'source']);
     expect(detectSecret('WIFI:S:Home;T:WPA;P:hunter22;;')).toBe('wifi-password');
     expect(detectSecret('WIFI:S:Cafe;T:nopass;;')).toBeNull();
     expect(detectSecret('https://dltools.vercel.app')).toBeNull();

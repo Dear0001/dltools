@@ -44,6 +44,8 @@ const MAX_CODE = 200_000;
 const KHQR_MAX = 4_000;
 /** Largest KHQR logo/header image (as a data URL) that is synchronized; larger images are not sent. */
 export const KHQR_IMAGE_MAX = 150_000;
+/** Largest QR reader image preview (downscaled JPEG data URL) that is synchronized. */
+export const QR_IMAGE_MAX = 150_000;
 
 const code = (label: string, role: 'input' | 'output', maxChars = MAX_CODE): LiveShareFieldSpec => ({ label, kind: 'code', role, maxChars });
 const text = (label: string, role: 'input' | 'option', maxChars = 2_000): LiveShareFieldSpec => ({ label, kind: 'text', role, maxChars });
@@ -127,10 +129,13 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
   'tool-json-to-ts': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-dart': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-java': jsonToCode('lang', ['java', 'kotlin', 'csharp']),
-  // ---- QR reader: only the decoded text is shared — never the camera feed or the scanned image.
-  // Wi-Fi results with a password are withheld by the secret scanner (secrets.ts). ----
+  // ---- QR reader: decoded text plus a downscaled copy of an uploaded/pasted image — never the live camera feed.
+  // Wi-Fi results with a password are withheld by the secret scanner (secrets.ts), and so is their image. ----
   'tool-qr-reader': native({
-    fields: { result: code('Decoded result', 'output', 8_000), source: text('Source', 'input', 120), error: message('Error') },
+    fields: {
+      image: { label: 'Scanned image', kind: 'code', role: 'input', maxChars: QR_IMAGE_MAX },
+      result: code('Decoded result', 'output', 8_000), source: text('Source', 'input', 120), error: message('Error'),
+    },
   }),
   // ---- KHQR: payment QR payloads are public by design (printed for customers); viewers stay read-only. ----
   'tool-khqr-validator': native({ fields: { input: code('KHQR / EMVCo string', 'input', KHQR_MAX) } }),

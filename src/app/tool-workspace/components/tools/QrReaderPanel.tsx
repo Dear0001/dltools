@@ -8,7 +8,33 @@ import { toast } from 'sonner';
 import jsQR from 'jsqr';
 import AppImage from '@/components/ui/AppImage';
 import { analyzeKhqr } from './emvQr';
-import { useLiveState } from '@/lib/live-share/useLiveState';
+import { useLiveState, type Codec } from '@/lib/live-share/useLiveState';
+import { QR_IMAGE_MAX } from '@/lib/live-share/registry';
+import { detectSecret } from '@/lib/live-share/secrets';
+
+/** A viewer only ever renders a real image data URL from the host. */
+const sharedImageCodec: Codec<string> = {
+  encode: (v) => v,
+  decode: (raw) => (/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(raw) ? raw : ''),
+};
+
+/** Small JPEG copy of the scanned image for Live Share viewers; '' if it can't be made small enough. */
+function makeShareCopy(img: HTMLImageElement): string {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  for (const [max, quality] of [[640, 0.8], [480, 0.7], [360, 0.6]] as const) {
+    const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL('image/jpeg', quality);
+    if (url.length <= QR_IMAGE_MAX) return url;
+  }
+  return '';
+}
 import KhqrResult from './KhqrResult';
 
 type ContentKind = 'KHQR / EMV' | 'URL' | 'Wi-Fi' | 'Email' | 'Phone' | 'SMS' | 'Contact' | 'Geo' | 'JSON' | 'Text';
@@ -65,10 +91,13 @@ function decodeImage(img: HTMLImageElement): string | null {
 }
 
 export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
-  // Shared with Live Share viewers: the decoded text only. The image preview and camera feed stay on this device.
+  // Shared with Live Share viewers: the decoded text and a small copy of an uploaded/pasted image.
+  // The live camera feed never leaves this device.
   const [result, setResult] = useLiveState('result', '');
   const [source, setSource] = useLiveState('source', '');
   const [previewUrl, setPreviewUrl] = useState('');
+  const [shareCopy, setShareCopy] = useState('');
+  const [sharedImage, setSharedImage] = useLiveState('image', '', sharedImageCodec);
   const [scanning, setScanning] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useLiveState('error', '');
@@ -80,6 +109,7 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
   const prevPreviewUrl = useRef<string | null>(null);
 
   const updateResult = useCallback((decoded: string, from: string) => {
+    if (from === 'Camera' || from === 'Clipboard text') setShareCopy(''); // no image behind this result
     setResult(decoded.trim());
     setSource(from);
     setError('');
@@ -107,6 +137,7 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
 
       const img = new Image();
       img.onload = () => {
+        setShareCopy(makeShareCopy(img));
         const decoded = decodeImage(img);
         if (decoded) {
           updateResult(decoded, file.name === 'pasted.png' ? 'Clipboard image' : file.name || 'Image');
@@ -228,7 +259,13 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
     [stopCamera],
   );
 
+  // Publish the image copy, except when the result is withheld (e.g. a Wi-Fi password): the picture would reveal it.
+  useEffect(() => {
+    setSharedImage(shareCopy && !detectSecret(result) ? shareCopy : '');
+  }, [shareCopy, result, setSharedImage]);
+
   const clear = () => {
+    setShareCopy('');
     setResult('');
     setSource('');
     setError('');
@@ -286,9 +323,10 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
             </div>
           )}
 
-          {previewUrl && !scanning && (
+          {/* Host: full-size local preview. Live Share viewer: the host's shared copy. */}
+          {(previewUrl || sharedImage) && !scanning && (
             <div className="flex min-h-40 flex-1 items-center justify-center rounded-lg border border-border bg-background-secondary p-3">
-              <AppImage key={previewUrl} src={previewUrl} alt="Uploaded image scanned for a QR code" width={320} height={320} className="max-h-[40vh] w-auto rounded object-contain" unoptimized />
+              <AppImage key={previewUrl || sharedImage} src={previewUrl || sharedImage} alt="Uploaded image scanned for a QR code" width={320} height={320} className="max-h-[40vh] w-auto rounded object-contain" unoptimized />
             </div>
           )}
           <input ref={fileRef} type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) processImage(file); e.target.value = ''; }} />
