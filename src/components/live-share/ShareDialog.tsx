@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, LogIn, Radio, Share2, Square, UserCheck, UserX, X } from 'lucide-react';
+import { Check, Copy, LogIn, Radio, RefreshCw, Share2, Square, UserCheck, UserX, X } from 'lucide-react';
 import ActionButton from '@/components/ui/ActionButton';
 import { getAvailability, useHost, useIsClient } from '@/lib/live-share/react';
 import { Countdown, PrivacyNotice, useLs } from './shared';
@@ -138,10 +138,17 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
                     </button>
                   </>
                 )}
-                {!active && state.phase === 'starting' && (
+                {!active && state.phase === 'starting' && !state.unreachable && (
                   <p role="status" className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden="true" />{t('starting')}
                   </p>
+                )}
+                {!active && state.phase === 'starting' && state.unreachable && controller && (
+                  <div role="alert" className="rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-3">
+                    <p className="text-sm font-semibold text-foreground">{t('unreachableTitle')}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('unreachableBody')}</p>
+                    <button type="button" className="btn-primary mt-3" onClick={() => controller.retry()}><RefreshCw size={15} /> {t('retryNow')}</button>
+                  </div>
                 )}
                 {active && host && controller && (
                   <div className="space-y-4">
