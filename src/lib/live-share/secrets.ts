@@ -13,6 +13,8 @@ const PATTERNS: ReadonlyArray<readonly [string, RegExp]> = [
   ['slack-token', /\bxox[baprs]-[A-Za-z0-9-]{10,}/],
   ['google-api-key', /\bAIza[0-9A-Za-z_-]{35}\b/],
   ['jwt', /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/],
+  // Wi-Fi QR payloads (WIFI:S:<ssid>;T:WPA;P:<password>;;) carry the network password.
+  ['wifi-password', /\bWIFI:(?:(?:\\.|[^;\\])*;)*?P:(?:\\.|[^;\\])+/i],
   ['auth-header', /\bauthorization\s*[:=]\s*["']?(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}/i],
   [
     'credential-assignment',

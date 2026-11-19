@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import jsQR from 'jsqr';
 import AppImage from '@/components/ui/AppImage';
 import { analyzeKhqr } from './emvQr';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 import KhqrResult from './KhqrResult';
 
 type ContentKind = 'KHQR / EMV' | 'URL' | 'Wi-Fi' | 'Email' | 'Phone' | 'SMS' | 'Contact' | 'Geo' | 'JSON' | 'Text';
@@ -64,12 +65,13 @@ function decodeImage(img: HTMLImageElement): string | null {
 }
 
 export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
-  const [result, setResult] = useState('');
-  const [source, setSource] = useState('');
+  // Shared with Live Share viewers: the decoded text only. The image preview and camera feed stay on this device.
+  const [result, setResult] = useLiveState('result', '');
+  const [source, setSource] = useLiveState('source', '');
   const [previewUrl, setPreviewUrl] = useState('');
   const [scanning, setScanning] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useLiveState('error', '');
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -81,7 +83,7 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
     setResult(decoded.trim());
     setSource(from);
     setError('');
-  }, []);
+  }, [setResult, setSource, setError]);
 
   const stopCamera = useCallback(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
@@ -117,7 +119,7 @@ export default function QrReaderPanel({ tool: _tool }: { tool: Tool }) {
       img.onerror = () => setError('This image could not be opened.');
       img.src = url;
     },
-    [updateResult],
+    [updateResult, setResult, setError],
   );
 
   const handlePaste = useCallback(async () => {

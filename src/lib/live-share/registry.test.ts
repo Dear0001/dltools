@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TOOLS } from '@/data/tools';
 import { LIVE_SHARE_EXCLUDED_TOOLS, LIVE_SHARE_TOOLS, checkField, getLiveShareTool, isLiveShareTool } from './registry';
+import { detectSecret } from './secrets';
 
 describe('Live Share tool registry', () => {
   it('only lists tools that exist', () => {
@@ -48,6 +49,14 @@ describe('Live Share tool registry', () => {
     expect(fields.logo.optIn).toBe('files');
     expect(fields.headerImage.optIn).toBe('files');
     expect(isLiveShareTool('tool-ip-cidr')).toBe(false);
+  });
+
+  it('shares only the QR reader\'s decoded text, and withholds Wi-Fi passwords', () => {
+    expect(isLiveShareTool('tool-qr-reader')).toBe(true);
+    expect(Object.keys(LIVE_SHARE_TOOLS['tool-qr-reader'].fields).sort()).toEqual(['error', 'result', 'source']);
+    expect(detectSecret('WIFI:S:Home;T:WPA;P:hunter22;;')).toBe('wifi-password');
+    expect(detectSecret('WIFI:S:Cafe;T:nopass;;')).toBeNull();
+    expect(detectSecret('https://dltools.vercel.app')).toBeNull();
   });
 
   it('adds the host theme and language to every tool, and validates them', () => {

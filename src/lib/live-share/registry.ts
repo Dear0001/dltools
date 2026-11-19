@@ -127,6 +127,11 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
   'tool-json-to-ts': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-dart': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-java': jsonToCode('lang', ['java', 'kotlin', 'csharp']),
+  // ---- QR reader: only the decoded text is shared — never the camera feed or the scanned image.
+  // Wi-Fi results with a password are withheld by the secret scanner (secrets.ts). ----
+  'tool-qr-reader': native({
+    fields: { result: code('Decoded result', 'output', 8_000), source: text('Source', 'input', 120), error: message('Error') },
+  }),
   // ---- KHQR: payment QR payloads are public by design (printed for customers); viewers stay read-only. ----
   'tool-khqr-validator': native({ fields: { input: code('KHQR / EMVCo string', 'input', KHQR_MAX) } }),
   'tool-khqr-builder': native({
@@ -147,12 +152,12 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
 /**
  * Deliberately NOT shareable: password generator, JWT decoder, hash, API tester, cURL generator,
  * certificate inspector (credentials / secrets), and every file-based tool — Base64 image,
- * image compressor, QR reader, PDF/Word/image converters (files need an explicit extra approval step that
+ * image compressor, PDF/Word/image converters (files need an explicit extra approval step that
  * v1 does not implement). IP / CIDR calculator is excluded by product decision. `registry.test.ts` pins this list.
  */
 export const LIVE_SHARE_EXCLUDED_TOOLS: readonly string[] = [
   'tool-password-generator', 'tool-jwt-decoder', 'tool-hash', 'tool-api-tester', 'tool-curl-generator', 'tool-certificate-inspector',
-  'tool-base64-image', 'tool-image-compress', 'tool-qr-reader',
+  'tool-base64-image', 'tool-image-compress',
   'tool-pdf-word-converter', 'tool-image-to-pdf', 'tool-image-to-word',
   'tool-ip-cidr', // product decision: not part of Live Share
 ];
