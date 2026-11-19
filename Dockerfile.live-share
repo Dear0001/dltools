@@ -4,6 +4,8 @@ FROM node:22-alpine
 WORKDIR /app
 RUN npm install --omit=dev --no-save --no-package-lock ws@8 tsx@4
 COPY src/lib/live-share ./src/lib/live-share
+# registry.ts imports ../theme (the theme list); it has no further imports.
+COPY src/lib/theme.ts ./src/lib/theme.ts
 COPY live-share-server ./live-share-server
 ENV NODE_ENV=production PORT=4040 LIVE_SHARE_TRUST_PROXY=true
 EXPOSE 4040
