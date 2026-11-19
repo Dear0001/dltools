@@ -39,7 +39,7 @@ export interface HostOptions {
   WebSocketImpl?: typeof WebSocket;
   debounceMs?: number;
   maxWaitMs?: number;
-  /** How long to wait for the first connection before reporting `unreachable`. Default 6 s. */
+  /** How long to wait for the first connection before reporting `unreachable`. Default 4 s. */
   connectTimeoutMs?: number;
 }
 
@@ -55,17 +55,32 @@ export class HostController {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private firstPendingAt = 0;
   private reachTimer: ReturnType<typeof setTimeout> | undefined;
+  /** True once the user asked to start a session; a warmed-up socket stays silent until then. */
+  private wantSession = false;
 
   constructor(private o: HostOptions) {}
 
   get state() { return this.store.get(); }
 
-  start(): void {
+  /**
+   * Opens the socket ahead of time (e.g. when the Share dialog opens) so that "Start sharing"
+   * only has to send CREATE_SESSION instead of also paying for DNS + TLS + the WebSocket handshake.
+   * Creates nothing on the server: an idle socket holds no session and is released by `cool()`.
+   */
+  warmUp(): void {
+    if (this.conn || this.state.phase === 'starting' || this.state.phase === 'active') return;
+    this.ensureConnection();
+  }
+
+  /** Releases a warmed-up socket that was never used. Does nothing once a session is starting or active. */
+  cool(): void {
+    if (this.state.phase === 'starting' || this.state.phase === 'active') return;
+    this.dispose();
+    this.store.set({ connection: 'idle', unreachable: false });
+  }
+
+  private ensureConnection(): void {
     if (this.conn) return;
-    this.version = 0;
-    this.lastSent = null;
-    this.creds = null;
-    this.store.set({ ...INITIAL, phase: 'starting', activeToolId: this.state.activeToolId, activeToolSupported: this.state.activeToolSupported });
     this.conn = new Connection({
       url: this.o.url,
       WebSocketImpl: this.o.WebSocketImpl,
@@ -73,15 +88,30 @@ export class HostController {
       onLatency: (latencyMs) => this.store.set({ latencyMs }),
       onOpen: () => {
         if (this.creds) this.conn?.send({ type: 'RECONNECT_HOST', ...this.creds });
-        else this.conn?.send({ type: 'CREATE_SESSION', protocol: PROTOCOL_VERSION });
+        else if (this.wantSession) this.conn?.send({ type: 'CREATE_SESSION', protocol: PROTOCOL_VERSION });
       },
       onMessage: (m) => this.onMessage(m),
     });
     this.conn.connect();
+  }
+
+  start(): void {
+    if (this.state.phase === 'starting' || this.state.phase === 'active') return;
+    this.version = 0;
+    this.lastSent = null;
+    this.creds = null;
+    this.wantSession = true;
+    this.store.set({ ...INITIAL, phase: 'starting', connection: this.state.connection, latencyMs: this.state.latencyMs, activeToolId: this.state.activeToolId, activeToolSupported: this.state.activeToolSupported });
+    if (this.conn?.isOpen) {
+      // Warm socket: no handshake left to wait for.
+      this.conn.send({ type: 'CREATE_SESSION', protocol: PROTOCOL_VERSION });
+    } else {
+      this.ensureConnection();
+    }
     clearTimeout(this.reachTimer);
     this.reachTimer = setTimeout(() => {
       if (this.state.phase === 'starting') this.store.set({ unreachable: true }); // keeps retrying in the background
-    }, this.o.connectTimeoutMs ?? 6000);
+    }, this.o.connectTimeoutMs ?? 4000);
   }
 
   /** Abandons a stuck attempt and starts over. */
@@ -132,6 +162,7 @@ export class HostController {
     this.conn?.close();
     this.conn = null;
     this.creds = null;
+    this.wantSession = false;
   }
 
   // ---------- commands ----------

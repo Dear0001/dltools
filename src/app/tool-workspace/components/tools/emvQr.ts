@@ -191,11 +191,18 @@ function child(tag: EmvTlvTag | undefined, sub: string): string | null {
   return tag?.children?.find((c) => c.tag === sub)?.value ?? null;
 }
 
-function parseTimestamp(value: string | null): Date | null {
+export function parseTimestamp(value: string | null): Date | null {
   if (!value || !/^\d{10,13}$/.test(value)) return null;
   const ms = value.length === 13 ? Number(value) : Number(value) * 1000;
   const date = new Date(ms);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** Human-readable local date/time (with time zone) for a KHQR epoch timestamp, or null when the value is not one. */
+export function formatTimestamp(value: string | null): string | null {
+  const date = parseTimestamp(value);
+  if (!date) return null;
+  return date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
 }
 
 const INVISIBLE = new RegExp('[\\u0000-\\u001f\\u007f-\\u009f\\u00ad\\u034f\\u061c\\u115f-\\u1160\\u17b4-\\u17b5\\u180b-\\u180f\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u206f\\u3164\\ufeff\\uffa0]');

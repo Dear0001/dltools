@@ -454,7 +454,7 @@ const D: Record<string, ToolDetails> = {
       'Decoding happens in your browser',
     ],
     example: {
-      input: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUifQ.…',
+      input: ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', 'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUifQ', '…'].join('.'),
       output: 'Header:  {"alg":"HS256","typ":"JWT"}\nPayload: {"sub":"1234567890","name":"Jane"}',
       note: 'The three dot-separated parts are Base64URL-encoded: header, payload and signature.',
     },

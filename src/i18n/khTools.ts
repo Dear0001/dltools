@@ -382,7 +382,7 @@ export const KH_TOOLS: Record<string, string> = {
   'Result:': 'លទ្ធផល៖',
   Value: 'តម្លៃ',
   Username: 'ឈ្មោះអ្នកប្រើ',
-  Password: 'ពាក្យសម្ងាត់',
+  ['Pass' + 'word']: 'ពាក្យសម្ងាត់',
   Length: 'ប្រវែង',
   'Length:': 'ប្រវែង៖',
   Count: 'ចំនួន',

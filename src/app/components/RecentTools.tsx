@@ -12,6 +12,12 @@ import { getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
 
 const STORAGE_KEY = 'devtoolkit-recent';
 
+/** Tool hrefs are built from static catalogue data; still refuse anything that is not a plain /tools/<slug> path. */
+function safeToolHref(tool: Tool): string {
+  const path = getToolPath(tool);
+  return /^\/tools\/[a-z0-9-]+$/i.test(path) ? path : '/tools';
+}
+
 /** Recently opened tools: read from this device, then merged with the account when signed in. */
 export function useRecentTools() {
   const { locale } = useLocale();
@@ -135,7 +141,7 @@ export default function RecentTools({
             return (
               <li key={`recent-${tool.id}`} className="group relative">
                 <Link
-                  href={getToolPath(tool)}
+                  href={safeToolHref(tool)}
                   className="surface-hover flex items-center gap-3 rounded-xl border border-border bg-card py-2.5 pl-2.5 pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ToolIcon tool={tool} size="sm" />

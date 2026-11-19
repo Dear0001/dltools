@@ -2,12 +2,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { TOOLS } from '@/data/tools';
 
-const KEY = 'devtoolkit-favorites';
+const FAVORITES_STORAGE_KEY = 'devtoolkit-favorites';
 const EVENT = 'devtoolkit-favorites-changed';
 
 function read(): string[] {
   try {
-    const parsed: unknown = JSON.parse(window.localStorage.getItem(KEY) ?? '[]');
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? '[]');
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((id): id is string => typeof id === 'string' && TOOLS.some((t) => t.id === id));
   } catch {
@@ -36,7 +36,7 @@ export function useFavorites() {
     const current = read();
     const next = current.includes(id) ? current.filter((x) => x !== id) : [id, ...current];
     try {
-      window.localStorage.setItem(KEY, JSON.stringify(next));
+      window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
     } catch {
       return false;
     }

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronRight, Copy, Download, FileJson, Wrench, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import VisibleUnicodeText, { hasInvisibleUnicode } from '../VisibleUnicodeText';
-import { analysisToJson, analyzeKhqr, formatAmount, withCorrectCrc, type CheckLevel, type EmvTlvTag, type KhqrAnalysis } from './emvQr';
+import { analysisToJson, analyzeKhqr, formatAmount, formatTimestamp, withCorrectCrc, type CheckLevel, type EmvTlvTag, type KhqrAnalysis } from './emvQr';
 
 async function copyText(text: string, message: string) {
   try {
@@ -50,8 +50,9 @@ function RawSegments({ analysis }: { analysis: KhqrAnalysis }) {
   );
 }
 
-function TlvRow({ tag, depth, crcValid }: { tag: EmvTlvTag; depth: number; crcValid: boolean | null }) {
+function TlvRow({ tag, depth, crcValid, parentTag }: { tag: EmvTlvTag; depth: number; crcValid: boolean | null; parentTag?: string }) {
   const isCrc = depth === 0 && tag.tag === '63';
+  const readableTime = parentTag === '99' ? formatTimestamp(tag.value) : null;
   return (
     <>
       <button
@@ -69,13 +70,18 @@ function TlvRow({ tag, depth, crcValid }: { tag: EmvTlvTag; depth: number; crcVa
         <span className="hidden sm:block text-xs text-muted-foreground tabular-nums">{tag.length}</span>
         <span className="col-start-2 sm:col-start-auto font-mono text-xs text-foreground break-all flex items-start justify-between gap-2">
           <span className={isCrc ? (crcValid ? 'text-primary' : 'text-error') : ''}>
-            {tag.tag === '59' ? <VisibleUnicodeText value={tag.value} /> : tag.value}
+            {readableTime ? (
+              <>
+                {readableTime}
+                <span className="ml-2 text-muted-foreground/70">({tag.value})</span>
+              </>
+            ) : tag.tag === '59' ? <VisibleUnicodeText value={tag.value} /> : tag.value}
             {isCrc && (crcValid ? '  ✓ valid' : '  ✗ mismatch')}
           </span>
           <Copy size={11} className="mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-50" />
         </span>
       </button>
-      {tag.children?.map((c, i) => <TlvRow key={`${c.tag}-${i}`} tag={c} depth={depth + 1} crcValid={crcValid} />)}
+      {tag.children?.map((c, i) => <TlvRow key={`${c.tag}-${i}`} tag={c} depth={depth + 1} crcValid={crcValid} parentTag={tag.tag} />)}
     </>
   );
 }

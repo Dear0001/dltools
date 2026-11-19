@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
 import { useLs } from './shared';
 
 /** Renders a QR that opens the join page with the code prefilled. Generated locally in the browser. */
@@ -10,7 +9,9 @@ export default function PairingQr({ code, size = 176 }: { code: string; size?: n
   useEffect(() => {
     let cancelled = false;
     const link = `${window.location.origin}/live-share/join?code=${encodeURIComponent(code)}`;
-    QRCode.toDataURL(link, { width: size * 2, margin: 1, errorCorrectionLevel: 'M' })
+    // Loaded on demand so the QR library is not part of every tool page's JavaScript.
+    import('qrcode')
+      .then((mod) => (mod.default ?? mod).toDataURL(link, { width: size * 2, margin: 1, errorCorrectionLevel: 'M' }))
       .then((url) => { if (!cancelled) setSrc(url); })
       .catch(() => { if (!cancelled) setSrc(''); });
     return () => { cancelled = true; };

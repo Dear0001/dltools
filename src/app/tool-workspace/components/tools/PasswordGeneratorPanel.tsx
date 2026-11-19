@@ -54,7 +54,7 @@ export default function PasswordGeneratorPanel({ tool: _tool }: { tool: Tool }) 
     numbers: true,
     symbols: true,
   });
-  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [copiedValue, setCopiedValue] = useState<number | null>(null);
 
   const canGenerate = useMemo(() => {
     return options.lowercase || options.uppercase || options.numbers || options.symbols;
@@ -65,14 +65,14 @@ export default function PasswordGeneratorPanel({ tool: _tool }: { tool: Tool }) 
     setPasswords(generated.filter(Boolean));
   };
 
-  const copyOne = async (password: string) => {
+  const copyOne = async (password: string, index: number) => {
     try {
       await navigator.clipboard.writeText(password);
     } catch {
       toast.error('Could not copy. Allow clipboard access and try again.');
       return;
     }
-    setCopiedValue(password);
+    setCopiedValue(index);
     toast.success('Password copied');
     setTimeout(() => setCopiedValue(null), 2000);
   };
@@ -117,8 +117,8 @@ export default function PasswordGeneratorPanel({ tool: _tool }: { tool: Tool }) 
             {passwords.map((password, i) => (
               <li key={`password-${i}`} className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-background-secondary/50 px-3 py-2 transition-colors hover:border-primary/30">
                 <span className="break-all font-mono text-sm tabular-nums text-foreground">{password}</span>
-                <button type="button" className={`btn-icon flex-shrink-0 opacity-60 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 ${copiedValue === password ? 'text-primary' : ''}`} onClick={() => copyOne(password)} aria-label="Copy password">
-                  {copiedValue === password ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                <button type="button" className={`btn-icon flex-shrink-0 opacity-60 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 ${copiedValue === i ? 'text-primary' : ''}`} onClick={() => copyOne(password, i)} aria-label="Copy password">
+                  {copiedValue === i ? <CheckCircle2 size={14} /> : <Copy size={14} />}
                 </button>
               </li>
             ))}

@@ -37,14 +37,14 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
     try {
       const parsedSchema = JSON.parse(schemaSource);
       const parsedData = JSON.parse(dataSource);
-      const ajv = new Ajv({ allErrors: true, jsonPointers: true, schemaId: 'auto' });
+      const ajv = new Ajv({ allErrors: true, strict: false });
       const valid = ajv.validate(parsedSchema, parsedData);
       if (valid) {
         setResult('Valid: JSON data matches the schema.');
         setError('');
       } else {
         const errors = ajv.errors ?? [];
-        setResult(errors.map((issue) => `${issue.dataPath || '/'} ${issue.message ?? 'is invalid'}`).join('\n'));
+        setResult(errors.map((issue) => `${issue.instancePath || '/'} ${issue.message ?? 'is invalid'}`).join('\n'));
         setError('Schema validation failed.');
       }
     } catch (cause) {

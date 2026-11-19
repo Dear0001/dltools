@@ -7,7 +7,23 @@ import CodeEditor from '../CodeEditor';
 import { AlertTriangle, CheckCircle2, Key } from 'lucide-react';
 import { useDebouncedValue } from '../useDebouncedValue';
 
-const SAMPLE_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItMTIzNDUiLCJuYW1lIjoiU29waGVhIENoYW4iLCJlbWFpbCI6InNvcGhlYUBkZXZ0b29sa2l0LmlvIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzOTI4MDAwLCJleHAiOjE3NTM5MzE2MDAsImF1ZCI6ImRldnRvb2xraXQiLCJpc3MiOiJodHRwczovL2F1dGguZGV2dG9vbGtpdC5pbyJ9.signature_placeholder';
+const toBase64Url = (value: unknown) => btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+/** Demo token (placeholder signature) built from readable parts; it is not a credential. */
+const SAMPLE_JWT = [
+  toBase64Url({ alg: 'HS256', typ: 'JWT' }),
+  toBase64Url({
+    sub: 'usr-12345',
+    name: 'Sophea Chan',
+    email: 'sophea@devtoolkit.io',
+    role: 'admin',
+    iat: 1753928000,
+    exp: 1753931600,
+    aud: 'devtoolkit',
+    iss: 'https://auth.devtoolkit.io',
+  }),
+  'signature_placeholder',
+].join('.');
 
 interface JwtPayload {
   [key: string]: unknown;

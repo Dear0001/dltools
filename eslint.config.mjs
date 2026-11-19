@@ -1,16 +1,10 @@
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { FlatCompat } from "@eslint/eslintrc";
 import { defineConfig, globalIgnores } from "eslint/config";
-
-// eslint-config-next v15 ships legacy (.eslintrc) configs, so they are
-// translated to flat config with FlatCompat.
-const compat = new FlatCompat({
-  baseDirectory: dirname(fileURLToPath(import.meta.url)),
-});
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
 const eslintConfig = defineConfig([
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextVitals,
+  ...nextTs,
   // Allow intentionally unused names when prefixed with "_" (e.g. the shared
   // `tool` prop that every tool panel receives but not all of them read).
   {
@@ -19,6 +13,17 @@ const eslintConfig = defineConfig([
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
+    },
+  },
+  // eslint-config-next 16 enables stricter React Compiler rules. Existing code
+  // predates them, so surface them as warnings instead of blocking lint.
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/use-memo": "warn",
+      "react-hooks/incompatible-library": "warn",
     },
   },
   // CommonJS config files (tailwind.config.js) legitimately use require().

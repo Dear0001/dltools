@@ -27,10 +27,26 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
   const [copied, setCopied] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const coolTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const availability = React.useSyncExternalStore(() => () => {}, getAvailability, () => 'ok' as const);
   const host = state.host;
   const active = state.phase === 'active' && host;
   const viewerCount = host?.viewers.filter((v) => v.connected).length ?? 0;
+
+  // Open the socket before "Start sharing" is clicked so the code appears after one round trip, not a full handshake.
+  const warm = () => {
+    if (!controller) return;
+    controller.warmUp();
+    clearTimeout(coolTimer.current);
+    if (!open) coolTimer.current = setTimeout(() => controller.cool(), 20_000); // hovered but never opened
+  };
+  useEffect(() => {
+    if (!open || !controller) return;
+    clearTimeout(coolTimer.current);
+    controller.warmUp();
+    return () => controller.cool(); // no-op while a session is starting or active
+  }, [open, controller]);
+  useEffect(() => () => clearTimeout(coolTimer.current), []);
 
   useEffect(() => {
     if (!open) return;
@@ -86,6 +102,9 @@ export default function ShareDialog({ toolSupported = true }: { toolSupported?: 
         label={active && ready ? statusText : t('shareButton')}
         tooltip={t('shareButtonTip')}
         aria-haspopup="dialog"
+        onPointerEnter={warm}
+        onFocus={warm}
+        onTouchStart={warm}
         onClick={() => setOpen(true)}
       />
       {open && (

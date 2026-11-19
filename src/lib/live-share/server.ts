@@ -56,6 +56,7 @@ export function createLiveShareServer(options: ServerOptions): LiveShareServer {
   };
   const manager = new SessionManager(config, transport);
 
+  // deepcode ignore HttpToHttps: plain HTTP behind the TLS-terminating reverse proxy (nginx); only serves /healthz and WebSocket upgrades
   const http = createServer((req, res) => {
     if (req.url === '/healthz') {
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });

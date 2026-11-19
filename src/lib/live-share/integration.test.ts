@@ -399,3 +399,32 @@ describe('server hardening', () => {
     expect(await reply).toMatchObject({ type: 'ERROR', code: 'RATE_LIMITED' });
   });
 });
+
+describe('warm-up (faster "Start sharing")', () => {
+  it('opens the socket without creating a session, then Start sharing reuses that socket', async () => {
+    const host = newHost();
+    host.warmUp();
+    await until(() => host.state.connection === 'open');
+    expect(host.state.phase).toBe('idle');
+    expect(server.manager.stats.sessions).toBe(0);
+
+    const openSockets = sockets.length;
+    host.start();
+    await until(() => host.state.phase === 'active');
+    expect(sockets.length).toBe(openSockets); // no second handshake
+    expect(server.manager.stats.sessions).toBe(1);
+  });
+
+  it('cool() releases an unused warm socket and does not touch an active session', async () => {
+    const warm = newHost();
+    warm.warmUp();
+    await until(() => warm.state.connection === 'open');
+    warm.cool();
+    await until(() => warm.state.connection === 'idle');
+
+    const active = await startedHost();
+    active.cool();
+    expect(active.state.phase).toBe('active');
+    expect(active.state.connection).toBe('open');
+  });
+});
