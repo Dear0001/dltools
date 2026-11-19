@@ -7,6 +7,7 @@ import { GitCompare, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { translateText, useLocale } from '@/i18n/LocaleProvider';
 import { buildSplitDiff, buildUnifiedDiff, type DiffLineType, type SplitCell } from './diffRows';
 import { normalizeXml } from './xmlFormat';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 /** Each diff tool opens with an example in its own format. */
 const SAMPLES: Record<string, [string, string]> = {
@@ -117,9 +118,9 @@ export default function DiffPanel({ tool }: { tool: Tool }) {
   const { locale } = useLocale();
   const [sampleLeft, sampleRight] = SAMPLES[tool.id] ?? SAMPLES['tool-text-diff'];
   const isXml = tool.id === 'tool-xml-diff';
-  const [left, setLeft] = useState(sampleLeft);
-  const [right, setRight] = useState(sampleRight);
-  const [mode, setMode] = useState<'split' | 'unified'>('split');
+  const [left, setLeft] = useLiveState('left', sampleLeft);
+  const [right, setRight] = useLiveState('right', sampleRight);
+  const [mode, setMode] = useLiveState<'split' | 'unified'>('mode', 'split');
   const [leftZoom, setLeftZoom] = useState(13);
   const [rightZoom, setRightZoom] = useState(13);
 
@@ -155,9 +156,9 @@ export default function DiffPanel({ tool }: { tool: Tool }) {
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background-secondary/50 px-3.5 py-1">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <div className="ml-auto flex items-center gap-0.5">
-          <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => adjustZoom(setZoom, zoom, -1)} title={`Zoom out ${which}`} aria-label={`Zoom out ${which}`}><ZoomOut size={12} /></button>
+          <button type="button" data-live-safe="" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => adjustZoom(setZoom, zoom, -1)} title={`Zoom out ${which}`} aria-label={`Zoom out ${which}`}><ZoomOut size={12} /></button>
           <span className="min-w-10 text-center font-mono text-[11px] text-muted-foreground">{zoom}px</span>
-          <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => adjustZoom(setZoom, zoom, 1)} title={`Zoom in ${which}`} aria-label={`Zoom in ${which}`}><ZoomIn size={12} /></button>
+          <button type="button" data-live-safe="" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => adjustZoom(setZoom, zoom, 1)} title={`Zoom in ${which}`} aria-label={`Zoom in ${which}`}><ZoomIn size={12} /></button>
           <button type="button" className="btn-icon h-7 min-h-0 w-7 min-w-0" onClick={() => setZoom(13)} title={`Reset ${which} zoom`} aria-label={`Reset ${which} zoom`}><RotateCcw size={12} /></button>
         </div>
       </div>

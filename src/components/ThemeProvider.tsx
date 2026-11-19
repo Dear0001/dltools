@@ -22,7 +22,7 @@ interface ThemeContextValue {
   theme: ThemeId;
   /** What the user chose: a fixed theme or 'auto'. */
   preference: ThemePreference;
-  setPreference: (preference: ThemePreference) => void;
+  setPreference: (preference: ThemePreference, options?: { persist?: boolean }) => void;
   /** Pick a fixed theme (leaves auto mode). */
   setTheme: (theme: ThemeId) => void;
   /** Place followed in 'weather' mode. Kept in this browser only, never saved to the account. */
@@ -167,9 +167,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setPreference = useCallback(
-    (next: ThemePreference) => {
+    (next: ThemePreference, options?: { persist?: boolean }) => {
       setPreferenceState(next);
       if (next !== 'auto' && next !== 'weather') show(next, true);
+      // Live Share viewers follow the host's theme without overwriting their own saved choice.
+      if (options?.persist === false) return;
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, next);
       } catch {

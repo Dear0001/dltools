@@ -6,6 +6,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `name: devtoolkit
 version: 1.0.0
@@ -99,6 +100,7 @@ export default function YamlFormatterPanel({ tool: _tool }: { tool: Tool }) {
     }
   };
 
+  useLiveShareHost('tool-yaml-formatter', { input, output, status });
   return (
     <ToolFrame
       toolbar={<>

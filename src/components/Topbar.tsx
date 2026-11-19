@@ -1,4 +1,5 @@
 'use client';
+import { ls as lsText } from '@/components/live-share/messages';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -269,6 +270,13 @@ export default function Topbar() {
             >
               {t('navAllTools')}
             </Link>
+            <Link
+              href="/live-share"
+              className={navLink(isActive('/live-share'))}
+              aria-current={isActive('/live-share') ? 'page' : undefined}
+            >
+              {lsText(locale, 'navLabel')}
+            </Link>
             <div
               ref={categoriesRef}
               className="relative"
@@ -524,6 +532,7 @@ export default function Topbar() {
               {[
                 { href: '/', label: t('navHome') },
                 { href: '/tools', label: t('navAllTools') },
+                { href: '/live-share', label: lsText(locale, 'navLabel') },
                 { href: '/tool-workspace', label: t('navWorkspace') },
                 { href: '/favorites', label: t('favorites') },
               ].map((link) => (

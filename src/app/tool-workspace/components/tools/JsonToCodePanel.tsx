@@ -9,6 +9,7 @@ import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 import JsonToTS from 'json-to-ts';
 import { generateDartModels } from './dartModel';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 type Target = 'typescript' | 'go' | 'python' | 'pydantic' | 'rust' | 'zod' | 'dart';
 const SAMPLE = `{"user":{"id":42,"name":"Dara","active":true,"roles":["admin","editor"]}}`;
@@ -113,6 +114,7 @@ export default function JsonToCodePanel({ tool }: { tool: Tool }) {
   }, [input, debouncedInput, generate]);
 
   const language: 'typescript' | 'text' = target === 'zod' || target === 'typescript' ? 'typescript' : 'text';
+  useLiveShareHost(tool.id, { input, output, target, rootName });
   return <ToolFrame
     toolbar={<>
       <ToolbarField label="Root name"><input className="input-code w-32 px-2 py-1 text-xs" value={rootName} onChange={(event) => setRootName(event.target.value)} /></ToolbarField>

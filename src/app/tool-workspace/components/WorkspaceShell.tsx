@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Tool } from '@/data/tools';
-import { Check, Globe2, Heart, Link2, Share2, ShieldCheck } from 'lucide-react';
+import { Check, Globe2, Heart, Link2, ShieldCheck } from 'lucide-react';
 import { getToolPrivacyMode } from '@/data/toolPrivacy';
 import { Breadcrumbs } from '@/components/PageHeader';
 import ToolIcon from '@/components/ui/ToolIcon';
@@ -12,6 +12,9 @@ import { toast } from 'sonner';
 import { CATEGORIES } from '@/data/tools';
 import { trackToolOpen } from '@/components/GoogleAnalytics';
 import SavedToolDataDialog from './SavedToolDataDialog';
+import ShareDialog from '@/components/live-share/ShareDialog';
+import { isLiveShareTool } from '@/lib/live-share/registry';
+import { LiveToolProvider } from '@/lib/live-share/workspace';
 import DocumentConverterPanel from './tools/DocumentConverterPanel';
 import { getCategoryName, getToolDescription, getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
 
@@ -102,7 +105,18 @@ const PANEL_MAP: Record<string, React.ComponentType<{ tool: Tool }>> = {
   'tool-image-to-word': DocumentConverterPanel,
 };
 
-export default function WorkspaceShell({ tool }: { tool: Tool }) {
+export default function WorkspaceShell({
+  tool,
+  liveViewerFields,
+  embedded = false,
+}: {
+  tool: Tool;
+  /** Set when rendering as a Live Share viewer: the host's values. The panel becomes read-only and host-driven. */
+  liveViewerFields?: Record<string, string>;
+  /** Rendered inside another page (the viewer), so the height budget leaves room for its banner. */
+  embedded?: boolean;
+}) {
+  const viewing = liveViewerFields !== undefined;
   const { locale, t } = useLocale();
   const { data: session, status: authStatus } = useSession();
   const trackedToolId = useRef('');
@@ -113,21 +127,17 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
   const PanelComponent = PANEL_MAP[tool.id] || GenericComingSoon;
   // Tool panels use browser-only APIs (DOMParser, window, localStorage), so render them after mount.
   const [mounted, setMounted] = useState(false);
-  // Share only appears where the browser has a native share sheet (mostly mobile).
-  const [canShare, setCanShare] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     if (!linkCopied) return;
     const timer = window.setTimeout(() => setLinkCopied(false), 2000);
     return () => window.clearTimeout(timer);
   }, [linkCopied]);
 
-  // Save to recent
+  // Save to recent (never when viewing someone else's workspace)
   useEffect(() => {
+    if (viewing) return;
     try {
       const stored = localStorage.getItem('devtoolkit-recent');
       const recents: unknown = stored ? JSON.parse(stored) : [];
@@ -157,13 +167,13 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
     });
     // `locale` only localizes the error toast; re-saving on a language switch is not wanted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authStatus, session?.user?.id, tool.id]);
+  }, [authStatus, session?.user?.id, tool.id, viewing]);
 
   useEffect(() => {
-    if (trackedToolId.current === tool.id) return;
+    if (viewing || trackedToolId.current === tool.id) return;
     trackedToolId.current = tool.id;
     trackToolOpen(tool);
-  }, [tool]);
+  }, [tool, viewing]);
 
   const description =
     tool.id === 'tool-pdf-word-converter'
@@ -181,19 +191,10 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
       toast.error(t('copyFailed'));
     }
   };
-  const share = async () => {
-    try {
-      await navigator.share({ title: toolName, text: description, url: window.location.href });
-    } catch (error) {
-      // Closing the share sheet is not an error.
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      toast.error(t('shareFailed'));
-    }
-  };
   const privacyMode = getToolPrivacyMode(tool.id);
 
   return (
-    <div className="flex flex-col lg:h-[calc(100dvh-4rem)]">
+    <div className={`flex flex-col ${embedded ? 'lg:h-[calc(100dvh-8.5rem)]' : 'lg:h-[calc(100dvh-4rem)]'}`}>
       {/* Workspace header: breadcrumb, title, description, actions */}
       <div className="flex-shrink-0 border-b border-border bg-background-secondary">
         <div className="px-4 py-4 sm:px-6 lg:px-8">
@@ -223,6 +224,7 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
                 </p>
               </div>
             </div>
+            {!viewing && (
             <div role="group" aria-label={t('toolActions')} className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-wrap sm:items-center md:justify-end">
               <ActionButton
                 icon={Link2}
@@ -232,9 +234,6 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
                 tooltip={t('copyLinkTip')}
                 onClick={() => void copyLink()}
               />
-              {canShare && (
-                <ActionButton icon={Share2} label={t('share')} tooltip={t('shareTip')} onClick={() => void share()} />
-              )}
               <ActionButton
                 icon={Heart}
                 iconClassName={favorite ? 'fill-primary text-primary' : ''}
@@ -245,7 +244,9 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
                 onClick={() => toggleWithFeedback(tool.id, toolName)}
               />
               <SavedToolDataDialog tool={tool} />
+              {mounted && <ShareDialog toolSupported={isLiveShareTool(tool.id)} />}
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -253,7 +254,9 @@ export default function WorkspaceShell({ tool }: { tool: Tool }) {
       {/* Workspace body */}
       <div className="min-h-[70vh] flex-1 px-4 py-4 sm:px-6 lg:min-h-0 lg:overflow-hidden lg:px-8">
         {mounted ? (
-          <PanelComponent tool={tool} />
+          <LiveToolProvider toolId={tool.id} viewerFields={liveViewerFields}>
+            <PanelComponent tool={tool} />
+          </LiveToolProvider>
         ) : (
           <div className="flex h-full min-h-[40vh] items-center justify-center" role="status" aria-label={t('loadingTool')}>
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />

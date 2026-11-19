@@ -6,6 +6,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `{
   "user": {
@@ -127,6 +128,7 @@ export default function JsonToJavaPanel({ tool: _tool }: { tool: Tool }) {
     generate(debouncedInput, lang, rootName);
   }, [input, debouncedInput, lang, rootName, generate]);
 
+  useLiveShareHost('tool-json-to-java', { input, output, lang, rootName });
   return (
     <ToolFrame
       toolbar={<>

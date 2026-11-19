@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import Ajv from 'ajv';
 import type { Tool } from '@/data/tools';
 import ToolFrame from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE_DATA = `{"user":{"name":"Dara","age":29},"active":true}`;
 const SAMPLE_SCHEMA = `{
@@ -20,10 +21,10 @@ const SAMPLE_SCHEMA = `{
 }`;
 
 export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
-  const [data, setData] = useState(SAMPLE_DATA);
-  const [schema, setSchema] = useState(SAMPLE_SCHEMA);
-  const [result, setResult] = useState('');
-  const [error, setError] = useState('');
+  const [data, setData] = useLiveState('data', SAMPLE_DATA);
+  const [schema, setSchema] = useLiveState('schema', SAMPLE_SCHEMA);
+  const [result, setResult] = useLiveState('result', '');
+  const [error, setError] = useLiveState('error', '');
   const debouncedData = useDebouncedValue(data);
   const debouncedSchema = useDebouncedValue(schema);
 
@@ -50,7 +51,7 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
       setResult('');
       setError(cause instanceof Error ? cause.message : 'Could not validate this schema.');
     }
-  }, [data, schema]);
+  }, [data, schema, setResult, setError]);
 
   useEffect(() => {
     if (data !== debouncedData || schema !== debouncedSchema) {
@@ -64,7 +65,7 @@ export default function JsonSchemaPanel({ tool: _tool }: { tool: Tool }) {
       return;
     }
     validate(debouncedData, debouncedSchema);
-  }, [data, schema, debouncedData, debouncedSchema, validate]);
+  }, [data, schema, debouncedData, debouncedSchema, validate, setResult, setError]);
 
   const status = error ? 'error' : result ? 'success' : 'idle';
   return (

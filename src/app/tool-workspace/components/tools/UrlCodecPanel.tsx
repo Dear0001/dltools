@@ -6,6 +6,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE_DECODED = 'https://api.devtoolkit.io/v2/search?query=json formatter&category=formatters&lang=en&sort=popular&page=1&limit=20&tags=json,format,validate';
 
@@ -56,6 +57,7 @@ export default function UrlCodecPanel({ tool: _tool }: { tool: Tool }) {
   };
 
   const reference = [['Space', '%20'], ['/', '%2F'], ['?', '%3F'], ['&', '%26'], ['=', '%3D'], ['#', '%23'], ['+', '%2B'], ['@', '%40'], [':', '%3A']];
+  useLiveShareHost('tool-url-codec', { decoded, encoded });
   return (
     <ToolFrame
       toolbar={<>

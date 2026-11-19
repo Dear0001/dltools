@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
@@ -7,6 +7,7 @@ import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { format as sqlFormat } from 'sql-formatter';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `SELECT u.id,u.name,u.email,u.created_at,p.plan_name,p.price,COUNT(o.id) AS order_count,SUM(o.total_amount) AS lifetime_value FROM users u LEFT JOIN subscriptions s ON s.user_id=u.id LEFT JOIN plans p ON p.id=s.plan_id LEFT JOIN orders o ON o.user_id=u.id WHERE u.created_at>='2026-01-01' AND u.status='active' GROUP BY u.id,u.name,u.email,u.created_at,p.plan_name,p.price HAVING COUNT(o.id)>0 ORDER BY lifetime_value DESC LIMIT 100;`;
 
@@ -14,13 +15,13 @@ type Dialect = 'sql' | 'mysql' | 'postgresql' | 'sqlite' | 'bigquery' | 'tsql';
 type Status = 'idle' | 'success' | 'error';
 
 export default function SqlFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [dialect, setDialect] = useState<Dialect>('postgresql');
-  const [indent, setIndent] = useState(2);
-  const [uppercase, setUppercase] = useState(true);
-  const [error, setError] = useState('');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [dialect, setDialect] = useLiveState<Dialect>('dialect', 'postgresql');
+  const [indent, setIndent] = useLiveState('indent', 2);
+  const [uppercase, setUppercase] = useLiveState('uppercase', true);
+  const [error, setError] = useLiveState('error', '');
   const debouncedInput = useDebouncedValue(input);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function SqlFormatterPanel({ tool: _tool }: { tool: Tool }) {
       setError(cause instanceof Error ? cause.message : 'SQL format error');
       setOutput('');
     }
-  }, [input, debouncedInput, dialect, indent, uppercase]);
+  }, [input, debouncedInput, dialect, indent, uppercase, setOutput, setStatus, setError]);
 
   const format = () => {
     try {
@@ -71,6 +72,7 @@ export default function SqlFormatterPanel({ tool: _tool }: { tool: Tool }) {
       setOutput('');
     }
   };
+
 
   return (
     <ToolFrame

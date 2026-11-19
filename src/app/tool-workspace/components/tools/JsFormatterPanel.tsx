@@ -6,18 +6,19 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `const fetchUserData=async(userId)=>{const response=await fetch(\`/api/users/\${userId}\`);if(!response.ok){throw new Error('Failed to fetch user: '+response.status);}const data=await response.json();return{id:data.id,name:data.name,email:data.email,createdAt:new Date(data.created_at).toISOString()};}`;
 
 type Status = 'idle' | 'success' | 'error';
 
 export default function JsFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [error, setError] = useState('');
-  const [indent, setIndent] = useState(2);
-  const [parser, setParser] = useState<'babel' | 'typescript'>('babel');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [error, setError] = useLiveState('error', '');
+  const [indent, setIndent] = useLiveState('indent', 2);
+  const [parser, setParser] = useLiveState<'babel' | 'typescript'>('parser', 'babel');
   const [loading, setLoading] = useState(false);
   const debouncedInput = useDebouncedValue(input, 300);
 
@@ -64,7 +65,7 @@ export default function JsFormatterPanel({ tool: _tool }: { tool: Tool }) {
     };
     void formatLive();
     return () => { cancelled = true; };
-  }, [input, debouncedInput, parser, indent]);
+  }, [input, debouncedInput, parser, indent, setOutput, setStatus, setError]);
 
   const format = async () => {
     setLoading(true);

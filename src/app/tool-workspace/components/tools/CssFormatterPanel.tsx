@@ -6,6 +6,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `.container{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;background-color:#0e0e10;border-radius:8px;}.title{font-size:24px;font-weight:700;color:#f0f0f5;margin-bottom:8px;}.btn{background:linear-gradient(135deg,#00d4aa,#7c6af7);color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;transition:all 150ms ease;}`;
 
@@ -75,6 +76,7 @@ export default function CssFormatterPanel({ tool: _tool }: { tool: Tool }) {
     setError('');
   };
 
+  useLiveShareHost('tool-css-formatter', { input, output, status, language });
   return (
     <ToolFrame
       toolbar={<>

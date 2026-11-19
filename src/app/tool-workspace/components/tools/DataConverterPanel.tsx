@@ -8,6 +8,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 type Format = 'json' | 'yaml' | 'csv' | 'xml';
 const FORMATS: Format[] = ['json', 'yaml', 'csv', 'xml'];
@@ -151,6 +152,7 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
   }, [input, debouncedInput, inputFormat, outputFormat, convert]);
 
   const formatOptions = FORMATS.map((format) => <option key={format} value={format}>{format.toUpperCase()}</option>);
+  useLiveShareHost('tool-data-converter', { input, output, inputFormat, outputFormat, status: error ? 'error' : output ? 'success' : 'idle' });
   return <ToolFrame
     toolbar={<>
       <ToolbarField label="From"><select className="select-input" value={inputFormat} onChange={(event) => setInputFormat(event.target.value as Format)}>{formatOptions}</select></ToolbarField>

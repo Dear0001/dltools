@@ -164,6 +164,7 @@ export default function PanelLayout({
               type="button"
               className={`btn-icon ${copied ? 'text-primary' : ''}`}
               onClick={copyOutput}
+              data-live-safe=""
               title={translateText('Copy output', locale)}
               aria-label={translateText('Copy output', locale)}
               disabled={!outputText}
@@ -176,6 +177,7 @@ export default function PanelLayout({
               type="button"
               className="btn-icon"
               onClick={downloadOutput}
+              data-live-safe=""
               title={translateText('Download output', locale)}
               aria-label={translateText('Download output', locale)}
               disabled={!downloadEnabled}

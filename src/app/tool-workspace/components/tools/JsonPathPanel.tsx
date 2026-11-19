@@ -7,6 +7,7 @@ import PanelLayout from '../PanelLayout';
 import CodeOutput from '../CodeOutput';
 import CodeEditor from '../CodeEditor';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `{
   "users": [
@@ -138,6 +139,8 @@ export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
     run(debouncedJson, debouncedExpression);
   }, [json, expression, debouncedJson, debouncedExpression, run]);
 
+  const output = result;
+  useLiveShareHost('tool-jsonpath', { json, expression, output, status: error ? 'error' : output ? 'success' : 'idle' });
   return (
     <ToolFrame toolbar={<>
       <label className="flex min-w-0 flex-1 items-center gap-2" title="Examples: $.users[*].name · $.users[?(@.active == true)] · $..id">

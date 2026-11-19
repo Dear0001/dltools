@@ -7,6 +7,7 @@ import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 import { formatXml } from './xmlFormat';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `<?xml version="1.0" encoding="UTF-8"?><catalog><book id="bk101"><author>Gambardella, Matthew</author><title>XML Developer's Guide</title><genre>Computer</genre><price>44.95</price><publish_date>2000-10-01</publish_date></book><book id="bk102"><author>Ralls, Kim</author><title>Midnight Rain</title><genre>Fantasy</genre><price>5.95</price><publish_date>2000-12-16</publish_date></book></catalog>`;
 
@@ -81,6 +82,7 @@ export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
     }
   };
 
+  useLiveShareHost('tool-xml-formatter', { input, output, status });
   return (
     <ToolFrame
       toolbar={<>

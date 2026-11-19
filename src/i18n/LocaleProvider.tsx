@@ -508,7 +508,7 @@ export function fill(message: string, values: Record<string, string | number>) {
 
 interface LocaleContextValue {
   locale: Locale;
-  setLocale: (locale: Locale) => void;
+  setLocale: (locale: Locale, options?: { persist?: boolean }) => void;
   t: (key: MessageKey) => string;
 }
 
@@ -539,8 +539,10 @@ export function LocaleProvider({ children, initialLocale = 'en' }: { children: R
     }
   }, []);
 
-  const setLocale = useCallback((nextLocale: Locale) => {
+  const setLocale = useCallback((nextLocale: Locale, options?: { persist?: boolean }) => {
     setLocaleState(nextLocale);
+    // Live Share viewers follow the host's language without overwriting their own saved choice.
+    if (options?.persist === false) return;
     persistLocaleCookie(nextLocale);
     try {
       window.localStorage.setItem('devtoolkit-locale', nextLocale);

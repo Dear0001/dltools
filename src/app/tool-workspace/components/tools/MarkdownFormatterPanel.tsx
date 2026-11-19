@@ -10,6 +10,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `# Markdown preview
 
@@ -102,6 +103,7 @@ export default function MarkdownFormatterPanel({ tool: _tool }: { tool: Tool }) 
     }
   };
 
+  useLiveShareHost('tool-markdown-formatter', { input, output: formatted });
   return (
     <ToolFrame toolbar={<>
       <div className="segmented" role="group" aria-label="Output view">

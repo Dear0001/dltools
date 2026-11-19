@@ -7,6 +7,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 type Mode = 'html' | 'hex' | 'gzip';
 type Direction = 'encode' | 'decode';
@@ -72,6 +73,7 @@ export default function EncodingToolkitPanel({ tool: _tool }: { tool: Tool }) {
     return () => { processId.current += 1; };
   }, [input, debouncedInput, mode, direction, process]);
 
+  useLiveShareHost('tool-encoding-toolkit', { input, output, mode, direction, status: error ? 'error' : output ? 'success' : 'idle' });
   return <ToolFrame
     toolbar={<>
       <ToolbarField label="Encoding"><select className="select-input" value={mode} onChange={(event) => setMode(event.target.value as Mode)}><option value="html">HTML entities</option><option value="hex">UTF-8 hex</option><option value="gzip">Gzip</option></select></ToolbarField>

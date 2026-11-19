@@ -21,6 +21,7 @@ import {
   type JsonFragment,
   type OutputFormatOption,
 } from './jsonContent';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = '{"id":1024,"name":"DLTools","active":true,"tags":["json","formatter"],"owner":{"name":"Dara","city":"Phnom Penh"},"stats":{"tools":44,"languages":["en","km"]}}';
 
@@ -173,17 +174,18 @@ function decodeQrImage(previewUrl: string): Promise<string> {
 }
 
 export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [error, setError] = useState('');
-  const [indent, setIndent] = useState(2);
-  const [sortKeys, setSortKeys] = useState(false);
-  const [inputFormat, setInputFormat] = useState<InputFormatOption>('auto');
-  const [outputFormat, setOutputFormat] = useState<OutputFormatOption>('auto');
-  const [detectedFormat, setDetectedFormat] = useState<DetectedInputFormat>('empty');
-  const [outputLanguage, setOutputLanguage] = useState<'json' | 'text'>('json');
+  const [input, setInput] = useLiveState('input', '');
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [error, setError] = useLiveState('error', '');
+  const [indent, setIndent] = useLiveState('indent', 2);
+  const [sortKeys, setSortKeys] = useLiveState('sortKeys', false);
+  const [inputFormat, setInputFormat] = useLiveState<InputFormatOption>('inputFormat', 'auto');
+  const [outputFormat, setOutputFormat] = useLiveState<OutputFormatOption>('outputFormat', 'auto');
+  const [detectedFormat, setDetectedFormat] = useLiveState<DetectedInputFormat>('detectedFormat', 'empty');
+  const [outputLanguage, setOutputLanguage] = useLiveState<'json' | 'text'>('outputLanguage', 'json');
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
+  // Local on purpose: the preview list holds decoded image data, which Live Share never sends.
   const [showImagePreviews, setShowImagePreviews] = useState(false);
   const [decodedQrItems, setDecodedQrItems] = useState<DecodedQrItem[]>([]);
   const [decodingQr, setDecodingQr] = useState(false);
@@ -552,6 +554,7 @@ export default function JsonFormatterPanel({ tool: _tool }: { tool: Tool }) {
     // Formatting is debounced so large pasted payloads do not parse on every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input, debouncedInput, inputFormat, outputFormat, sortKeys, indent]);
+
 
   return (
     <ToolFrame

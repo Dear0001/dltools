@@ -7,6 +7,7 @@ import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import beautify from 'js-beautify';
 import { useDebouncedValue } from '../useDebouncedValue';
+import { useLiveShareHost } from '@/lib/live-share/react';
 
 const SAMPLE = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>DevToolkit</title><link rel="stylesheet" href="/styles.css"></head><body><div class="container"><h1 class="title">Hello World</h1><p class="description">A developer toolkit.</p><button type="button" onClick="handleClick()">Click me</button></div><script src="/app.js"></script></body></html>`;
 
@@ -65,6 +66,7 @@ export default function HtmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
     setError('');
   };
 
+  useLiveShareHost('tool-html-formatter', { input, output, status });
   return (
     <ToolFrame
       toolbar={<>

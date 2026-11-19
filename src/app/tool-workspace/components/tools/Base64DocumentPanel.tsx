@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { DetailList, OutputPlaceholder, ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
@@ -17,6 +17,7 @@ import {
   resolveOutput,
   type TargetOption,
 } from './base64Document';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 function sanitizeFileName(name: string): string {
   const withoutExt = name.trim().replace(/\.[a-z0-9]{1,5}$/i, '');
@@ -25,9 +26,9 @@ function sanitizeFileName(name: string): string {
 }
 
 export default function Base64DocumentPanel(_props: { tool: Tool }) {
-  const [input, setInput] = useState('');
-  const [target, setTarget] = useState<TargetOption>('auto');
-  const [fileName, setFileName] = useState('document');
+  const [input, setInput] = useLiveState('input', '');
+  const [target, setTarget] = useLiveState<TargetOption>('target', 'auto');
+  const [fileName, setFileName] = useLiveState('fileName', 'document');
   const debouncedInput = useDebouncedValue(input);
 
   const parsed = useMemo(

@@ -1,9 +1,18 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
+import type { Codec } from '@/lib/live-share/useLiveState';
+
+type Flags = { g: boolean; i: boolean; m: boolean; s: boolean };
+/** Regex flags are shared as a compact string such as "gm". */
+const flagsCodec: Codec<Flags> = {
+  encode: (f) => (['g', 'i', 'm', 's'] as const).filter((k) => f[k]).join(''),
+  decode: (raw) => ({ g: raw.includes('g'), i: raw.includes('i'), m: raw.includes('m'), s: raw.includes('s') }),
+};
 
 const SAMPLE_PATTERN = '(\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b)';
 const SAMPLE_TEST = `Contact us at support@devtoolkit.io or sales@devtoolkit.io
@@ -12,11 +21,11 @@ Invalid: notanemail@, @nodomain.com, plaintext
 Developer: dev+tools@devtoolkit.io`;
 
 export default function RegexPanel({ tool: _tool }: { tool: Tool }) {
-  const [pattern, setPattern] = useState(SAMPLE_PATTERN);
-  const [flags, setFlags] = useState({ g: true, i: false, m: true, s: false });
-  const [testStr, setTestStr] = useState(SAMPLE_TEST);
-  const [replaceStr, setReplaceStr] = useState('');
-  const [mode, setMode] = useState<'match' | 'replace'>('match');
+  const [pattern, setPattern] = useLiveState('pattern', SAMPLE_PATTERN);
+  const [flags, setFlags] = useLiveState<Flags>('flags', { g: true, i: false, m: true, s: false }, flagsCodec);
+  const [testStr, setTestStr] = useLiveState('testString', SAMPLE_TEST);
+  const [replaceStr, setReplaceStr] = useLiveState('replacement', '');
+  const [mode, setMode] = useLiveState<'match' | 'replace'>('mode', 'match');
 
   const flagStr = Object.entries(flags).filter(([, v]) => v).map(([k]) => k).join('');
 
@@ -44,6 +53,7 @@ export default function RegexPanel({ tool: _tool }: { tool: Tool }) {
   }, [pattern, flagStr, testStr, replaceStr, flags.g]);
 
   const outputText = mode === 'replace' ? result.replaced : result.matches.map((m) => m.value).join('\n');
+
   return (
     <ToolFrame toolbar={<>
       <div className="segmented" role="group" aria-label="Mode">
