@@ -1,0 +1,30 @@
+# Keeps the free-plan Render service (dltools-live-share) from sleeping.
+# Render spins a free web service down after 15 min without inbound traffic;
+# pinging /healthz every 10 min keeps it warm.
+# Override the target with the repo variable RENDER_HEALTH_URL (Settings > Secrets and variables > Actions > Variables).
+name: Keep Render awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # every 10 min (UTC); GitHub may delay scheduled runs by a few minutes
+  workflow_dispatch: {}
+
+concurrency:
+  group: keep-render-awake
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping health endpoint
+        env:
+          URL: ${{ vars.RENDER_HEALTH_URL || 'https://dltools-live-share.onrender.com/healthz' }}
+        run: |
+          # Retries cover a cold start (~30-60 s) if the service already slept.
+          curl --fail --silent --show-error --max-time 90 \
+            --retry 3 --retry-delay 10 --retry-all-errors \
+            -w '\nHTTP %{http_code} in %{time_total}s\n' "$URL"
