@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import WebSocket, { WebSocketServer } from 'ws';
 import { loadConfig } from './config';
@@ -131,7 +132,7 @@ describe('two-device flow over a real WebSocket server', () => {
     const viewer = await pair(host, 'B');
     host.publish('tool-json-formatter', { input: '{}', output: '{}', status: 'success' });
     await until(() => viewer.state.toolId === 'tool-json-formatter');
-    host.publish('tool-password-generator', { password: 'hunter2hunter2' });
+    host.publish('tool-password-generator', { password: randomUUID() });
     await until(() => viewer.state.toolId === null);
     expect(viewer.state.fields).toEqual({});
     expect(viewer.state.hostToolUnsupported).toBe(true);

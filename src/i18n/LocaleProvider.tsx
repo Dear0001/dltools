@@ -518,7 +518,9 @@ const LOCALE_COOKIE = 'devtoolkit-locale';
 
 function persistLocaleCookie(locale: Locale) {
   try {
-    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
+    // Secure whenever served over HTTPS (production); plain-HTTP dev hosts would otherwise drop the cookie.
+    const secure = window.location.protocol === 'https:' ? '; secure' : '';
+    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax${secure}`;
   } catch {
     // The choice still applies to this page view.
   }

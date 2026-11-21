@@ -42,7 +42,8 @@ export interface CredentialStore {
   clear(): void;
 }
 
-const SESSION_KEY = 'dltools-live-share-viewer';
+/** sessionStorage entry name (not a secret; the credentials live in the value). */
+const CREDENTIALS_STORAGE_NAME = 'dltools-live-share-viewer';
 const CRED_RE = /^[A-Za-z0-9_-]{8,128}$/;
 
 /** `sessionStorage`-backed credentials, so refreshing a viewer tab rejoins the same session. */
@@ -50,15 +51,15 @@ export function browserCredentialStore(): CredentialStore {
   return {
     load() {
       try {
-        const raw = window.sessionStorage.getItem(SESSION_KEY);
+        const raw = window.sessionStorage.getItem(CREDENTIALS_STORAGE_NAME);
         if (!raw) return null;
         const v = JSON.parse(raw) as { sessionId?: unknown; viewerToken?: unknown };
         return typeof v.sessionId === 'string' && typeof v.viewerToken === 'string' && CRED_RE.test(v.sessionId) && CRED_RE.test(v.viewerToken)
           ? { sessionId: v.sessionId, viewerToken: v.viewerToken } : null;
       } catch { return null; }
     },
-    save(creds) { try { window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(creds)); } catch { /* refresh just won't resume */ } },
-    clear() { try { window.sessionStorage.removeItem(SESSION_KEY); } catch { /* non-critical */ } },
+    save(creds) { try { window.sessionStorage.setItem(CREDENTIALS_STORAGE_NAME, JSON.stringify(creds)); } catch { /* refresh just won't resume */ } },
+    clear() { try { window.sessionStorage.removeItem(CREDENTIALS_STORAGE_NAME); } catch { /* non-critical */ } },
   };
 }
 

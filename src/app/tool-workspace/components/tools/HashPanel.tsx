@@ -12,6 +12,11 @@ import { useDebouncedValue } from '../useDebouncedValue';
 type Algorithm = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-512';
 
 const ALGORITHMS: Algorithm[] = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
+/**
+ * MD5 and SHA-1 are offered on purpose: this is a checksum calculator (verifying downloads, matching legacy
+ * digests), not password storage. They are labelled as legacy in the UI so nobody picks them for security.
+ */
+const LEGACY: ReadonlySet<Algorithm> = new Set(['MD5', 'SHA-1']);
 const SAMPLE = 'DevToolkit — browser developer tools 2026';
 
 export default function HashPanel({ tool: _tool }: { tool: Tool }) {
@@ -89,7 +94,7 @@ export default function HashPanel({ tool: _tool }: { tool: Tool }) {
           {ALGORITHMS.map((algo) => (
             <li key={`hash-${algo}`} className="rounded-lg border border-border bg-background-secondary/50 p-3">
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground">{algo}</span>
+                <span className="text-xs font-semibold text-muted-foreground">{algo}{LEGACY.has(algo) && <span className="ml-1.5 font-normal" title="Broken for security use. Fine for checksums, never for passwords or signatures.">(legacy, not for security)</span>}</span>
                 {results[algo] && (
                   <button type="button" className={`btn-icon h-7 min-h-0 w-7 min-w-0 ${copiedKey === algo ? 'text-primary' : ''}`} onClick={() => copyHash(algo, results[algo])} aria-label={`Copy ${algo} hash`}>
                     {copiedKey === algo ? <CheckCircle2 size={13} /> : <Copy size={13} />}
