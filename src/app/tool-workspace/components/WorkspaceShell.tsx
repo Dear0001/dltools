@@ -15,6 +15,8 @@ import SavedToolDataDialog from './SavedToolDataDialog';
 import ShareDialog from '@/components/live-share/ShareDialog';
 import { isLiveShareTool } from '@/lib/live-share/registry';
 import { LiveToolProvider } from '@/lib/live-share/workspace';
+import { useViewer } from '@/lib/live-share/react';
+import ViewerGuard from '@/components/live-share/ViewerGuard';
 import DocumentConverterPanel from './tools/DocumentConverterPanel';
 import { getCategoryName, getToolDescription, getToolName, translateText, useLocale } from '@/i18n/LocaleProvider';
 
@@ -105,18 +107,16 @@ const PANEL_MAP: Record<string, React.ComponentType<{ tool: Tool }>> = {
   'tool-image-to-word': DocumentConverterPanel,
 };
 
-export default function WorkspaceShell({
-  tool,
-  liveViewerFields,
-  embedded = false,
-}: {
-  tool: Tool;
-  /** Set when rendering as a Live Share viewer: the host's values. The panel becomes read-only and host-driven. */
-  liveViewerFields?: Record<string, string>;
-  /** Rendered inside another page (the viewer), so the height budget leaves room for its banner. */
-  embedded?: boolean;
-}) {
-  const viewing = liveViewerFields !== undefined;
+const NO_FIELDS: Record<string, string> = {};
+
+export default function WorkspaceShell({ tool }: { tool: Tool }) {
+  // Live Share: when this tab is following a host, this same page (reached through the host's route) renders
+  // the host's state, read-only. The host's fields apply only once they are for *this* tool — during a
+  // navigation, or on a tool that isn't shared, the panel shows empty read-only content instead.
+  const { state: liveViewer } = useViewer();
+  const viewing = liveViewer.phase === 'joined';
+  const liveViewerFields = viewing ? (liveViewer.toolId === tool.id ? liveViewer.fields : NO_FIELDS) : undefined;
+  const liveStale = viewing && (liveViewer.paused || !liveViewer.hostConnected || liveViewer.connection !== 'open');
   const { locale, t } = useLocale();
   const { data: session, status: authStatus } = useSession();
   const trackedToolId = useRef('');
@@ -194,7 +194,7 @@ export default function WorkspaceShell({
   const privacyMode = getToolPrivacyMode(tool.id);
 
   return (
-    <div className={`flex flex-col ${embedded ? 'lg:h-[calc(100dvh-8.5rem)]' : 'lg:h-[calc(100dvh-4rem)]'}`}>
+    <div className={`flex flex-col ${viewing ? 'lg:h-[calc(100dvh-7rem)]' : 'lg:h-[calc(100dvh-4rem)]'}`}>
       {/* Workspace header: breadcrumb, title, description, actions */}
       <div className="flex-shrink-0 border-b border-border bg-background-secondary">
         <div className="px-4 py-4 sm:px-6 lg:px-8">
@@ -254,8 +254,17 @@ export default function WorkspaceShell({
       {/* Workspace body */}
       <div className="min-h-[70vh] flex-1 px-4 py-4 sm:px-6 lg:min-h-0 lg:overflow-hidden lg:px-8">
         {mounted ? (
-          <LiveToolProvider toolId={tool.id} viewerFields={liveViewerFields}>
-            <PanelComponent tool={tool} />
+          // `key`: switching between hosting/normal use and viewing remounts the panel, so no local state from one
+          // mode (e.g. the sample text) leaks into the other.
+          <LiveToolProvider key={viewing ? 'viewer' : 'local'} toolId={tool.id} viewerFields={liveViewerFields}>
+            {viewing ? (
+              // Same panel, read-only. Dimmed while stale so an old frame is never mistaken for a live one.
+              <ViewerGuard className={`h-full ${liveStale ? 'opacity-60 transition-opacity' : 'transition-opacity'}`}>
+                <PanelComponent tool={tool} />
+              </ViewerGuard>
+            ) : (
+              <PanelComponent tool={tool} />
+            )}
           </LiveToolProvider>
         ) : (
           <div className="flex h-full min-h-[40vh] items-center justify-center" role="status" aria-label={t('loadingTool')}>

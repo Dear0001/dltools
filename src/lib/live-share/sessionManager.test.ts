@@ -595,3 +595,67 @@ describe('no tool vs unsupported tool', () => {
   });
 });
 
+
+describe('route synchronization (viewers follow the host through the real app routes)', () => {
+  it('relays the host route to every viewer, in sequence with content', () => {
+    const host = createHost();
+    joinViewer(host, 'v1');
+    joinViewer(host, 'v2', '10.0.0.3');
+    send(host.id, { type: 'ROUTE', route: '/tools/json-formatter' });
+    send(host.id, update(1, { input: '{}' }, true));
+    send(host.id, { type: 'ROUTE', route: '/tools/sql-formatter' });
+    for (const v of ['v1', 'v2']) {
+      const routes = transport.of(v, 'ROUTE');
+      expect(routes.map((r) => r.route)).toEqual(['/tools/json-formatter', '/tools/sql-formatter']);
+      const content = transport.last(v, 'CONTENT_UPDATE')!;
+      expect(content.seq).toBe(routes[0].seq + 1);
+      expect(routes[1].seq).toBe(content.seq + 1);
+    }
+  });
+
+  it('gives late joiners and reconnecting viewers the current route in the snapshot', () => {
+    const host = createHost();
+    send(host.id, { type: 'ROUTE', route: '/tools/regex-tester' });
+    joinViewer(host, 'late');
+    expect(transport.last('late', 'JOIN_APPROVED')!.snapshot.route).toBe('/tools/regex-tester');
+    const { sessionId, viewerToken } = transport.last('late', 'JOIN_APPROVED')!;
+    manager.disconnect('late');
+    manager.connect('late2', '10.0.0.2');
+    send('late2', { type: 'RECONNECT_VIEWER', sessionId, viewerToken });
+    expect(transport.last('late2', 'RECONNECTED')!.snapshot.route).toBe('/tools/regex-tester');
+  });
+
+  it('ignores duplicate routes', () => {
+    const host = createHost();
+    joinViewer(host, 'v1');
+    send(host.id, { type: 'ROUTE', route: '/tools' });
+    send(host.id, { type: 'ROUTE', route: '/tools' });
+    expect(transport.of('v1', 'ROUTE')).toHaveLength(1);
+  });
+
+  it('never lets a viewer move the session', () => {
+    const host = createHost();
+    joinViewer(host, 'v1');
+    joinViewer(host, 'v2', '10.0.0.3');
+    send('v1', { type: 'ROUTE', route: '/tools/sql-formatter' });
+    expect(transport.last('v1', 'ERROR')!.code).toBe('FORBIDDEN');
+    expect(transport.of('v2', 'ROUTE')).toHaveLength(0);
+  });
+
+  it('withholds route changes while paused', () => {
+    const host = createHost();
+    joinViewer(host, 'v1');
+    send(host.id, { type: 'PAUSE' });
+    send(host.id, { type: 'ROUTE', route: '/tools/sql-formatter' });
+    expect(transport.of('v1', 'ROUTE')).toHaveLength(0);
+  });
+
+  it('rejects routes outside the shareable set at the protocol layer', () => {
+    for (const route of ['/live-share/host', '/favorites', '/api/user/recents', '/tools/json-formatter?x=1', 'https://evil.example/tools', 'javascript:alert(1)', '//evil.example', '/tools/../api', 42]) {
+      const parsed = parseClientMessage(JSON.stringify({ type: 'ROUTE', route }), 10_000);
+      expect(parsed.ok, String(route)).toBe(false);
+    }
+    const ok = parseClientMessage(JSON.stringify({ type: 'ROUTE', route: '/tools/khqr-builder/' }), 10_000);
+    expect(ok.ok && ok.message).toEqual({ type: 'ROUTE', route: '/tools/khqr-builder' });
+  });
+});

@@ -3,7 +3,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { loadConfig } from './config';
 import { Connection, type ConnectionStatus } from './connection';
 import { HostController } from './hostController';
-import { ViewerController } from './viewerController';
+import { ViewerController, type CredentialStore } from './viewerController';
 import { createLiveShareServer, type LiveShareServer } from './server';
 import type { ServerMessage } from './protocol';
 
@@ -35,6 +35,7 @@ async function until<T>(fn: () => T | undefined | false | null, ms = 3000): Prom
 
 const newHost = () => { const h = new HostController({ url, WebSocketImpl: Impl, debounceMs: 20, maxWaitMs: 60 }); controllers.push(h); return h; };
 const newViewer = () => { const v = new ViewerController({ url, WebSocketImpl: Impl }); controllers.push(v); return v; };
+const newViewerWith = (credentials: CredentialStore) => { const v = new ViewerController({ url, WebSocketImpl: Impl, credentials }); controllers.push(v); return v; };
 
 async function pair(host: HostController, name: string) {
   const viewer = newViewer();
@@ -426,5 +427,92 @@ describe('warm-up (faster "Start sharing")', () => {
     active.cool();
     expect(active.state.phase).toBe('active');
     expect(active.state.connection).toBe('open');
+  });
+});
+
+/** Stand-in for this tab's sessionStorage: survives "reloading" (a new controller), like the browser one. */
+function memoryCredentials(): CredentialStore & { value: { sessionId: string; viewerToken: string } | null } {
+  return {
+    value: null,
+    load() { return this.value; },
+    save(c) { this.value = c; },
+    clear() { this.value = null; },
+  };
+}
+
+describe('route synchronization: every device follows the host through the real routes', () => {
+  it('A hosts on JSON Formatter; B, C, D join and follow A through SQL Formatter, Regex Tester and KHQR Builder; B survives a refresh; ending frees everyone', async () => {
+    const host = await startedHost();
+    host.setRoute('/tools/json-formatter');
+    host.publish('tool-json-formatter', { input: '{"a":1}', indent: '2' });
+
+    const storeB = memoryCredentials();
+    const b = newViewerWith(storeB);
+    b.start(host.state.host!.code!, 'B');
+    host.approve((await until(() => host.state.host?.pending.find((p) => p.name === 'B'))).requestId);
+    await until(() => b.state.phase === 'joined');
+    const c = await pair(host, 'C');
+    const d = await pair(host, 'D');
+    const viewers = [b, c, d];
+
+    // Join lands on the host's current route, with that tool's state.
+    for (const v of viewers) {
+      expect(v.state.route).toBe('/tools/json-formatter');
+      await until(() => v.state.fields.input === '{"a":1}');
+      expect(v.state.toolId).toBe('tool-json-formatter');
+    }
+
+    const steps: Array<[string, string, Record<string, string>]> = [
+      ['/tools/sql-formatter', 'tool-sql-formatter', { input: 'select 1', dialect: 'mysql' }],
+      ['/tools/regex-tester', 'tool-regex-tester', { pattern: '\\d+', flags: 'g', testString: 'a1b22' }],
+      ['/tools/khqr-builder', 'tool-khqr-builder', { khqr: '00020101021229', fgColor: '#000000' }],
+    ];
+    for (const [route, toolId, fields] of steps) {
+      host.release(viewers[0].state.toolId ?? ''); // the previous tool page unmounts
+      host.setRoute(route);
+      host.publish(toolId, fields);
+      for (const v of viewers) {
+        await until(() => v.state.route === route && v.state.toolId === toolId);
+        for (const [k, val] of Object.entries(fields)) await until(() => v.state.fields[k] === val);
+      }
+    }
+    expect(storeB.value).not.toBeNull();
+
+    // Refresh B: a brand-new controller in the same tab resumes from the stored credentials.
+    b.dispose();
+    const b2 = newViewerWith(storeB);
+    expect(b2.resume()).toBe(true);
+    await until(() => b2.state.phase === 'joined');
+    expect(b2.state.route).toBe('/tools/khqr-builder');
+    expect(b2.state.fields.khqr).toBe('00020101021229');
+
+    // Ending the session releases every viewer and forgets B's credentials.
+    host.end();
+    for (const v of [b2, c, d]) await until(() => v.state.phase === 'ended');
+    expect(b2.state.route).toBeNull();
+    expect(storeB.value).toBeNull();
+    expect(newViewerWith(storeB).resume()).toBe(false);
+  });
+
+  it('a reload after the session ended quietly returns to normal browsing', async () => {
+    const store = memoryCredentials();
+    store.value = { sessionId: 'abcdefgh12345678', viewerToken: 'x'.repeat(40) };
+    const v = newViewerWith(store);
+    expect(v.resume()).toBe(true);
+    await until(() => v.state.phase === 'idle' && !v.state.resuming);
+    expect(store.value).toBeNull();
+  });
+
+  it('host route reports are deduplicated and only sent while sharing', async () => {
+    const host = newHost();
+    host.setRoute('/tools/json-formatter'); // not sharing yet: remembered, not sent
+    host.start();
+    await until(() => host.state.phase === 'active');
+    const v = await pair(host, 'V');
+    expect(v.state.route).toBe('/tools/json-formatter');
+    host.setRoute(null); // a page that is not shared: viewers stay put
+    host.setRoute('/tools/json-formatter');
+    host.setRoute('/tools');
+    await until(() => v.state.route === '/tools');
   });
 });

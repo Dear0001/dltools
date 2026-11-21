@@ -1,11 +1,11 @@
 'use client';
 /** React bindings for Live Share. Controllers are plain classes; these hooks only subscribe. */
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useContext, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { LiveToolContext } from './toolContext';
 import { getLiveShareUrl } from './clientConfig';
 import { isSecureEnough } from './connection';
 import { HostController, type HostViewState } from './hostController';
-import { ViewerController, type ViewerViewState } from './viewerController';
+import { ViewerController, browserCredentialStore, type ViewerViewState } from './viewerController';
 
 let hostSingleton: HostController | null = null;
 const SERVER_HOST_STATE = { phase: 'idle' } as HostViewState;
@@ -43,23 +43,35 @@ export function useHost(): { controller: HostController | null; state: HostViewS
   return { controller, state: controller ? state : idleState };
 }
 
-/** A viewer controller owned by the calling component; closed on unmount. */
+let viewerSingleton: ViewerController | null = null;
+
+/**
+ * One viewer controller per tab. It lives outside the React tree (like the host's) so the session survives
+ * every client-side navigation: the viewer *follows the host through the app's real routes*, which unmounts
+ * whatever page started the join.
+ */
+export function getViewerController(): ViewerController | null {
+  if (typeof window === 'undefined') return null;
+  if (viewerSingleton) return viewerSingleton;
+  const url = getLiveShareUrl();
+  if (!url || !isSecureEnough(url)) return null;
+  viewerSingleton = new ViewerController({ url, credentials: browserCredentialStore() });
+  return viewerSingleton;
+}
+
+const IDLE_VIEWER: ViewerViewState = {
+  phase: 'idle', connection: 'idle', latencyMs: null, toolId: null, route: null, hostToolUnsupported: false, fields: {}, paused: false, hostConnected: true,
+  sessionExpiresAt: null, endedReason: null, rejectedReason: null, error: null, lastUpdateAt: null, syncing: false, unreachable: false, resuming: false,
+};
+
 export function useViewer(): { controller: ViewerController | null; state: ViewerViewState } {
-  const controller = useMemo(() => {
-    const url = getLiveShareUrl();
-    return typeof window !== 'undefined' && url && isSecureEnough(url) ? new ViewerController({ url }) : null;
-  }, []);
-  useEffect(() => () => controller?.dispose(), [controller]);
-  const idle = useRef<ViewerViewState>({
-    phase: 'idle', connection: 'idle', latencyMs: null, toolId: null, hostToolUnsupported: false, fields: {}, paused: false, hostConnected: true,
-    sessionExpiresAt: null, endedReason: null, rejectedReason: null, error: null, lastUpdateAt: null, syncing: false, unreachable: false,
-  });
+  const controller = useMemo(() => getViewerController(), []);
   const state = useSyncExternalStore(
     controller ? controller.store.subscribe : noopSubscribe,
-    controller ? controller.store.get : () => idle.current,
-    () => idle.current,
+    controller ? controller.store.get : () => IDLE_VIEWER,
+    () => IDLE_VIEWER,
   );
-  return { controller, state };
+  return { controller, state: controller ? state : IDLE_VIEWER };
 }
 
 /**

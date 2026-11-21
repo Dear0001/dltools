@@ -6,7 +6,6 @@ import { Loader2, LogIn } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { getAvailability, useIsClient, useViewer } from '@/lib/live-share/react';
 import { Card, ConnectionBadge, PrivacyNotice, useLs } from './shared';
-import ViewerWorkspace from './ViewerWorkspace';
 import type { LsKey } from './messages';
 
 const ERROR_KEY: Record<string, LsKey> = {
@@ -52,7 +51,24 @@ export default function JoinFlow() {
   }
 
   if (state.phase === 'joined') {
-    return <ViewerWorkspace state={state} onLeave={() => controller?.leave()} />;
+    // There is no viewer page: the app-level LiveShareSession now navigates this tab to the host's actual route
+    // (e.g. /tools/json-formatter) and the real tool page renders the host's state. This is only shown until
+    // then, or while the host is on a page that isn't shared.
+    return (
+      <div className="page-container pb-20 pt-10">
+        <PageHeader crumbs={crumbs} title={t('joinTitle')} />
+        <div className="max-w-xl">
+          <Card>
+            <div role="status" className="flex flex-col items-center gap-3 py-6 text-center">
+              {state.route ? <Loader2 size={28} className="animate-spin text-primary" aria-hidden="true" /> : null}
+              <p className="text-sm text-muted-foreground">{state.route ? t('followingHost') : state.hostToolUnsupported ? t('unsupportedTool') : t('waitingForTool')}</p>
+              <ConnectionBadge status={state.connection} latencyMs={state.latencyMs} />
+              <button type="button" className="btn-ghost" onClick={() => controller?.leave()}>{t('leave')}</button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   const busy = state.phase === 'connecting' || state.phase === 'pending';

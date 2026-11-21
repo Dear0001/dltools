@@ -1,12 +1,12 @@
 'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `{
   "user": {
@@ -50,11 +50,11 @@ function inferType(value: unknown) {
 }
 
 export default function JsonToJavaPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [lang, setLang] = useState<Lang>('java');
-  const [rootName, setRootName] = useState('RootModel');
-  const [error, setError] = useState('');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [lang, setLang] = useLiveState<Lang>('lang', 'java');
+  const [rootName, setRootName] = useLiveState('rootName', 'RootModel');
+  const [error, setError] = useLiveState('error', '');
   const debouncedInput = useDebouncedValue(input);
 
   const generate = useCallback((source = input, language = lang, root = rootName) => {
@@ -128,7 +128,6 @@ export default function JsonToJavaPanel({ tool: _tool }: { tool: Tool }) {
     generate(debouncedInput, lang, rootName);
   }, [input, debouncedInput, lang, rootName, generate]);
 
-  useLiveShareHost('tool-json-to-java', { input, output, lang, rootName });
   return (
     <ToolFrame
       toolbar={<>

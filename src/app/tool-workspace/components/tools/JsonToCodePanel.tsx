@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
@@ -9,7 +9,7 @@ import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 import JsonToTS from 'json-to-ts';
 import { generateDartModels } from './dartModel';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 type Target = 'typescript' | 'go' | 'python' | 'pydantic' | 'rust' | 'zod' | 'dart';
 const SAMPLE = `{"user":{"id":42,"name":"Dara","active":true,"roles":["admin","editor"]}}`;
@@ -98,11 +98,11 @@ function generateCode(value: unknown, root: string, target: Target): string {
 }
 
 export default function JsonToCodePanel({ tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [target, setTarget] = useState<Target>(tool.id === 'tool-json-to-dart' ? 'dart' : 'typescript');
-  const [rootName, setRootName] = useState('RootModel');
-  const [error, setError] = useState('');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [target, setTarget] = useLiveState<Target>('target', tool.id === 'tool-json-to-dart' ? 'dart' : 'typescript');
+  const [rootName, setRootName] = useLiveState('rootName', 'RootModel');
+  const [error, setError] = useLiveState('error', '');
   const debouncedInput = useDebouncedValue(input);
   const generate = useCallback((source = input) => {
     try { setOutput(generateCode(JSON.parse(source), rootName || 'RootModel', target)); setError(''); }
@@ -114,7 +114,6 @@ export default function JsonToCodePanel({ tool }: { tool: Tool }) {
   }, [input, debouncedInput, generate]);
 
   const language: 'typescript' | 'text' = target === 'zod' || target === 'typescript' ? 'typescript' : 'text';
-  useLiveShareHost(tool.id, { input, output, target, rootName });
   return <ToolFrame
     toolbar={<>
       <ToolbarField label="Root name"><input className="input-code w-32 px-2 py-1 text-xs" value={rootName} onChange={(event) => setRootName(event.target.value)} /></ToolbarField>

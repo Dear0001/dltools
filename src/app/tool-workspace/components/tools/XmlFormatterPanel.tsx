@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
@@ -7,18 +7,18 @@ import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
 import { formatXml } from './xmlFormat';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `<?xml version="1.0" encoding="UTF-8"?><catalog><book id="bk101"><author>Gambardella, Matthew</author><title>XML Developer's Guide</title><genre>Computer</genre><price>44.95</price><publish_date>2000-10-01</publish_date></book><book id="bk102"><author>Ralls, Kim</author><title>Midnight Rain</title><genre>Fantasy</genre><price>5.95</price><publish_date>2000-12-16</publish_date></book></catalog>`;
 
 type Status = 'idle' | 'success' | 'error';
 
 export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [indent, setIndent] = useState(2);
-  const [error, setError] = useState('');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [indent, setIndent] = useLiveState('indent', 2);
+  const [error, setError] = useLiveState('error', '');
   const debouncedInput = useDebouncedValue(input);
 
   useEffect(() => {
@@ -82,7 +82,6 @@ export default function XmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
     }
   };
 
-  useLiveShareHost('tool-xml-formatter', { input, output, status });
   return (
     <ToolFrame
       toolbar={<>

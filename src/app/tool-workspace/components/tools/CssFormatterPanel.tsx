@@ -1,12 +1,12 @@
 'use client';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `.container{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;background-color:#0e0e10;border-radius:8px;}.title{font-size:24px;font-weight:700;color:#f0f0f5;margin-bottom:8px;}.btn{background:linear-gradient(135deg,#00d4aa,#7c6af7);color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;transition:all 150ms ease;}`;
 
@@ -26,12 +26,12 @@ function errorText(cause: unknown): string {
 }
 
 export default function CssFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [error, setError] = useState('');
-  const [indent, setIndent] = useState(2);
-  const [language, setLanguage] = useState<Language>('css');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [error, setError] = useLiveState('error', '');
+  const [indent, setIndent] = useLiveState('indent', 2);
+  const [language, setLanguage] = useLiveState<Language>('language', 'css');
   const debouncedInput = useDebouncedValue(input);
   // Formatting is async; only the latest request may update the output.
   const requestId = useRef(0);
@@ -76,7 +76,6 @@ export default function CssFormatterPanel({ tool: _tool }: { tool: Tool }) {
     setError('');
   };
 
-  useLiveShareHost('tool-css-formatter', { input, output, status, language });
   return (
     <ToolFrame
       toolbar={<>

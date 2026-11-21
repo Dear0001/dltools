@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import { ArrowLeftRight } from 'lucide-react';
@@ -8,7 +8,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 type Format = 'json' | 'yaml' | 'csv' | 'xml';
 const FORMATS: Format[] = ['json', 'yaml', 'csv', 'xml'];
@@ -99,11 +99,11 @@ function csvToJson(source: string): unknown {
 }
 
 export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
-  const [inputFormat, setInputFormat] = useState<Format>('json');
-  const [outputFormat, setOutputFormat] = useState<Format>('yaml');
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
+  const [inputFormat, setInputFormat] = useLiveState<Format>('inputFormat', 'json');
+  const [outputFormat, setOutputFormat] = useLiveState<Format>('outputFormat', 'yaml');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [error, setError] = useLiveState('error', '');
   const conversionId = useRef(0);
   const debouncedInput = useDebouncedValue(input);
 
@@ -152,7 +152,6 @@ export default function DataConverterPanel({ tool: _tool }: { tool: Tool }) {
   }, [input, debouncedInput, inputFormat, outputFormat, convert]);
 
   const formatOptions = FORMATS.map((format) => <option key={format} value={format}>{format.toUpperCase()}</option>);
-  useLiveShareHost('tool-data-converter', { input, output, inputFormat, outputFormat, status: error ? 'error' : output ? 'success' : 'idle' });
   return <ToolFrame
     toolbar={<>
       <ToolbarField label="From"><select className="select-input" value={inputFormat} onChange={(event) => setInputFormat(event.target.value as Format)}>{formatOptions}</select></ToolbarField>

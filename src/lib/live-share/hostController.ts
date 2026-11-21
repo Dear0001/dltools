@@ -57,6 +57,9 @@ export class HostController {
   private reachTimer: ReturnType<typeof setTimeout> | undefined;
   /** True once the user asked to start a session; a warmed-up socket stays silent until then. */
   private wantSession = false;
+  /** The app route this tab is on (only shareable routes), and the one viewers were last told about. */
+  private route: string | null = null;
+  private routeSent: string | null = null;
 
   constructor(private o: HostOptions) {}
 
@@ -129,12 +132,15 @@ export class HostController {
         this.cleared = null;
         clearTimeout(this.reachTimer);
         this.store.set({ phase: 'active', host: m.state, error: null, unreachable: false });
+        this.routeSent = null; // a new or resumed session: tell viewers where we are
+        this.sendRoute();
         this.scheduleFlush(true);
         break;
       case 'HOST_STATE': {
         const resumed = this.state.host?.paused && !m.state.paused;
         const filesChanged = this.state.host !== null && this.state.host.allowFiles !== m.state.allowFiles;
         this.store.set({ host: m.state });
+        if (resumed) { this.routeSent = null; this.sendRoute(); } // routes are withheld while paused
         if (resumed || filesChanged) { this.lastSent = null; this.scheduleFlush(true); }
         break;
       }
@@ -181,6 +187,23 @@ export class HostController {
   }
   /** Releases everything (page unload / provider teardown) without ending a resumable session. */
   dispose() { clearTimeout(this.timer); clearTimeout(this.reachTimer); this.conn?.close(); this.conn = null; }
+
+  // ---------- route synchronization ----------
+
+  /**
+   * The host tab navigated. `route` must already be a shareable route (see `routes.ts`) or `null` for a page
+   * that is not shared, in which case viewers simply stay where they are. Duplicate reports are ignored.
+   */
+  setRoute(route: string | null): void {
+    this.route = route;
+    this.sendRoute();
+  }
+
+  private sendRoute() {
+    const route = this.route;
+    if (!route || route === this.routeSent || this.state.phase !== 'active' || this.state.host?.paused) return;
+    if (this.cmd({ type: 'ROUTE', route })) this.routeSent = route; // offline: resent after reconnect
+  }
 
   // ---------- outbound content pipeline ----------
 

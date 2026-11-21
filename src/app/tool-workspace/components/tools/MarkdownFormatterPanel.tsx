@@ -10,7 +10,7 @@ import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `# Markdown preview
 
@@ -54,8 +54,8 @@ function safeMarkdownHtml(markdown: string): string {
 }
 
 export default function MarkdownFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [formatted, setFormatted] = useState(SAMPLE);
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [formatted, setFormatted] = useLiveState('output', SAMPLE);
   const [preview, setPreview] = useState(true);
   const [busy, setBusy] = useState(false);
   const debouncedInput = useDebouncedValue(input, 300);
@@ -103,7 +103,6 @@ export default function MarkdownFormatterPanel({ tool: _tool }: { tool: Tool }) 
     }
   };
 
-  useLiveShareHost('tool-markdown-formatter', { input, output: formatted });
   return (
     <ToolFrame toolbar={<>
       <div className="segmented" role="group" aria-label="Output view">

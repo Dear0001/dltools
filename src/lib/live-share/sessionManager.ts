@@ -75,6 +75,8 @@ interface Session {
   pending: Map<string, Pending>;
   toolId: string | null;
   unsupported: boolean;
+  /** The app route the host is on; viewers navigate to it. */
+  route: string | null;
   fields: Record<string, string>;
   hostVersion: number;
   seq: number;
@@ -188,6 +190,7 @@ export class SessionManager {
       case 'REFRESH_CODE': return this.refreshCode(session);
       case 'END': return this.endSession(session, 'host_ended');
       case 'CLEAR_TOOL': return this.clearTool(session, msg.unsupported === true);
+      case 'ROUTE': return this.setRoute(session, msg.route);
       case 'SET_ALLOW_FILES': return this.setAllowFiles(session, msg.allow);
       case 'CONTENT_UPDATE': return this.contentUpdate(session, conn, msg);
       default: return this.error(connId, 'INVALID_MESSAGE', 'Unexpected message.');
@@ -219,6 +222,7 @@ export class SessionManager {
       pending: new Map(),
       toolId: null,
       unsupported: false,
+      route: null,
       fields: {},
       hostVersion: 0,
       seq: 0,
@@ -431,6 +435,24 @@ export class SessionManager {
     this.pushHostState(session);
   }
 
+  /**
+   * Host navigated. Stored so late joiners and reconnecting viewers land on the same page, and relayed in
+   * sequence with content updates. Withheld while paused, like content; the host resends it on resume.
+   */
+  private setRoute(session: Session, route: string): void {
+    if (session.paused || session.route === route) return;
+    session.route = route;
+    session.lastActivity = this.now();
+    session.seq += 1;
+    const relay: ServerMessage = { type: 'ROUTE', seq: session.seq, route };
+    for (const viewer of session.viewers.values()) {
+      if (!viewer.conn) continue;
+      if (viewer.stale || this.transport.backlog(viewer.conn) > this.config.backpressureBytes) { viewer.stale = true; continue; }
+      viewer.lastSeq = session.seq;
+      this.transport.send(viewer.conn, relay);
+    }
+  }
+
   // ---------- viewer ----------
 
   private joinRequest(conn: Conn, rawCode: string, name: string): void {
@@ -601,7 +623,7 @@ export class SessionManager {
   // ---------- helpers ----------
 
   private snapshotFor(session: Session): Snapshot {
-    return { toolId: session.toolId, seq: session.seq, fields: { ...session.fields }, unsupported: session.unsupported };
+    return { toolId: session.toolId, seq: session.seq, fields: { ...session.fields }, unsupported: session.unsupported, route: session.route };
   }
 
   private hostState(session: Session): HostState {

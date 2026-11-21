@@ -5,6 +5,7 @@ import { Inter, JetBrains_Mono, Noto_Sans_Khmer } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import Topbar from '@/components/Topbar';
+import LiveShareSession from '@/components/live-share/LiveShareSession';
 import SiteFooter from '@/components/SiteFooter';
 import AutoTranslate from '@/components/AutoTranslate';
 import AuthProvider from '@/components/AuthProvider';
@@ -81,6 +82,8 @@ export default async function RootLayout({
             <VercelAnalytics />
             <Toast />
             <Topbar />
+            {/* App-level so a Live Share session survives navigation; viewers follow the host's real routes. */}
+            <LiveShareSession />
             <main id="main-content" tabIndex={-1} className="relative min-h-[calc(100dvh-4rem)] bg-background text-foreground focus:outline-none">
               {children}
             </main>

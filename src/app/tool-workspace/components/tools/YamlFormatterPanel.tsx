@@ -1,12 +1,12 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `name: devtoolkit
 version: 1.0.0
@@ -29,10 +29,10 @@ server:
 type Status = 'idle' | 'success' | 'error';
 
 export default function YamlFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [error, setError] = useState('');
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [error, setError] = useLiveState('error', '');
   const debouncedInput = useDebouncedValue(input);
 
   useEffect(() => {
@@ -100,7 +100,6 @@ export default function YamlFormatterPanel({ tool: _tool }: { tool: Tool }) {
     }
   };
 
-  useLiveShareHost('tool-yaml-formatter', { input, output, status });
   return (
     <ToolFrame
       toolbar={<>

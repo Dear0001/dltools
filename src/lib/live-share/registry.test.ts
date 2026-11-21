@@ -40,7 +40,6 @@ describe('Live Share tool registry', () => {
   it('shares the KHQR tools natively, with uploaded images gated behind file sharing', () => {
     expect(isLiveShareTool('tool-khqr-validator')).toBe(true);
     expect(isLiveShareTool('tool-khqr-builder')).toBe(true);
-    expect(LIVE_SHARE_TOOLS['tool-khqr-builder'].native).toBe(true);
     expect(checkField('tool-khqr-builder', 'khqr', '00020101021229').ok).toBe(true);
     expect(checkField('tool-khqr-builder', 'logoSize', '0.16').ok).toBe(true);
     expect(checkField('tool-khqr-builder', 'logoSize', 'big').ok).toBe(false);
@@ -79,10 +78,8 @@ describe('Live Share tool registry', () => {
     expect(checkField('tool-json-formatter', 'sortKeys', 'yes').ok).toBe(false);
   });
 
-  it('marks the seven priority tools as native (real UI on the viewer)', () => {
-    for (const id of ['tool-json-formatter', 'tool-json-schema', 'tool-json-diff', 'tool-sql-formatter', 'tool-js-formatter', 'tool-regex-tester', 'tool-base64-document']) {
-      expect(LIVE_SHARE_TOOLS[id].native, id).toBe(true);
-    }
+  it('has no viewer-only rendering mode: every shared tool is rendered by its real panel', () => {
+    for (const [id, spec] of Object.entries(LIVE_SHARE_TOOLS)) expect(Object.keys(spec), id).toEqual(['fields']);
   });
 
   it('flags the Base64 input as file content that needs host opt-in', () => {

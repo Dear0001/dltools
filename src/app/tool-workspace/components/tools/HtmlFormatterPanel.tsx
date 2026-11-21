@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Tool } from '@/data/tools';
 import ToolFrame, { ToolbarField } from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
@@ -7,18 +7,18 @@ import CodeEditor from '../CodeEditor';
 import CodeOutput from '../CodeOutput';
 import beautify from 'js-beautify';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>DevToolkit</title><link rel="stylesheet" href="/styles.css"></head><body><div class="container"><h1 class="title">Hello World</h1><p class="description">A developer toolkit.</p><button type="button" onClick="handleClick()">Click me</button></div><script src="/app.js"></script></body></html>`;
 
 type Status = 'idle' | 'success' | 'error';
 
 export default function HtmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
-  const [input, setInput] = useState(SAMPLE);
-  const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [error, setError] = useState('');
-  const [indent, setIndent] = useState(2);
+  const [input, setInput] = useLiveState('input', SAMPLE);
+  const [output, setOutput] = useLiveState('output', '');
+  const [status, setStatus] = useLiveState<Status>('status', 'idle');
+  const [error, setError] = useLiveState('error', '');
+  const [indent, setIndent] = useLiveState('indent', 2);
   const debouncedInput = useDebouncedValue(input);
 
   useEffect(() => {
@@ -66,7 +66,6 @@ export default function HtmlFormatterPanel({ tool: _tool }: { tool: Tool }) {
     setError('');
   };
 
-  useLiveShareHost('tool-html-formatter', { input, output, status });
   return (
     <ToolFrame
       toolbar={<>

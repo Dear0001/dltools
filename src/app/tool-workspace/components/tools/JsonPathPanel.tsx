@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { Tool } from '@/data/tools';
 import ToolFrame from '../ToolFrame';
 import PanelLayout from '../PanelLayout';
 import CodeOutput from '../CodeOutput';
 import CodeEditor from '../CodeEditor';
 import { useDebouncedValue } from '../useDebouncedValue';
-import { useLiveShareHost } from '@/lib/live-share/react';
+import { useLiveState } from '@/lib/live-share/useLiveState';
 
 const SAMPLE = `{
   "users": [
@@ -102,10 +102,10 @@ function queryJsonPath(root: unknown, query: string): Match[] {
 }
 
 export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
-  const [json, setJson] = useState(SAMPLE);
-  const [expression, setExpression] = useState('$.users[*].name');
-  const [result, setResult] = useState('');
-  const [error, setError] = useState('');
+  const [json, setJson] = useLiveState('json', SAMPLE);
+  const [expression, setExpression] = useLiveState('expression', '$.users[*].name');
+  const [result, setResult] = useLiveState('output', '');
+  const [error, setError] = useLiveState('error', '');
   const debouncedJson = useDebouncedValue(json);
   const debouncedExpression = useDebouncedValue(expression);
 
@@ -140,7 +140,6 @@ export default function JsonPathPanel({ tool: _tool }: { tool: Tool }) {
   }, [json, expression, debouncedJson, debouncedExpression, run]);
 
   const output = result;
-  useLiveShareHost('tool-jsonpath', { json, expression, output, status: error ? 'error' : output ? 'success' : 'idle' });
   return (
     <ToolFrame toolbar={<>
       <label className="flex min-w-0 flex-1 items-center gap-2" title="Examples: $.users[*].name · $.users[?(@.active == true)] · $..id">

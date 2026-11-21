@@ -145,6 +145,9 @@ const en = {
   fileGatedNotice: 'Held back until you allow file content:',
   fileNotShared: 'The host has not shared file content, so this field is empty.',
   endedBackToTools: 'Back to all tools',
+  followingHost: 'Following the host',
+  resumingSession: 'Reconnecting to the shared session…',
+  dismiss: 'Dismiss',
   redirecting: 'Returning to all tools in',
   joinAnother: 'Join another session',
 } as const;
@@ -295,6 +298,9 @@ const kh: Record<LsKey, string> = {
   fileGatedNotice: 'បានទប់ស្កាត់រហូតដល់អ្នកអនុញ្ញាតមាតិកាឯកសារ៖',
   fileNotShared: 'ម្ចាស់វគ្គមិនបានចែករំលែកមាតិកាឯកសារទេ ដូច្នេះវាលនេះទទេ។',
   endedBackToTools: 'ត្រឡប់ទៅឧបករណ៍ទាំងអស់',
+  followingHost: 'កំពុងតាមម្ចាស់វគ្គ',
+  resumingSession: 'កំពុងភ្ជាប់ទៅវគ្គចែករំលែកឡើងវិញ…',
+  dismiss: 'បិទ',
   redirecting: 'ត្រឡប់ទៅឧបករណ៍ទាំងអស់ក្នុងរយៈពេល',
   joinAnother: 'ចូលរួមវគ្គផ្សេងទៀត',
 };

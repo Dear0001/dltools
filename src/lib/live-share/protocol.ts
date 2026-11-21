@@ -4,6 +4,7 @@
  * session manager; nothing is trusted because of its `type`.
  */
 import { checkField, isLiveShareTool } from './registry';
+import { normalizeShareRoute } from './routes';
 
 export const PROTOCOL_VERSION = 1;
 
@@ -44,6 +45,8 @@ export type ClientMessage =
   /** `unsupported`: the host opened a tool that cannot be shared (as opposed to having no tool open). */
   | { type: 'CLEAR_TOOL'; unsupported?: boolean }
   | { type: 'SET_ALLOW_FILES'; allow: boolean }
+  /** Host navigated to another app route; viewers follow it with the app's own router. See `routes.ts`. */
+  | { type: 'ROUTE'; route: string }
   | { type: 'LEAVE' }
   | { type: 'SYNC_REQUEST' }
   | { type: 'PING'; t: number }
@@ -92,6 +95,8 @@ export interface Snapshot {
   fields: Record<string, string>;
   /** The host is on a tool that cannot be shared (vs. no tool open). */
   unsupported: boolean;
+  /** The app route the host is on (`/tools/json-formatter`), or `null` before the host has reported one. */
+  route: string | null;
 }
 
 export type ServerMessage =
@@ -103,6 +108,7 @@ export type ServerMessage =
   | { type: 'RECONNECTED'; paused: boolean; hostConnected: boolean; sessionExpiresAt: number; snapshot: Snapshot }
   | { type: 'SNAPSHOT'; paused: boolean; snapshot: Snapshot }
   | { type: 'CONTENT_UPDATE'; seq: number; toolId: string; full: boolean; fields: Record<string, string> }
+  | { type: 'ROUTE'; seq: number; route: string }
   | { type: 'SHARING'; paused: boolean }
   | { type: 'HOST_STATUS'; connected: boolean }
   | { type: 'SESSION_ENDED'; reason: LeaveReason }
@@ -176,6 +182,11 @@ export function parseClientMessage(raw: unknown, maxBytes: number): ParseResult 
     case 'SET_ALLOW_FILES':
       if (typeof m.allow !== 'boolean') return fail('Invalid option.');
       return { ok: true, message: { type: 'SET_ALLOW_FILES', allow: m.allow } };
+    case 'ROUTE': {
+      const route = normalizeShareRoute(m.route);
+      if (!route) return fail('That page cannot be shared.', 'FORBIDDEN');
+      return { ok: true, message: { type: 'ROUTE', route } };
+    }
     case 'PING':
       if (typeof m.t !== 'number' || !Number.isFinite(m.t)) return fail('Invalid ping.');
       return { ok: true, message: { type: 'PING', t: m.t } };

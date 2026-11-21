@@ -26,14 +26,12 @@ export interface LiveShareFieldSpec {
   optIn?: 'files';
 }
 
+/**
+ * Every listed tool's real panel reads these fields through `useLiveState`, so a viewer renders the actual DLTools
+ * page for the tool (reached through the host's route) — there is no separate viewer UI.
+ */
 export interface LiveShareToolSpec {
-  /** Field order is the viewer's display order. */
   fields: Readonly<Record<string, LiveShareFieldSpec>>;
-  /**
-   * `true`: the tool's real panel is driven by `useLiveState`, so the viewer renders the actual DLTools UI.
-   * Otherwise the viewer falls back to the generic read-only field renderer.
-   */
-  native?: boolean;
 }
 
 import { THEMES } from '../theme';
@@ -54,22 +52,28 @@ const status = choice('Status', STATUS);
 const num = (label: string): LiveShareFieldSpec => ({ label, kind: 'number', role: 'option', maxChars: 12 });
 const flag = (label: string): LiveShareFieldSpec => ({ label, kind: 'enum', role: 'option', maxChars: 5, values: ['true', 'false'] });
 const message = (label: string): LiveShareFieldSpec => ({ label, kind: 'text', role: 'output', maxChars: 2_000 });
-const native = (spec: LiveShareToolSpec): LiveShareToolSpec => ({ ...spec, native: true });
 
 /** input → output text tools with a success/error status. */
 const transform = (extra: Record<string, LiveShareFieldSpec> = {}): LiveShareToolSpec => ({
-  fields: { input: code('Input', 'input'), output: code('Output', 'output'), ...extra, status },
+  fields: { input: code('Input', 'input'), output: code('Output', 'output'), ...extra, status, error: message('Error') },
 });
-const diff: LiveShareToolSpec = native({
+/** input → output text tools whose status is derived from `error` / `output` on each device. */
+const converter = (extra: Record<string, LiveShareFieldSpec>): LiveShareToolSpec => ({
+  fields: { input: code('Input', 'input'), output: code('Output', 'output'), ...extra, error: message('Error') },
+});
+const diff: LiveShareToolSpec = {
   fields: { left: code('Original', 'input'), right: code('Changed', 'input'), mode: choice('View', ['split', 'unified']) },
-});
+};
 const jsonToCode = (key: string, values: readonly string[]): LiveShareToolSpec => ({
-  fields: { input: code('JSON', 'input'), output: code('Generated code', 'output'), [key]: choice(key === 'lang' ? 'Language' : 'Target', values), rootName: text('Root name', 'option', 64) },
+  fields: {
+    input: code('JSON', 'input'), output: code('Generated code', 'output'), [key]: choice(key === 'lang' ? 'Language' : 'Target', values),
+    rootName: text('Root name', 'option', 64), error: message('Error'),
+  },
 });
 
 export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
   // ---- Priority 1: formatters, validators, diff, regex ----
-  'tool-json-formatter': native({
+  'tool-json-formatter': {
     fields: {
       input: code('Input', 'input'), output: code('Output', 'output'), status, error: message('Error'),
       indent: num('Indent'), sortKeys: flag('Sort keys'),
@@ -78,33 +82,33 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
       detectedFormat: choice('Detected', ['empty', 'json', 'string', 'mixed', 'invalid-json']),
       outputLanguage: choice('Output language', ['json', 'text']),
     },
-  }),
-  'tool-sql-formatter': native({
+  },
+  'tool-sql-formatter': {
     fields: {
       input: code('Input', 'input'), output: code('Output', 'output'), status, error: message('Error'),
       dialect: choice('Dialect', ['sql', 'mysql', 'postgresql', 'sqlite', 'bigquery', 'tsql']),
       indent: num('Indent'), uppercase: flag('Uppercase keywords'),
     },
-  }),
-  'tool-js-formatter': native({
+  },
+  'tool-js-formatter': {
     fields: {
       input: code('Input', 'input'), output: code('Output', 'output'), status, error: message('Error'),
       parser: choice('Parser', ['babel', 'typescript']), indent: num('Indent'),
     },
-  }),
-  'tool-html-formatter': transform(),
-  'tool-css-formatter': transform({ language: choice('Language', ['css', 'scss', 'less']) }),
-  'tool-xml-formatter': transform(),
+  },
+  'tool-html-formatter': transform({ indent: num('Indent') }),
+  'tool-css-formatter': transform({ language: choice('Language', ['css', 'scss', 'less']), indent: num('Indent') }),
+  'tool-xml-formatter': transform({ indent: num('Indent') }),
   'tool-yaml-formatter': transform(),
   'tool-markdown-formatter': transform(),
-  'tool-json-schema': native({ // JSON validator
+  'tool-json-schema': { // JSON validator
     fields: { data: code('JSON data', 'input'), schema: code('JSON Schema', 'input'), result: code('Validation result', 'output'), error: message('Error') },
-  }),
+  },
   'tool-json-diff': diff,
   'tool-text-diff': diff,
   'tool-xml-diff': diff,
   'tool-java-diff': diff,
-  'tool-regex-tester': native({
+  'tool-regex-tester': {
     fields: {
       pattern: text('Regular expression', 'input'),
       flags: text('Flags', 'option', 8),
@@ -112,34 +116,34 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
       replacement: text('Replace with', 'input'),
       mode: choice('Mode', ['match', 'replace']),
     },
-  }),
+  },
   // Base64 decoder. The Base64 string IS the file content, so it is opt-in (see `optIn`).
-  'tool-base64-document': native({
+  'tool-base64-document': {
     fields: {
       input: { label: 'Base64 string or data URI', kind: 'code', role: 'input', maxChars: 400_000, optIn: 'files' },
       target: choice('Convert to', ['auto', 'pdf', 'word', 'excel']),
       fileName: text('File name', 'option', 120),
     },
-  }),
+  },
   // ---- Priority 2: text-only utilities ----
-  'tool-jsonpath': { fields: { json: code('JSON', 'input'), expression: text('JSONPath', 'input'), output: code('Result', 'output'), status } },
-  'tool-url-codec': { fields: { decoded: code('Decoded', 'input'), encoded: code('Encoded', 'output') } },
-  'tool-data-converter': transform({ inputFormat: choice('From', ['json', 'yaml', 'csv', 'xml']), outputFormat: choice('To', ['json', 'yaml', 'csv', 'xml']) }),
-  'tool-encoding-toolkit': transform({ mode: choice('Mode', ['html', 'hex', 'gzip']), direction: choice('Direction', ['encode', 'decode']) }),
+  'tool-jsonpath': { fields: { json: code('JSON', 'input'), expression: text('JSONPath', 'input'), output: code('Result', 'output'), error: message('Error') } },
+  'tool-url-codec': { fields: { decoded: code('Decoded', 'input'), encoded: code('Encoded', 'output'), error: message('Error') } },
+  'tool-data-converter': converter({ inputFormat: choice('From', ['json', 'yaml', 'csv', 'xml']), outputFormat: choice('To', ['json', 'yaml', 'csv', 'xml']) }),
+  'tool-encoding-toolkit': converter({ mode: choice('Mode', ['html', 'hex', 'gzip']), direction: choice('Direction', ['encode', 'decode']) }),
   'tool-json-to-ts': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-dart': jsonToCode('target', ['typescript', 'go', 'python', 'pydantic', 'rust', 'zod', 'dart']),
   'tool-json-to-java': jsonToCode('lang', ['java', 'kotlin', 'csharp']),
   // ---- QR reader: decoded text plus a downscaled copy of an uploaded/pasted image — never the live camera feed.
   // Wi-Fi results with a password are withheld by the secret scanner (secrets.ts), and so is their image. ----
-  'tool-qr-reader': native({
+  'tool-qr-reader': {
     fields: {
       image: { label: 'Scanned image', kind: 'code', role: 'input', maxChars: QR_IMAGE_MAX },
       result: code('Decoded result', 'output', 8_000), source: text('Source', 'input', 120), error: message('Error'),
     },
-  }),
+  },
   // ---- KHQR: payment QR payloads are public by design (printed for customers); viewers stay read-only. ----
-  'tool-khqr-validator': native({ fields: { input: code('KHQR / EMVCo string', 'input', KHQR_MAX) } }),
-  'tool-khqr-builder': native({
+  'tool-khqr-validator': { fields: { input: code('KHQR / EMVCo string', 'input', KHQR_MAX) } },
+  'tool-khqr-builder': {
     fields: {
       khqr: code('Raw string', 'input', KHQR_MAX),
       fgColor: text('Foreground', 'option', 16),
@@ -151,7 +155,7 @@ export const LIVE_SHARE_TOOLS: Readonly<Record<string, LiveShareToolSpec>> = {
       logo: { label: 'Logo image', kind: 'code', role: 'option', maxChars: KHQR_IMAGE_MAX, optIn: 'files' },
       headerImage: { label: 'Header image', kind: 'code', role: 'option', maxChars: KHQR_IMAGE_MAX, optIn: 'files' },
     },
-  }),
+  },
 };
 
 /**
